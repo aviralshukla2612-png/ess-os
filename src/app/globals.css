@@ -1,0 +1,175 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-app: #F8FAFC;
+    --surface-main: #FFFFFF;
+    --surface-alt: #F1F5F9;
+    --border-main: #E2E8F0;
+    --border-subtle: #F1F5F9;
+    --text-main: #0F172A;
+    --text-muted: #64748B;
+    
+    --primary-main: #4F46E5;
+    --primary-hover: #4338CA;
+    --primary-soft: rgba(79, 70, 229, 0.08);
+
+    --nav-bg: #FFFFFF;
+    --nav-border: #E2E8F0;
+    --nav-text: #0F172A;
+    --nav-text-muted: #64748B;
+
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .dark {
+    --bg-app: #070B14;
+    --surface-main: #0E1626;
+    --surface-alt: #141F36;
+    --border-main: #1E293B;
+    --border-subtle: #0F172A;
+    --text-main: #F8FAFC;
+    --text-muted: #94A3B8;
+
+    --primary-main: #6366F1;
+    --primary-hover: #818CF8;
+    --primary-soft: rgba(99, 102, 241, 0.15);
+
+    --nav-bg: #0A101D;
+    --nav-border: #1E293B;
+    --nav-text: #F8FAFC;
+    --nav-text-muted: #94A3B8;
+  }
+}
+
+body {
+  font-family: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  overflow-x: hidden;
+  letter-spacing: -0.01em;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.025em;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+/* Touch Target Standard */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Open Section Architecture Utilities */
+.open-section {
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-main);
+}
+
+.open-section:last-child {
+  border-bottom: none;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  margin-bottom: 0.25rem;
+}
+
+.section-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.open-row {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background-color 0.15s ease;
+}
+
+.open-row:hover {
+  background-color: var(--surface-alt);
+}
+
+/* Neutral Card System */
+.ui-card {
+  background-color: var(--surface-main);
+  border: 1px solid var(--border-main);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ui-card-hover:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.08);
+}
+
+.dark .ui-card-hover:hover {
+  border-color: #334155;
+}
+
+/* Primary Button */
+.ui-button-primary {
+  background-color: var(--primary-main);
+  color: #FFFFFF;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  transition: all 0.15s ease-in-out;
+}
+
+.ui-button-primary:hover {
+  background-color: var(--primary-hover);
+  box-shadow: 0 4px 12px var(--primary-soft);
+}
+
+/* Sheet & Drawer Animations */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

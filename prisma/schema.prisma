@@ -1,0 +1,560 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  designation   String
+  department    String
+  activeRole    String   @default("EMPLOYEE") // OWNER, SALES, EMPLOYEE, CLIENT
+  avatarUrl     String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  userRoles           UserRole[]
+  assignedLeads       Lead[]               @relation("AssignedSalesperson")
+  createdLeads        Lead[]               @relation("CreatedBySalesperson")
+  leadFollowups       LeadFollowup[]
+  createdClients      Client[]
+  createdProjects     Project[]            @relation("ProjectCreator")
+  assignedChecklists  ProjectChecklist[]   @relation("ChecklistAssignee")
+  completedChecklists ProjectChecklist[]   @relation("ChecklistCompleter")
+  assignedTasks       Task[]               @relation("TaskAssignee")
+  createdTasks        Task[]               @relation("TaskCreator")
+  createdDocs         ProjectDocument[]    @relation("DocCreator")
+  updatedDocs         ProjectDocument[]    @relation("DocUpdater")
+  docVersions         DocumentVersion[]
+  projectNotes        ProjectNote[]
+  createdDiscussions  ClientDiscussion[]
+  employeeProfile     Employee?
+  clientUpdates       ClientUpdate[]
+  activityEvents      ActivityEvent[]
+  notifications       Notification[]
+  assignedMemberships ProjectMembership[]  @relation("MembershipAssigner")
+  removedMemberships  ProjectMembership[]  @relation("MembershipRemover")
+  approvedChanges     ChangeRequest[]      @relation("ChangeApprover")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  code        String   @unique
+  description String?
+  userRoles   UserRole[]
+  rolePermissions RolePermission[]
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  domain      String
+  description String?
+  rolePermissions RolePermission[]
+}
+
+model UserRole {
+  id     String @id @default(uuid())
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+}
+
+model RolePermission {
+  id           String @id @default(uuid())
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+model Lead {
+  id                    String    @id @default(uuid())
+  leadNumber            String    @unique
+  contactPerson         String
+  companyName           String?
+  mobile                String
+  whatsapp              String?
+  email                 String?
+  source                String    @default("WEBSITE") // WEBSITE, REFERRAL, SOCIAL, DIRECT, OTHER
+  interestedService     String
+  description           String?
+  estimatedBudget       Float     @default(0)
+  expectedValue         Float     @default(0)
+  priority              String    @default("MEDIUM") // LOW, MEDIUM, HIGH, HOT
+  status                String    @default("NEW") // NEW, CONTACTED, FOLLOW_UP, MEETING, PROPOSAL, NEGOTIATION, WON, LOST
+  assignedSalespersonId String?
+  nextFollowupAt        DateTime?
+  remarks               String?
+  lostReason            String?
+  createdById           String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  assignedSalesperson User?          @relation("AssignedSalesperson", fields: [assignedSalespersonId], references: [id])
+  createdBy           User           @relation("CreatedBySalesperson", fields: [createdById], references: [id])
+  followups           LeadFollowup[]
+  activities          LeadActivity[]
+}
+
+model LeadFollowup {
+  id                String    @id @default(uuid())
+  leadId            String
+  salespersonId     String
+  scheduledAt       DateTime
+  communicationType String    @default("CALL") // CALL, WHATSAPP, EMAIL, MEETING, VIDEO_CALL, OTHER
+  notes             String?
+  result            String?
+  nextAction        String?
+  nextFollowupAt    DateTime?
+  status            String    @default("PENDING") // PENDING, COMPLETED, CANCELLED, OVERDUE
+  createdAt         DateTime  @default(now())
+
+  lead        Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  salesperson User @relation(fields: [salespersonId], references: [id])
+}
+
+model LeadActivity {
+  id          String   @id @default(uuid())
+  leadId      String
+  actorId     String
+  action      String
+  detailsJson String?
+  createdAt   DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model Client {
+  id                 String   @id @default(uuid())
+  clientNumber       String   @unique
+  companyName        String
+  billingAddress     String?
+  taxId              String?
+  phone              String
+  email              String
+  notes              String?
+  totalBusiness      Float    @default(0)
+  outstandingBalance Float    @default(0)
+  createdById        String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  createdBy          User                @relation(fields: [createdById], references: [id])
+  contacts           ClientContact[]
+  projects           Project[]
+  portalTokens       ClientPortalToken[]
+  invoices           Invoice[]
+}
+
+model ClientContact {
+  id          String   @id @default(uuid())
+  clientId    String
+  name        String
+  designation String
+  email       String?
+  phone       String?
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  client      Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  discussions ClientDiscussion[]
+}
+
+model ProjectType {
+  id                  String    @id @default(uuid())
+  name                String    @unique
+  code                String    @unique
+  description         String?
+  defaultWorkflowJson String?
+  projects            Project[]
+}
+
+model Project {
+  id                   String    @id @default(uuid())
+  projectNumber        String    @unique
+  name                 String
+  clientId             String
+  projectTypeId        String?
+  description          String?
+  scopeText            String?
+  contractValue        Float     @default(0)
+  startDate            DateTime?
+  targetDeadline       DateTime?
+  actualCompletionDate DateTime?
+  status               String    @default("DRAFT") // DRAFT, PLANNING, WAITING_CLIENT, IN_PROGRESS, IN_REVIEW, TESTING, UAT, DEPLOYMENT, COMPLETED, ON_HOLD, CANCELLED
+  priority             String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  progressPercentage   Float     @default(0)
+  liveUrl              String?
+  stagingUrl           String?
+  designUrl            String?
+  createdById          String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  client             Client              @relation(fields: [clientId], references: [id])
+  projectType        ProjectType?        @relation(fields: [projectTypeId], references: [id])
+  createdBy          User                @relation("ProjectCreator", fields: [createdById], references: [id])
+  memberships        ProjectMembership[]
+  stages             ProjectStage[]
+  tasks              Task[]
+  documents          ProjectDocument[]
+  notes              ProjectNote[]
+  discussions        ClientDiscussion[]
+  changeRequests     ChangeRequest[]
+  paymentMilestones  PaymentMilestone[]
+  invoices           Invoice[]
+  portalTokens       ClientPortalToken[]
+  clientUpdates      ClientUpdate[]
+  workSessions       WorkSession[]
+  helpRequests       HelpRequest[]
+}
+
+model ProjectMembership {
+  id            String    @id @default(uuid())
+  projectId     String
+  employeeId    String
+  roleInProject String    @default("MEMBER") // TM (Team Manager), MEMBER
+  assignedAt    DateTime  @default(now())
+  removedAt     DateTime?
+  assignedById  String
+  removedById   String?
+  removalReason String?
+  isActive      Boolean   @default(true)
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  assignedBy User     @relation("MembershipAssigner", fields: [assignedById], references: [id])
+  removedBy  User?    @relation("MembershipRemover", fields: [removedById], references: [id])
+}
+
+model ProjectStage {
+  id                 String   @id @default(uuid())
+  projectId          String
+  name               String
+  orderIndex         Int      @default(1)
+  weight             Float    @default(10) // Stage weight % in overall progress
+  progressPercentage Float    @default(0)
+  status             String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, BLOCKED
+  createdAt          DateTime @default(now())
+
+  project    Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  checklists ProjectChecklist[]
+  tasks      Task[]
+}
+
+model ProjectChecklist {
+  id                String    @id @default(uuid())
+  stageId           String
+  title             String
+  description       String?
+  status            String    @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, BLOCKED
+  assignedToId      String?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  completedById     String?
+  estimatedMinutes  Int       @default(60)
+  actualMinutes     Int       @default(0)
+  weight            Float     @default(1)
+  required          Boolean   @default(true)
+  requiresApproval  Boolean   @default(false)
+  approvedById      String?
+  approvedAt        DateTime?
+  notes             String?
+  createdAt         DateTime  @default(now())
+
+  stage       ProjectStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  assignedTo  User?        @relation("ChecklistAssignee", fields: [assignedToId], references: [id])
+  completedBy User?        @relation("ChecklistCompleter", fields: [completedById], references: [id])
+}
+
+model Task {
+  id             String    @id @default(uuid())
+  projectId      String
+  stageId        String?
+  title          String
+  description    String?
+  assignedToId   String?
+  createdById    String
+  priority       String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  status         String    @default("TODO") // TODO, READY, IN_PROGRESS, BLOCKED, IN_REVIEW, COMPLETED, CANCELLED
+  startDate      DateTime?
+  deadline       DateTime?
+  estimatedHours Float     @default(0)
+  actualHours    Float     @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stage        ProjectStage? @relation(fields: [stageId], references: [id])
+  assignedTo   User?         @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  createdBy    User          @relation("TaskCreator", fields: [createdById], references: [id])
+  workSessions WorkSession[]
+  helpRequests HelpRequest[]
+}
+
+model ProjectDocument {
+  id          String   @id @default(uuid())
+  projectId   String
+  title       String
+  category    String   @default("GENERAL") // REQUIREMENTS, ARCHITECTURE, APIS, TESTING, DEPLOYMENT
+  content     String
+  version     Int      @default(1)
+  createdById String
+  updatedById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User              @relation("DocCreator", fields: [createdById], references: [id])
+  updatedBy User              @relation("DocUpdater", fields: [updatedById], references: [id])
+  versions  DocumentVersion[]
+}
+
+model DocumentVersion {
+  id           String   @id @default(uuid())
+  documentId   String
+  version      Int
+  content      String
+  changeReason String?
+  updatedById  String
+  createdAt    DateTime @default(now())
+
+  document  ProjectDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  updatedBy User            @relation(fields: [updatedById], references: [id])
+}
+
+model ProjectNote {
+  id         String   @id @default(uuid())
+  projectId  String
+  authorId   String
+  content    String
+  visibility String   @default("INTERNAL") // INTERNAL, TEAM_ONLY, MANAGEMENT
+  createdAt  DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id])
+}
+
+model ClientDiscussion {
+  id               String   @id @default(uuid())
+  projectId        String
+  clientContactId  String?
+  date             DateTime @default(now())
+  startTime        String?
+  endTime          String?
+  summary          String
+  discussionText   String
+  decisionsText    String?
+  actionItemsText  String?
+  createdById      String
+  createdAt        DateTime @default(now())
+
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  clientContact ClientContact? @relation(fields: [clientContactId], references: [id])
+  createdBy     User           @relation(fields: [createdById], references: [id])
+}
+
+model ChangeRequest {
+  id                   String    @id @default(uuid())
+  requestNumber        String    @unique
+  projectId            String
+  requestedBy          String
+  source               String    @default("CLIENT") // CLIENT, INTERNAL, PM
+  originalRequirement  String
+  requestedChange      String
+  reason               String?
+  technicalImpact      String?
+  timelineImpactDays   Int       @default(0)
+  costImpactAmount     Float     @default(0)
+  estimatedHours       Float     @default(0)
+  status               String    @default("DRAFT") // DRAFT, UNDER_REVIEW, WAITING_CLIENT, APPROVED, REJECTED, IMPLEMENTED
+  approvedById         String?
+  approvedAt           DateTime?
+  createdAt            DateTime  @default(now())
+
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  approvedBy User?   @relation("ChangeApprover", fields: [approvedById], references: [id])
+}
+
+model Employee {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  employeeIdCode     String   @unique
+  joiningDate        DateTime @default(now())
+  status             String   @default("ACTIVE") // ACTIVE, PROBATION, ON_LEAVE, RESIGNED
+  salaryMonthly      Float    @default(0)
+  reportingManagerId String?
+  skillsJson         String?  @default("[]")
+  createdAt          DateTime @default(now())
+
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memberships   ProjectMembership[]
+  attendances   Attendance[]
+  statusEvents  EmployeeStatusEvent[]
+  workSessions  WorkSession[]
+  helpRequests  HelpRequest[]
+}
+
+model Attendance {
+  id           String    @id @default(uuid())
+  employeeId   String
+  date         DateTime  @default(now())
+  punchIn      DateTime?
+  punchOut     DateTime?
+  totalMinutes Int       @default(0)
+  status       String    @default("PRESENT") // PRESENT, ABSENT, HALF_DAY, LEAVE, HOLIDAY
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model EmployeeStatusEvent {
+  id         String    @id @default(uuid())
+  employeeId String
+  statusType String    @default("WORKING") // WORKING, BREAK, LUNCH, CLIENT_CALL, INTERNAL_MEETING, OUTSIDE_WORK
+  startedAt  DateTime  @default(now())
+  endedAt    DateTime?
+  notes      String?
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model WorkSession {
+  id              String    @id @default(uuid())
+  employeeId      String
+  projectId       String?
+  taskId          String?
+  statusType      String    @default("WORKING")
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+  durationMinutes Int       @default(0)
+  notes           String?
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  project  Project?  @relation(fields: [projectId], references: [id])
+  task     Task?     @relation(fields: [taskId], references: [id])
+}
+
+model HelpRequest {
+  id            String    @id @default(uuid())
+  requestNumber String    @unique
+  employeeId    String
+  projectId     String?
+  taskId        String?
+  category      String    @default("TECHNICAL_BLOCKER") // REQUIREMENT, TECHNICAL_BLOCKER, CLIENT_ISSUE, APPROVAL, OTHER
+  message       String
+  urgency       String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  requestedAt   DateTime  @default(now())
+  status        String    @default("SUBMITTED") // SUBMITTED, IN_QUEUE, ACKNOWLEDGED, IN_PROGRESS, RESOLVED
+  ownerAction   String?   // COME_NOW, WAIT, MESSAGE, ASSIGN_SOMEONE_ELSE, RESOLVED
+  ownerComment  String?
+  resolvedAt    DateTime?
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  project  Project?  @relation(fields: [projectId], references: [id])
+  task     Task?     @relation(fields: [taskId], references: [id])
+}
+
+model PaymentMilestone {
+  id                   String    @id @default(uuid())
+  projectId            String
+  title                String
+  amount               Float
+  dueDate              DateTime
+  status               String    @default("UPCOMING") // UPCOMING, DUE, PARTIALLY_PAID, PAID, OVERDUE, CANCELLED
+  paidAmount           Float     @default(0)
+  paidAt               DateTime?
+  paymentMethod        String?
+  transactionReference String?
+  invoiceNumber        String?
+  notes                String?
+  createdAt            DateTime  @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  invoiceNumber String   @unique
+  projectId     String
+  clientId      String
+  issueDate     DateTime @default(now())
+  dueDate       DateTime
+  totalAmount   Float
+  taxAmount     Float    @default(0)
+  grandTotal    Float
+  status        String   @default("UNPAID") // UNPAID, PAID, OVERDUE, CANCELLED
+  itemsJson     String   @default("[]")
+  createdAt     DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  client  Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model ClientPortalToken {
+  id        String   @id @default(uuid())
+  clientId  String
+  projectId String
+  token     String   @unique
+  expiresAt DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  client  Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ClientUpdate {
+  id         String   @id @default(uuid())
+  projectId  String
+  title      String
+  content    String
+  visibility String   @default("CLIENT_VISIBLE") // CLIENT_VISIBLE, INTERNAL
+  authorId   String
+  createdAt  DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id])
+}
+
+model ActivityEvent {
+  id           String   @id @default(uuid())
+  eventType    String
+  actorId      String
+  entityType   String
+  entityId     String
+  projectId    String?
+  clientId     String?
+  metadataJson String?
+  createdAt    DateTime @default(now())
+
+  actor User @relation(fields: [actorId], references: [id])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  recipientId String
+  title       String
+  message     String
+  urgency     String   @default("MEDIUM") // CRITICAL, HIGH, MEDIUM, INFO
+  linkUrl     String?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  recipient User @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+}
