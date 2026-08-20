@@ -15,4 +15,6 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3020
+      - NEXTAUTH_URL=http://200.97.161.91/mdz-os
+      - NEXTAUTH_SECRET=super_secret_mdz_os_key_2026_!@#
     restart: unless-stopped
