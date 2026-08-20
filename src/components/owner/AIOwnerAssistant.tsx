@@ -43,7 +43,7 @@ export function AIOwnerAssistant() {
             <Bot className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">EMPEROR AI ASSISTANT</h2>
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">MDZ AI ASSISTANT</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">Natural language intelligence operating over company data.</p>
           </div>
         </div>
@@ -69,7 +69,7 @@ export function AIOwnerAssistant() {
           <div className="p-4 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-xs text-slate-800 dark:text-slate-200 leading-relaxed font-sans shadow-xs">
             <div className="font-bold text-indigo-900 dark:text-indigo-300 mb-1 flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>Emperor AI Executive Brief</span>
+              <span>MDZ AI Executive Brief</span>
             </div>
             {response}
           </div>
@@ -86,7 +86,7 @@ export function AIOwnerAssistant() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask Emperor AI (e.g. 'What should I focus on today?', 'Who is working on ABC?')"
+            placeholder="Ask MDZ AI (e.g. 'What should I focus on today?', 'Who is working on ABC?')"
             className="flex-1 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg px-3.5 py-2 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-indigo-500 transition-all"
           />
           <button

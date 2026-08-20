@@ -7,6 +7,7 @@ import { Search, ChevronDown, LogOut, Coffee, Play, Power, Sparkles, Clock, Shie
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { BottomSheet } from "../ui/BottomSheet";
 import { useWorkClock } from "@/lib/workClockContext";
+import { useToast } from "@/components/ui/Toast";
 
 interface Props {
   currentUser: DemoUser;
@@ -17,10 +18,120 @@ interface Props {
 }
 
 export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout }: Props) {
-  const { status, workSeconds, breakSeconds, breakType, formatHMS, punchIn, startBreak, resumeWork, confirmPunchOutAnyway } = useWorkClock();
+  const { status, workSeconds, breakSeconds, breakType, formatHMS, punchIn, startBreak, resumeWork, punchOut, confirmPunchOutAnyway } = useWorkClock();
+  const { showToast } = useToast();
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isBreakSheetOpen, setIsBreakSheetOpen] = useState(false);
+  const [isPunchOutConfirmOpen, setIsPunchOutConfirmOpen] = useState(false);
+  const [punchOutReason, setPunchOutReason] = useState("");
+
+  // Track active breaks for owner notifications
+  const knownBreakStarts = React.useRef<Set<string>>(new Set());
+  const knownBreakEnds = React.useRef<Set<string>>(new Set());
+  const initialFetchDone = React.useRef(false);
+
+  React.useEffect(() => {
+    if (currentUser.role !== "OWNER") return;
+    const checkBreaks = async () => {
+      try {
+        const res = await fetch("/api/attendance/breaks/today");
+        const json = await res.json();
+        if (json.success && json.data) {
+          json.data.forEach((b: any) => {
+            const name = b.employee?.user?.name || "An employee";
+            
+            // Notification for break start
+            if (initialFetchDone.current && !knownBreakStarts.current.has(b.id)) {
+              showToast(`☕ ${name} just took a ${b.statusType || "break"}`, "info");
+            }
+            knownBreakStarts.current.add(b.id);
+
+            // Notification for break end
+            if (b.endedAt && initialFetchDone.current && !knownBreakEnds.current.has(b.id)) {
+              const start = new Date(b.startedAt).getTime();
+              const end = new Date(b.endedAt).getTime();
+              const mins = Math.round((end - start) / 60000);
+              showToast(`▶️ ${name} has resumed working (Break was ${mins} min)`, "success");
+            }
+            if (b.endedAt) {
+              knownBreakEnds.current.add(b.id);
+            }
+          });
+          initialFetchDone.current = true;
+        }
+      } catch (e) {}
+    };
+    // Initial fetch to populate known breaks without notifying
+    checkBreaks();
+    const interval = setInterval(checkBreaks, 10000); // Check every 10 seconds to be more responsive
+    return () => clearInterval(interval);
+  }, [currentUser.role, showToast]);
+
+  const handlePunchInClick = async () => {
+    try {
+      const res = await fetch("/api/attendance/punch-in", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employeeId: currentUser.employeeId || "EMP-004" }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok || !data.success) {
+        showToast(data.error || "Failed to punch in.", "error");
+        return;
+      }
+      
+      punchIn();
+      showToast("✓ Punched In successfully!", "success");
+    } catch (e) {
+      showToast("Network error while punching in.", "error");
+    }
+  };
+
+  const handlePunchOutClick = async () => {
+    const res = punchOut();
+    if (res.requiresConfirmation) {
+      setIsPunchOutConfirmOpen(true);
+      setIsBreakSheetOpen(false); // close break sheet if open
+    } else {
+      try {
+        await fetch("/api/attendance/punch-out-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ employeeId: currentUser.employeeId || "EMP-004", reason: "" }), // Assume 8+ hours
+        });
+      } catch (e) {}
+      showToast("✓ Punched Out for today. Day complete!", "success");
+    }
+  };
+
+  const handleConfirmPunchOutAnyway = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!punchOutReason.trim()) {
+      showToast("Please provide a reason for leaving early.", "error");
+      return;
+    }
+    
+    try {
+      const response = await fetch("/api/attendance/punch-out-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employeeId: currentUser.employeeId || "EMP-004", reason: punchOutReason }),
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        confirmPunchOutAnyway(); // local state update
+        setIsPunchOutConfirmOpen(false);
+        showToast("Punch out request submitted for admin approval.", "info");
+      } else {
+        showToast(data.error || "Failed to submit request", "error");
+      }
+    } catch (e) {
+      showToast("Error submitting request", "error");
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-white/90 dark:bg-[#090F1D]/95 backdrop-blur-2xl border-b border-slate-200/80 dark:border-slate-800/80 px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-xs dark:shadow-2xl transition-all shrink-0 h-16 w-full">
@@ -41,11 +152,11 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
 
         <Link href="/owner" className="flex items-center gap-3 select-none group">
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white font-black text-sm flex items-center justify-center font-mono shadow-lg shadow-indigo-600/25 tracking-tighter group-hover:scale-105 transition-all">
-            E
+            M
           </div>
           <span className="font-extrabold text-base sm:text-lg tracking-wider text-slate-900 dark:text-slate-100 uppercase font-sans flex items-center gap-1.5">
-            <span className="md:hidden">EMPEROR</span>
-            <span className="hidden md:inline font-bold">EMPEROR <span className="bg-gradient-to-r from-indigo-600 to-cyan-500 dark:from-indigo-400 dark:to-cyan-400 bg-clip-text text-transparent">OS</span></span>
+            <span className="md:hidden">MDZ</span>
+            <span className="hidden md:inline font-bold">MDZ <span className="bg-gradient-to-r from-indigo-600 to-cyan-500 dark:from-indigo-400 dark:to-cyan-400 bg-clip-text text-transparent">OS</span></span>
           </span>
         </Link>
       </div>
@@ -67,6 +178,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
       {/* Right Controls & Live Work Session Stopwatch (Always shrink-0, never overlapped) */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
         {/* Work Clock Controls Bar */}
+        {currentUser.role !== "OWNER" && (
         <div className="flex items-center gap-2 shrink-0">
           {status === "WORKING" && (
             <div className="flex items-center gap-1.5 shrink-0">
@@ -80,7 +192,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
               </button>
 
               <button
-                onClick={() => confirmPunchOutAnyway()}
+                onClick={handlePunchOutClick}
                 className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1 shadow-md shadow-rose-600/20 active:scale-95 transition-all touch-target shrink-0"
                 title="Punch Out for Today"
               >
@@ -112,9 +224,9 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
             </div>
           )}
 
-          {(status === "NOT_PUNCHED_IN" || status === "DAY_COMPLETE") && (
+          {status === "NOT_PUNCHED_IN" && (
             <button
-              onClick={punchIn}
+              onClick={handlePunchInClick}
               className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/20 active:scale-95 transition-all touch-target shrink-0"
               title="Punch In to Work Clock"
             >
@@ -122,9 +234,17 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
               <span>Punch In</span>
             </button>
           )}
-        </div>
 
-        {/* Theme Toggle */}
+          {status === "DAY_COMPLETE" && (
+            <div className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-extrabold text-xs flex items-center gap-1.5 border border-slate-200 dark:border-slate-700/80 cursor-not-allowed shrink-0 select-none">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <span>Shift Complete</span>
+            </div>
+          )}
+        </div>
+        )}
+
+        {/* Global Notifications for Owner */}
         <div className="hidden md:block shrink-0">
           <ThemeToggle />
         </div>
@@ -211,10 +331,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
               </div>
 
               <button
-                onClick={() => {
-                  confirmPunchOutAnyway();
-                  setIsBreakSheetOpen(false);
-                }}
+                onClick={handlePunchOutClick}
                 className="w-full py-3.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all mt-2"
               >
                 <Power className="w-4 h-4" />
@@ -234,6 +351,37 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
             </button>
           )}
         </div>
+      </BottomSheet>
+
+      {/* Early Punch Out Reason Sheet */}
+      <BottomSheet
+        isOpen={isPunchOutConfirmOpen}
+        onClose={() => setIsPunchOutConfirmOpen(false)}
+        title="Early Punch Out Request"
+        subtitle="You are leaving before completing 8 hours. Please provide a reason for admin approval."
+      >
+        <form onSubmit={handleConfirmPunchOutAnyway} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Reason for leaving early
+            </label>
+            <input
+              type="text"
+              required
+              value={punchOutReason}
+              onChange={(e) => setPunchOutReason(e.target.value)}
+              placeholder="e.g. Doctor's appointment, family emergency"
+              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs"
+          >
+            <Power className="w-4 h-4" />
+            <span>Submit Punch Out Request</span>
+          </button>
+        </form>
       </BottomSheet>
     </header>
   );

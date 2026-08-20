@@ -9,7 +9,7 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<ThemeMode>("system");
 
   useEffect(() => {
-    const saved = localStorage.getItem("emperor-theme") as ThemeMode | null;
+    const saved = localStorage.getItem("mdz-theme") as ThemeMode | null;
     if (saved) {
       setTheme(saved);
       applyTheme(saved);
@@ -40,7 +40,7 @@ export function ThemeToggle() {
 
   const handleSetTheme = (mode: ThemeMode) => {
     setTheme(mode);
-    localStorage.setItem("emperor-theme", mode);
+    localStorage.setItem("mdz-theme", mode);
     applyTheme(mode);
   };
 

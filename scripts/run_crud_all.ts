@@ -1,6 +1,6 @@
 async function runFullCrudSuite() {
   console.log("==================================================");
-  console.log("🔥 EMPEROR OS — MASTER CRUD REST API TEST EXECUTION");
+  console.log("🔥 MDZ OS — MASTER CRUD REST API TEST EXECUTION");
   console.log("==================================================\n");
 
   const baseUrl = "http://localhost:3020";
@@ -136,7 +136,7 @@ async function runFullCrudSuite() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       name: "Aarav CRUD Developer",
-      email: "aarav.crud@emperorsmart.com",
+      email: "aarav.crud@mdzcompany.com",
       designation: "Senior Frontend Engineer",
       department: "Engineering",
       salaryMonthly: 105000,

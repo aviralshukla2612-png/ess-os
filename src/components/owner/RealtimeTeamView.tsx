@@ -1,52 +1,30 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Users, Clock } from "lucide-react";
 
 export function RealtimeTeamView() {
-  const teamMembers = [
-    {
-      name: "Meet Shah",
-      designation: "Senior Tech Lead (TM)",
-      status: "WORKING",
-      duration: "2h 15m",
-      project: "ABC E-Commerce Storefront",
-      task: "Task: WhatsApp Webhook Notification API",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
-      statusColor: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-    },
-    {
-      name: "Dev Patel",
-      designation: "Full-Stack Developer",
-      status: "WORKING",
-      duration: "1h 45m",
-      project: "ABC E-Commerce Storefront",
-      task: "Task: Razorpay Signature Verification Test",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
-      statusColor: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-      helpWaiting: true,
-    },
-    {
-      name: "Priya Desai",
-      designation: "Lead UI/UX Designer",
-      status: "CLIENT_CALL",
-      duration: "24m",
-      project: "Apex SaaS Solutions",
-      task: "Task: Reviewing Wireframes with Client",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
-      statusColor: "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800",
-    },
-    {
-      name: "Jay Shah",
-      designation: "QA Lead",
-      status: "LUNCH",
-      duration: "30m",
-      project: "Zenith Mobile App",
-      task: "Task: On Break",
-      avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150",
-      statusColor: "bg-orange-50 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800",
-    },
-  ];
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTeamStatus = async () => {
+      try {
+        const res = await fetch("/api/attendance/team-status");
+        const json = await res.json();
+        if (json.success && json.data) {
+          setTeamMembers(json.data);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTeamStatus();
+    const interval = setInterval(fetchTeamStatus, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
@@ -62,10 +40,13 @@ export function RealtimeTeamView() {
         </div>
 
         <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-          4 / 4 Active
+          {teamMembers.filter(m => m.status === 'WORKING').length} / {teamMembers.length} Active
         </span>
       </div>
 
+      {loading ? (
+        <div className="p-8 text-center text-slate-500 animate-pulse text-sm font-bold">Loading team status...</div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {teamMembers.map((m, idx) => (
           <div
@@ -108,6 +89,7 @@ export function RealtimeTeamView() {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

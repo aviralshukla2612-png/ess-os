@@ -43,7 +43,7 @@ const config: Config = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        emperor: {
+        mdz: {
           50: "#fffbe6",
           100: "#fff1b8",
           200: "#ffe58f",

@@ -28,8 +28,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <Header
         currentUser={{
-          email: session?.email || "owner@emperorsmart.com",
-          name: session?.name || "Rahul Emperor",
+          email: session?.email || "owner@mdzcompany.com",
+          name: session?.name || "Rahul MDZ",
           role: currentRole,
           designation: session?.designation || "Founder & CEO",
           icon: null,
@@ -42,11 +42,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Global Search Modal */}
       <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
-      {/* Body Layout: Desktop Fixed Sidebar + Main Scrollable Workspace */}
-      <div className="flex flex-1 h-[calc(100vh-3.5rem)] overflow-hidden relative">
+      {/* Mobile Sidebar (Rendered outside to fix stacking context issues) */}
+      {isMobileMenuOpen && (
         <Sidebar
           role={currentRole}
-          isMobileOpen={isMobileMenuOpen}
+          isMobileOpen={true}
+          onCloseMobile={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Body Layout: Desktop Fixed Sidebar + Main Scrollable Workspace */}
+      <div className="flex flex-1 h-[calc(100vh-3.5rem)] relative">
+        <Sidebar
+          role={currentRole}
+          isMobileOpen={false}
           onCloseMobile={() => setIsMobileMenuOpen(false)}
         />
 

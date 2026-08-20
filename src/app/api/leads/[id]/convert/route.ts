@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { apiDb, ClientEntity, ProjectEntity } from "@/lib/prototypeStore";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -127,62 +126,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
       return { lead: updatedLead, client: newClient, project: newProject };
     });
-
-    // 4. Synchronize in-memory prototype store for UI components reading apiDb
-    const apiDbClient: ClientEntity = {
-      id: result.client.id,
-      clientCode: result.client.clientNumber,
-      companyName: result.client.companyName,
-      contactPerson: result.client.contacts[0]?.name || "Primary Contact",
-      email: result.client.email,
-      phone: result.client.phone,
-      industry: "Enterprise Technology",
-      totalBilling: result.client.totalBusiness,
-      paidBilling: 0,
-      pendingBilling: result.client.outstandingBalance,
-      status: "ACTIVE",
-      portalToken: `token-${result.client.id}`,
-      activeProjects: [result.project.id],
-      completedProjects: [],
-      invoices: [],
-      notes: [],
-    };
-
-    const apiDbProject: ProjectEntity = {
-      id: result.project.id,
-      projectCode: result.project.projectNumber,
-      name: result.project.name,
-      clientId: result.client.id,
-      clientName: result.client.companyName,
-      tmId: "EMP-003",
-      tmName: "Meet Shah (Senior Tech Lead)",
-      progress: 10,
-      currentStage: "Requirements & Scope Approval",
-      contractValue: result.project.contractValue,
-      paidValue: 0,
-      overdueValue: 0,
-      deadline: "30 Nov 2026",
-      status: "IN_PROGRESS",
-      health: "ON_TRACK",
-      scopeItems: ["Storefront Requirements", "Architecture Signoff"],
-      teamMembers: [{ id: "EMP-003", name: "Meet Shah", role: "TM (Team Manager)", assignedDate: "Today", active: true }],
-      removalHistory: [],
-      tasks: [],
-      livingDocs: [],
-      changeRequests: [],
-    };
-
-    // Unshift to apiDb for in-memory sync
-    if (!apiDb.clients.some((c) => c.id === apiDbClient.id)) {
-      apiDb.clients.unshift(apiDbClient);
-    }
-    if (!apiDb.projects.some((p) => p.id === apiDbProject.id)) {
-      apiDb.projects.unshift(apiDbProject);
-    }
-    const memLead = apiDb.leads.find((l) => l.id === lead.id || l.leadNumber === lead.leadNumber);
-    if (memLead) {
-      memLead.stage = "WON";
-    }
 
     return NextResponse.json({
       success: true,

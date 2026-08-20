@@ -5,8 +5,8 @@ import { PrototypeSessionProvider } from "@/lib/prototypeSession";
 import { AppShell } from "@/components/layout/AppShell";
 
 export const metadata = {
-  title: "EMPEROR OS — Master Business Operating System",
-  description: "Centralized Operating System for Emperor Smart Solutions",
+  title: "MDZ OS — Master Business Operating System",
+  description: "Centralized Operating System for MDZ Company",
 };
 
 import { PrototypeStoreProvider } from "@/lib/prototypeStore";

@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/Toast";
 
 export default function SettingsPage() {
   const { showToast } = useToast();
-  const [companyName, setCompanyName] = useState("Emperor Smart Solutions");
+  const [companyName, setCompanyName] = useState("MDZ Company");
   const [saved, setSaved] = useState(false);
 
   const playbooks = [

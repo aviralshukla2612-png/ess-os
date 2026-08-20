@@ -114,7 +114,31 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, data: newProject });
+    const formattedProject = {
+      id: newProject.id,
+      projectCode: newProject.projectNumber,
+      name: newProject.name,
+      clientId: newProject.clientId,
+      clientName: newProject.client ? newProject.client.companyName : "Client Account",
+      tmId: "EMP-003",
+      tmName: "Meet Shah (Senior Tech Lead)",
+      progress: newProject.progressPercentage,
+      currentStage: newProject.status,
+      contractValue: newProject.contractValue,
+      paidValue: 0,
+      overdueValue: 0,
+      deadline: newProject.targetDeadline ? new Date(newProject.targetDeadline).toLocaleDateString() : "15 Sep 2026",
+      status: newProject.status,
+      health: newProject.priority === "URGENT" ? "AT_RISK" : "ON_TRACK",
+      scopeItems: newProject.scopeText ? newProject.scopeText.split("\n") : ["Storefront Next.js App Router"],
+      teamMembers: [],
+      removalHistory: [],
+      tasks: [],
+      livingDocs: [],
+      changeRequests: [],
+    };
+
+    return NextResponse.json({ success: true, data: formattedProject });
   } catch (error) {
     return NextResponse.json({ success: false, error: "Failed to create project" }, { status: 500 });
   }

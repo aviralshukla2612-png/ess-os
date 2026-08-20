@@ -9,7 +9,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   FileText,
-  HelpCircle,
+
   Clock,
   FolderKanban,
   Send,
@@ -48,15 +48,11 @@ export default function EmployeeDeskPage() {
     { id: "2", text: "Requested client CEO Rajesh for live production credentials during morning standup.", time: "09:30 AM" },
   ]);
 
-  const [helpRequests, setHelpRequests] = useState([
-    { id: "1", regarding: "Razorpay credentials blocker", status: "WAITING", time: "12 mins ago" },
-  ]);
+
 
   const [isNoteSheetOpen, setIsNoteSheetOpen] = useState(false);
   const [newNoteText, setNewNoteText] = useState("");
-  const [isHelpSheetOpen, setIsHelpSheetOpen] = useState(false);
-  const [helpRegarding, setHelpRegarding] = useState("");
-  const [helpUrgency, setHelpUrgency] = useState("Normal");
+
 
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,21 +70,7 @@ export default function EmployeeDeskPage() {
     setIsNoteSheetOpen(false);
   };
 
-  const handleRequestHelp = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!helpRegarding.trim()) return;
-    setHelpRequests([
-      {
-        id: Date.now().toString(),
-        regarding: helpRegarding,
-        status: "WAITING",
-        time: "Just now",
-      },
-      ...helpRequests,
-    ]);
-    setHelpRegarding("");
-    setIsHelpSheetOpen(false);
-  };
+
 
   const toggleTaskStatus = (id: string, newStatus: string) => {
     setTasks(
@@ -101,7 +83,7 @@ export default function EmployeeDeskPage() {
       {/* Mobile-Optimized Executive Page Header */}
       <PageHeader
         title="Good morning, Dev"
-        description="Here is your personal work stack across assigned Emperor projects today."
+        description="Here is your personal work stack across assigned MDZ projects today."
         badge="FULL-STACK DEV"
         actions={
           <div className="flex items-center gap-2">
@@ -111,13 +93,6 @@ export default function EmployeeDeskPage() {
             >
               <Plus className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span>+ Add Note</span>
-            </button>
-            <button
-              onClick={() => setIsHelpSheetOpen(true)}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5 touch-target"
-            >
-              <HelpCircle className="w-4 h-4" />
-              <span>Sir Help</span>
             </button>
           </div>
         }
@@ -147,13 +122,6 @@ export default function EmployeeDeskPage() {
           >
             <FileText className="w-3.5 h-3.5" />
             <span>Quick Log Note</span>
-          </button>
-          <button
-            onClick={() => setIsHelpSheetOpen(true)}
-            className="px-3 py-1.5 rounded-lg bg-white text-indigo-900 text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs"
-          >
-            <HelpCircle className="w-3.5 h-3.5" />
-            <span>Report Blocker</span>
           </button>
         </div>
       </div>
@@ -265,52 +233,7 @@ export default function EmployeeDeskPage() {
         </form>
       </BottomSheet>
 
-      {/* Bottom Sheet: Sir Help Request */}
-      <BottomSheet
-        isOpen={isHelpSheetOpen}
-        onClose={() => setIsHelpSheetOpen(false)}
-        title="Request Sir Help / Assistance"
-        subtitle="Direct management assistance for technical or client blockers."
-      >
-        <form onSubmit={handleRequestHelp} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Regarding / Blocker Description
-            </label>
-            <input
-              type="text"
-              required
-              value={helpRegarding}
-              onChange={(e) => setHelpRegarding(e.target.value)}
-              placeholder="e.g. Razorpay webhook signature testing blocker"
-              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
-            />
-          </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Urgency Level
-            </label>
-            <select
-              value={helpUrgency}
-              onChange={(e) => setHelpUrgency(e.target.value)}
-              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 outline-none"
-            >
-              <option value="Normal">Normal</option>
-              <option value="Urgent">Urgent (Blocking Today's Release)</option>
-              <option value="Critical">Critical (Client Escalation)</option>
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs touch-target"
-          >
-            <HelpCircle className="w-4 h-4" />
-            <span>Submit Sir Help Request</span>
-          </button>
-        </form>
-      </BottomSheet>
     </div>
   );
 }

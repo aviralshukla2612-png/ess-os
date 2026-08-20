@@ -12,11 +12,11 @@ export interface DemoUser {
 }
 
 const DEMO_USERS: DemoUser[] = [
-  { email: "owner@emperorsmart.com", name: "Rahul Emperor", role: "OWNER", designation: "Founder & CEO (Owner Command Center)", icon: "👑" },
-  { email: "karan@emperorsmart.com", name: "Karan Verma", role: "SALES", designation: "Head of Sales (CRM Pipeline)", icon: "💼" },
-  { email: "meet.lead@emperorsmart.com", name: "Meet Shah", role: "EMPLOYEE", designation: "Tech Lead (TM for Project ABC)", icon: "🚀" },
-  { email: "dev.patel@emperorsmart.com", name: "Dev Patel", role: "EMPLOYEE", designation: "Full-Stack Dev (Member for Project ABC)", icon: "💻" },
-  { email: "priya.ux@emperorsmart.com", name: "Priya Desai", role: "EMPLOYEE", designation: "UI/UX Lead", icon: "🎨" },
+  { email: "owner@mdzcompany.com", name: "Rahul MDZ", role: "OWNER", designation: "Founder & CEO (Owner Command Center)", icon: "👑" },
+  { email: "karan@mdzcompany.com", name: "Karan Verma", role: "SALES", designation: "Head of Sales (CRM Pipeline)", icon: "💼" },
+  { email: "meet.lead@mdzcompany.com", name: "Meet Shah", role: "EMPLOYEE", designation: "Tech Lead (TM for Project ABC)", icon: "🚀" },
+  { email: "dev.patel@mdzcompany.com", name: "Dev Patel", role: "EMPLOYEE", designation: "Full-Stack Dev (Member for Project ABC)", icon: "💻" },
+  { email: "priya.ux@mdzcompany.com", name: "Priya Desai", role: "EMPLOYEE", designation: "UI/UX Lead", icon: "🎨" },
   { email: "rajesh@abcretailers.com", name: "Rajesh Mehta", role: "CLIENT", designation: "Client CEO (Isolated Safe Portal)", icon: "🔒" },
 ];
 

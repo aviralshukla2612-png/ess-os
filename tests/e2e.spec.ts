@@ -1,17 +1,17 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Emperor OS — Full-Stack API & UI E2E Test Suite", () => {
+test.describe("MDZ OS — Full-Stack API & UI E2E Test Suite", () => {
   test("1. Verify /api/auth/login with valid user credentials", async ({ request }) => {
     const res = await request.post("/api/auth/login", {
       data: {
-        email: "owner@emperorsmart.com",
+        email: "owner@mdzcompany.com",
         password: "demo123",
       },
     });
     expect(res.ok()).toBeTruthy();
     const body = await res.json();
     expect(body.success).toBe(true);
-    expect(body.session.name).toBe("Rahul Emperor");
+    expect(body.session.name).toBe("Rahul MDZ");
     expect(body.session.activeRole).toBe("OWNER");
   });
 

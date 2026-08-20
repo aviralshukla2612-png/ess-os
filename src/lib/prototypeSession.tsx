@@ -14,11 +14,11 @@ export interface UserSession {
 }
 
 export const MOCK_USERS: UserSession[] = [
-  { email: "owner@emperorsmart.com", name: "Rahul Emperor", role: "OWNER", designation: "Founder & CEO", employeeId: "EMP-001" },
-  { email: "karan@emperorsmart.com", name: "Karan Verma", role: "SALES", designation: "Head of Sales", employeeId: "EMP-002" },
-  { email: "meet.lead@emperorsmart.com", name: "Meet Shah", role: "EMPLOYEE", designation: "Tech Lead (TM Project ABC)", employeeId: "EMP-003" },
-  { email: "dev.patel@emperorsmart.com", name: "Dev Patel", role: "EMPLOYEE", designation: "Full-Stack Developer", employeeId: "EMP-004" },
-  { email: "priya.ux@emperorsmart.com", name: "Priya Desai", role: "EMPLOYEE", designation: "Lead UI/UX Designer", employeeId: "EMP-005" },
+  { email: "owner@mdzcompany.com", name: "Rahul MDZ", role: "OWNER", designation: "Founder & CEO", employeeId: "EMP-001" },
+  { email: "karan@mdzcompany.com", name: "Karan Verma", role: "SALES", designation: "Head of Sales", employeeId: "EMP-002" },
+  { email: "meet.lead@mdzcompany.com", name: "Meet Shah", role: "EMPLOYEE", designation: "Tech Lead (TM Project ABC)", employeeId: "EMP-003" },
+  { email: "dev.patel@mdzcompany.com", name: "Dev Patel", role: "EMPLOYEE", designation: "Full-Stack Developer", employeeId: "EMP-004" },
+  { email: "priya.ux@mdzcompany.com", name: "Priya Desai", role: "EMPLOYEE", designation: "Lead UI/UX Designer", employeeId: "EMP-005" },
   { email: "rajesh@abcretailers.com", name: "Rajesh Mehta", role: "CLIENT", designation: "Client CEO (ABC Retailers)", employeeId: "CLI-001" },
 ];
 
@@ -39,7 +39,7 @@ export function PrototypeSessionProvider({ children }: { children: React.ReactNo
   const pathname = usePathname();
 
   useEffect(() => {
-    const savedEmail = localStorage.getItem("emperor_session_email");
+    const savedEmail = localStorage.getItem("mdz_session_email");
     if (savedEmail) {
       const found = MOCK_USERS.find((u) => u.email === savedEmail);
       if (found) setSession(found);
@@ -54,7 +54,7 @@ export function PrototypeSessionProvider({ children }: { children: React.ReactNo
     ) || MOCK_USERS[0];
 
     setSession(found);
-    localStorage.setItem("emperor_session_email", found.email);
+    localStorage.setItem("mdz_session_email", found.email);
 
     // Navigate to role homepage
     if (found.role === "OWNER") router.push("/owner");
@@ -67,13 +67,13 @@ export function PrototypeSessionProvider({ children }: { children: React.ReactNo
 
   const logout = () => {
     setSession(null);
-    localStorage.removeItem("emperor_session_email");
+    localStorage.removeItem("mdz_session_email");
     router.push("/login");
   };
 
   const switchIdentity = (user: UserSession) => {
     setSession(user);
-    localStorage.setItem("emperor_session_email", user.email);
+    localStorage.setItem("mdz_session_email", user.email);
   };
 
   return (

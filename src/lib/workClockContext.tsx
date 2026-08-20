@@ -1,6 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useToast } from "@/components/ui/Toast";
+import { usePrototypeSession } from "@/lib/prototypeSession";
 
 export type ClockState = "NOT_PUNCHED_IN" | "WORKING" | "ON_BREAK" | "DAY_COMPLETE";
 
@@ -107,10 +109,65 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
   const [timeline, setTimeline] = useState<TimelineEvent[]>(INITIAL_TIMELINE);
 
   const [isLoaded, setIsLoaded] = useState(false);
+  const lastPunchOutStatusRef = React.useRef<string | null>(null);
+  const statusRef = React.useRef<ClockState>("WORKING");
+  const { showToast } = useToast();
+  const { session } = usePrototypeSession();
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+
+  // Polling for Attendance Status
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const pollStatus = async () => {
+      try {
+        const employeeId = session?.employeeId || "EMP-004";
+        const res = await fetch(`/api/attendance/status?employeeId=${employeeId}`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          const dbStatus = json.data.punchOutRequestStatus;
+          const generalStatus = json.data.status;
+          
+          if (lastPunchOutStatusRef.current === "PENDING" && dbStatus === "APPROVED") {
+            showToast("✓ Your early punch-out request was approved!", "success");
+            setStatus("DAY_COMPLETE");
+          } else if (lastPunchOutStatusRef.current === "PENDING" && dbStatus === "REJECTED") {
+            showToast("⚠️ Your punch-out request was REJECTED by admin. You must continue working.", "error");
+            setStatus("WORKING");
+            setPunchOutTime(null);
+          } else if (generalStatus !== statusRef.current) {
+            // Do not overwrite ON_BREAK with WORKING, as ON_BREAK is a client-side sub-state of WORKING
+            if (statusRef.current === "ON_BREAK" && generalStatus === "WORKING") {
+              // Preserve ON_BREAK
+            } else {
+              // Force sync if the backend says something different than what we have locally
+              // This is extremely important for when users switch accounts!
+              setStatus(generalStatus);
+              if (generalStatus === "NOT_PUNCHED_IN") {
+                // Soft reset for clean slate on switch
+                setWorkSeconds(0);
+                setTimeline([]);
+              }
+            }
+          }
+
+          lastPunchOutStatusRef.current = dbStatus;
+        }
+      } catch (err) {}
+    };
+
+    pollStatus(); // Run immediately on mount or status change
+    const intervalId = setInterval(pollStatus, 5000);
+    return () => clearInterval(intervalId);
+  }, [isLoaded, status, showToast, session?.employeeId]);
 
   // Load from localStorage on mount (hydration safe)
   useEffect(() => {
-    const saved = localStorage.getItem("emperor_work_clock_state");
+    const employeeId = session?.employeeId || "EMP-004";
+    const saved = localStorage.getItem(`mdz_work_clock_state_${employeeId}`);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -129,9 +186,12 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         console.error("Failed to parse work clock state", e);
       }
+    } else {
+      // Reset if no saved state for this user
+      if (status !== "WORKING") setStatus("WORKING");
     }
     setIsLoaded(true);
-  }, []);
+  }, [session?.employeeId]);
 
   // Save to localStorage when state changes
   useEffect(() => {
@@ -150,7 +210,8 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
       usedTeaSeconds,
       timeline,
     };
-    localStorage.setItem("emperor_work_clock_state", JSON.stringify(stateToSave));
+    const employeeId = session?.employeeId || "EMP-004";
+    localStorage.setItem(`mdz_work_clock_state_${employeeId}`, JSON.stringify(stateToSave));
   }, [
     isLoaded,
     status,
@@ -165,6 +226,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     usedLunchSeconds,
     usedTeaSeconds,
     timeline,
+    session?.employeeId,
   ]);
 
   // Ticker
@@ -224,7 +286,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     ]);
   };
 
-  const startBreak = (type: string, reason?: string) => {
+  const startBreak = async (type: string, reason?: string) => {
     const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     setBreakType(type);
     setBreakReason(reason || "");
@@ -241,9 +303,26 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
         subtitle: reason ? `Reason: ${reason}` : `Started at ${now}`,
       },
     ]);
+
+    // Send to database for Admin visibility
+    try {
+      const employeeId = session?.employeeId || "EMP-004";
+      await fetch("/api/attendance/breaks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          employeeId,
+          action: "START",
+          statusType: type,
+          notes: reason
+        }),
+      });
+    } catch (e) {
+      console.error("Failed to log break start", e);
+    }
   };
 
-  const resumeWork = () => {
+  const resumeWork = async () => {
     const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     setStatus("WORKING");
     setTimeline((prev) => [
@@ -252,10 +331,25 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
         id: `evt-${Date.now()}`,
         time: now,
         type: "WORK",
-        title: currentProject,
-        subtitle: currentTask,
+        title: "Resumed Work",
+        subtitle: "Break ended",
       },
     ]);
+
+    // Send to database for Admin visibility
+    try {
+      const employeeId = session?.employeeId || "EMP-004";
+      await fetch("/api/attendance/breaks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          employeeId,
+          action: "END",
+        }),
+      });
+    } catch (e) {
+      console.error("Failed to log break end", e);
+    }
   };
 
   const changeWork = (proj: string, task: string) => {

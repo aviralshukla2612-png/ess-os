@@ -14,7 +14,7 @@ export interface CurrentUserSession {
 }
 
 export async function getCurrentUser(email?: string): Promise<CurrentUserSession | null> {
-  const targetEmail = email || "owner@emperorsmart.com"; // Default to Owner for initial setup
+  const targetEmail = email || "owner@mdzcompany.com"; // Default to Owner for initial setup
   const user = await prisma.user.findUnique({
     where: { email: targetEmail },
     include: { employeeProfile: true },

@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding Emperor OS database with realistic company data...");
+  console.log("🌱 Seeding MDZ OS database with realistic company data...");
 
   // Clean existing records for fresh seed
   await prisma.activityEvent.deleteMany();
@@ -12,7 +12,7 @@ async function main() {
   await prisma.clientPortalToken.deleteMany();
   await prisma.invoice.deleteMany();
   await prisma.paymentMilestone.deleteMany();
-  await prisma.helpRequest.deleteMany();
+
   await prisma.workSession.deleteMany();
   await prisma.employeeStatusEvent.deleteMany();
   await prisma.attendance.deleteMany();
@@ -64,12 +64,12 @@ async function main() {
 
   // 2. Users
   const ownerUser = await prisma.user.upsert({
-    where: { email: "owner@emperorsmart.com" },
+    where: { email: "owner@mdzcompany.com" },
     update: {},
     create: {
-      email: "owner@emperorsmart.com",
+      email: "owner@mdzcompany.com",
       passwordHash: "demo123",
-      name: "Rahul Emperor",
+      name: "Rahul MDZ",
       designation: "Founder & CEO",
       department: "Management",
       activeRole: "OWNER",
@@ -78,10 +78,10 @@ async function main() {
   });
 
   const salesUser = await prisma.user.upsert({
-    where: { email: "karan.sales@emperorsmart.com" },
+    where: { email: "karan.sales@mdzcompany.com" },
     update: {},
     create: {
-      email: "karan.sales@emperorsmart.com",
+      email: "karan.sales@mdzcompany.com",
       passwordHash: "demo123",
       name: "Karan Verma",
       designation: "Head of Sales",
@@ -92,10 +92,10 @@ async function main() {
   });
 
   const tmUser = await prisma.user.upsert({
-    where: { email: "meet.lead@emperorsmart.com" },
+    where: { email: "meet.lead@mdzcompany.com" },
     update: {},
     create: {
-      email: "meet.lead@emperorsmart.com",
+      email: "meet.lead@mdzcompany.com",
       passwordHash: "demo123",
       name: "Meet Shah",
       designation: "Senior Tech Lead",
@@ -106,10 +106,10 @@ async function main() {
   });
 
   const devUser = await prisma.user.upsert({
-    where: { email: "dev.patel@emperorsmart.com" },
+    where: { email: "dev.patel@mdzcompany.com" },
     update: {},
     create: {
-      email: "dev.patel@emperorsmart.com",
+      email: "dev.patel@mdzcompany.com",
       passwordHash: "demo123",
       name: "Dev Patel",
       designation: "Full-Stack Developer",
@@ -120,10 +120,10 @@ async function main() {
   });
 
   const designerUser = await prisma.user.upsert({
-    where: { email: "priya.ux@emperorsmart.com" },
+    where: { email: "priya.ux@mdzcompany.com" },
     update: {},
     create: {
-      email: "priya.ux@emperorsmart.com",
+      email: "priya.ux@mdzcompany.com",
       passwordHash: "demo123",
       name: "Priya Desai",
       designation: "Lead UI/UX Designer",
@@ -134,10 +134,10 @@ async function main() {
   });
 
   const qaUser = await prisma.user.upsert({
-    where: { email: "jay.qa@emperorsmart.com" },
+    where: { email: "jay.qa@mdzcompany.com" },
     update: {},
     create: {
-      email: "jay.qa@emperorsmart.com",
+      email: "jay.qa@mdzcompany.com",
       passwordHash: "demo123",
       name: "Jay Shah",
       designation: "QA Lead",
@@ -364,7 +364,7 @@ async function main() {
       priority: "HIGH",
       progressPercentage: 72,
       liveUrl: "https://staging.abcretailers.com",
-      stagingUrl: "https://abc-staging.emperorsmart.com",
+      stagingUrl: "https://abc-staging.mdzcompany.com",
       designUrl: "https://figma.com/file/abc-ecommerce-design",
       createdById: ownerUser.id,
     },
@@ -604,18 +604,7 @@ async function main() {
     },
   });
 
-  // 14. "Sir Help" Request Queue
-  await prisma.helpRequest.create({
-    data: {
-      requestNumber: "HELP-2026-001",
-      employeeId: empDev.id,
-      projectId: projectABC.id,
-      category: "TECHNICAL_BLOCKER",
-      message: "Waiting for production Razorpay API keys from client to verify live signature.",
-      urgency: "HIGH",
-      status: "IN_QUEUE",
-    },
-  });
+
 
   // 15. Financial Milestones & Invoices
   await prisma.paymentMilestone.createMany({

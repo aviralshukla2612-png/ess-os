@@ -1,5 +1,5 @@
 Write-Host "=========================================" -ForegroundColor Cyan
-Write-Host " EMPEROR OS - Clean Rebuild Without Cache" -ForegroundColor Cyan
+Write-Host " MDZ OS - Clean Rebuild Without Cache" -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 
 # 1. Remove .next build directory & cache

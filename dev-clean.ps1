@@ -1,7 +1,7 @@
 $ErrorActionPreference = "SilentlyContinue"
 
 Write-Host "=========================================" -ForegroundColor Cyan
-Write-Host " EMPEROR OS - Clean Dev Server (Port 3020)" -ForegroundColor Cyan
+Write-Host " MDZ OS - Clean Dev Server (Port 3020)" -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 
 # 1. Kill any process on port 3020

@@ -26,7 +26,7 @@ export interface Lead {
 }
 
 export function LeadPipelineBoard() {
-  const { leads, convertLeadToClient } = usePrototypeStore();
+  const { leads, convertLeadToClient, updateLeadStage } = usePrototypeStore();
   const { showToast } = useToast();
   const router = useRouter();
   const [selectedLeadForConvert, setSelectedLeadForConvert] = useState<any>(null);
@@ -50,7 +50,23 @@ export function LeadPipelineBoard() {
           return (
             <div
               key={stage.id}
-              className="w-72 shrink-0 bg-slate-100/60 dark:bg-slate-950/40 rounded-2xl p-3 border border-slate-200/80 dark:border-slate-800/60 space-y-3"
+              className="w-72 shrink-0 bg-slate-100/60 dark:bg-slate-950/40 rounded-2xl p-3 border border-slate-200/80 dark:border-slate-800/60 space-y-3 flex flex-col"
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.currentTarget.classList.add("border-indigo-500/50", "bg-indigo-50/50", "dark:bg-indigo-950/20");
+              }}
+              onDragLeave={(e) => {
+                e.currentTarget.classList.remove("border-indigo-500/50", "bg-indigo-50/50", "dark:bg-indigo-950/20");
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove("border-indigo-500/50", "bg-indigo-50/50", "dark:bg-indigo-950/20");
+                const leadId = e.dataTransfer.getData("leadId");
+                if (leadId) {
+                  updateLeadStage(leadId, stage.id as any);
+                  showToast(`Moved to ${stage.title}`, "success");
+                }
+              }}
             >
               <div className="flex items-center justify-between px-1">
                 <span className="font-bold text-xs text-slate-800 dark:text-slate-200 font-mono uppercase">
@@ -69,13 +85,17 @@ export function LeadPipelineBoard() {
                 {stageLeads.map((lead) => (
                   <div
                     key={lead.id}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData("leadId", lead.id);
+                    }}
                     onClick={(e) => {
                       const target = e.target as HTMLElement;
                       if (!target.closest("button")) {
                         router.push(`/leads/${lead.id}`);
                       }
                     }}
-                    className="p-3.5 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800/80 shadow-xs hover:border-indigo-500/50 dark:hover:border-indigo-500/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/90 hover:scale-[1.01] hover:shadow-sm transition-all duration-200 space-y-2 group cursor-pointer"
+                    className="p-3.5 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800/80 shadow-xs hover:border-indigo-500/50 dark:hover:border-indigo-500/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/90 hover:scale-[1.01] hover:shadow-sm transition-all duration-200 space-y-2 group cursor-grab active:cursor-grabbing"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-[10px] font-bold text-slate-400">{lead.leadNumber}</span>

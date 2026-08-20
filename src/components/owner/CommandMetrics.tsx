@@ -4,9 +4,10 @@ import React, { useState, useEffect } from "react";
 import { TrendingUp, IndianRupee, AlertCircle, FolderKanban, Users, Sparkles } from "lucide-react";
 
 export function CommandMetrics() {
-  const [financeData, setFinanceData] = useState<{ totalBilling: number; totalPending: number } | null>(null);
-  const [leadCount, setLeadCount] = useState<number>(64);
-  const [projectCount, setProjectCount] = useState<number>(26);
+  const [financeData, setFinanceData] = useState<{ totalBilling: number; totalPending: number; upcoming: number; overdue: number; overdueCount: number } | null>(null);
+  const [leadCount, setLeadCount] = useState<number>(0);
+  const [projectCount, setProjectCount] = useState<number>(0);
+  const [attendanceStats, setAttendanceStats] = useState<{ present: number; total: number }>({ present: 0, total: 0 });
 
   useEffect(() => {
     fetchMetrics();
@@ -14,16 +15,25 @@ export function CommandMetrics() {
 
   const fetchMetrics = async () => {
     try {
-      const [finRes, leadRes, prjRes] = await Promise.all([
+      const [finRes, leadRes, prjRes, attRes] = await Promise.all([
         fetch("/api/finance").then((r) => r.json()).catch(() => null),
         fetch("/api/leads").then((r) => r.json()).catch(() => null),
         fetch("/api/projects").then((r) => r.json()).catch(() => null),
+        fetch("/api/attendance/team-status").then((r) => r.json()).catch(() => null),
       ]);
 
       if (finRes?.success && finRes.data) {
+        const invoices = finRes.data.invoices || [];
+        const now = new Date().getTime();
+        const overdueInvoices = invoices.filter((i: any) => i.status === "UNPAID" && new Date(i.dueDate).getTime() < now);
+        const overdueAmount = overdueInvoices.reduce((sum: number, i: any) => sum + i.amount, 0);
+
         setFinanceData({
-          totalBilling: finRes.data.companyMetrics?.totalContractedRevenue || 23720000,
-          totalPending: finRes.data.companyMetrics?.totalPendingCollection || 320000,
+          totalBilling: finRes.data.metrics?.totalBilling || 0,
+          totalPending: finRes.data.metrics?.pendingBilling || 0,
+          upcoming: (finRes.data.metrics?.pendingBilling || 0) - overdueAmount,
+          overdue: overdueAmount,
+          overdueCount: overdueInvoices.length,
         });
       }
       if (leadRes?.success && Array.isArray(leadRes.data)) {
@@ -32,6 +42,11 @@ export function CommandMetrics() {
       if (prjRes?.success && Array.isArray(prjRes.data)) {
         setProjectCount(prjRes.data.length);
       }
+      if (attRes?.success && Array.isArray(attRes.data)) {
+        const total = attRes.data.length;
+        const present = attRes.data.filter((e: any) => e.punchedIn).length;
+        setAttendanceStats({ present, total });
+      }
     } catch (e) {
       console.error("Failed to load metrics", e);
     }
@@ -39,29 +54,29 @@ export function CommandMetrics() {
 
   const formattedTotalBilling = financeData
     ? `₹${(financeData.totalBilling / 100000).toFixed(1)} Lakh`
-    : "₹2.37 Crore";
+    : "₹0.0 Lakh";
 
   const metrics = [
     {
       title: "Active Pipeline Value",
       value: formattedTotalBilling,
-      subtext: `${leadCount} Ingested CRM Leads`,
+      subtext: `${leadCount} CRM Leads`,
       icon: <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />,
       glow: "hover:border-emerald-500/50",
       accent: "from-emerald-500/10 to-transparent",
     },
     {
       title: "Upcoming Collections",
-      value: "₹3,20,000",
-      subtext: "4 Milestones due in Aug",
+      value: `₹${((financeData?.upcoming || 0) / 1000).toFixed(1)}K`,
+      subtext: "Pending Milestones",
       icon: <IndianRupee className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />,
       glow: "hover:border-indigo-500/50",
       accent: "from-indigo-500/10 to-transparent",
     },
     {
       title: "Overdue Payments",
-      value: "₹85,000",
-      subtext: "1 Invoice overdue (INV-002)",
+      value: `₹${((financeData?.overdue || 0) / 1000).toFixed(1)}K`,
+      subtext: `${financeData?.overdueCount || 0} Invoices overdue`,
       icon: <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400" />,
       glow: "hover:border-rose-500/50",
       accent: "from-rose-500/10 to-transparent",
@@ -69,15 +84,15 @@ export function CommandMetrics() {
     {
       title: "Active Projects",
       value: `${projectCount} Active`,
-      subtext: "18 On Track • 5 Risk • 3 Testing",
+      subtext: "Tracked in DB",
       icon: <FolderKanban className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />,
       glow: "hover:border-cyan-500/50",
       accent: "from-cyan-500/10 to-transparent",
     },
     {
       title: "Workforce Attendance",
-      value: "14 / 16 Present",
-      subtext: "2 Staff on Leave • 90-Day Logs",
+      value: `${attendanceStats.present} / ${attendanceStats.total} Present`,
+      subtext: "Live Clock-in",
       icon: <Users className="w-5 h-5 text-violet-600 dark:text-violet-400" />,
       glow: "hover:border-violet-500/50",
       accent: "from-violet-500/10 to-transparent",

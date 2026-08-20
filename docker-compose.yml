@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  mdz-os:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mdz-os-app
+    ports:
+      - "3020:3020"
+    volumes:
+      # Mount the prisma directory to persist the SQLite database
+      # Make sure the host ./prisma/dev.db exists and has the correct permissions
+      - ./prisma:/app/prisma
+    environment:
+      - NODE_ENV=production
+      - PORT=3020
+    restart: unless-stopped

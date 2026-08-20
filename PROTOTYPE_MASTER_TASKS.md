@@ -1,4 +1,4 @@
-# EMPEROR OS — AUTONOMOUS MOBILE-FIRST PROTOTYPE MASTER TASK LIST
+# MDZ OS — AUTONOMOUS MOBILE-FIRST PROTOTYPE MASTER TASK LIST
 
 ## P0 — Broken Prototype & Audit Pass
 - [x] Inspect codebase, existing routes, layout structure, and auth logic
@@ -37,7 +37,7 @@
 - [x] Redesign Owner Command Center (`/owner`) for mobile & desktop with open-section architecture:
   - Top 5 Key Metric pills (Pipeline, Collections, Overdue, Projects, Team Present)
   - Needs Attention Exception Queue rows with one-tap action buttons
-  - Real-time Team Status and Emperor AI Executive Assistant
+  - Real-time Team Status and MDZ AI Executive Assistant
 
 ## P7 — Sales Experience (CRM on Mobile)
 - [x] Redesign Sales Dashboard (`/sales`, `/leads`, `/sales/followups`) for mobile and desktop:

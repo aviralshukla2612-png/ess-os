@@ -1,4 +1,4 @@
-# EMPEROR OS — MASTER UI TRANSFORMATION TASKS (PEARL + MIDNIGHT)
+# MDZ OS — MASTER UI TRANSFORMATION TASKS (PEARL + MIDNIGHT)
 
 ## Phase 0 — Application Discovery & Audit
 - [x] Inspect codebase, router, and component architecture
@@ -9,7 +9,7 @@
 ## Phase 1 — Pearl + Midnight Design System Tokens
 - [x] Create Pearl workspace CSS variables (`#F6F7F9` workspace, `#FFFFFF` white surfaces) in `globals.css`
 - [x] Define Midnight navigation CSS variables (`#0C1220` navigation, `#111827` elevated dark)
-- [x] Establish Emperor Gold accent tokens (`#D89B17`, `#E0A31A`)
+- [x] Establish MDZ Gold accent tokens (`#D89B17`, `#E0A31A`)
 - [x] Configure calm typography scale, radius system (8px, 12px, 16px), and subtle shadows
 
 ## Phase 2 — Application Shell Transformation
@@ -21,7 +21,7 @@
 
 ## Phase 3 — Shared UI Primitives
 - [x] Create/Refine Pearl `Card` & `KPICard` primitives (white background, clean border, dominant metrics)
-- [x] Refine `Button` hierarchy (Emperor Gold primary CTA, neutral secondary, ghost, danger)
+- [x] Refine `Button` hierarchy (MDZ Gold primary CTA, neutral secondary, ghost, danger)
 - [x] Standardize Status Badges (Success, Danger, Warning, Info)
 - [x] Refine Responsive Data Table & Mobile Data Card strategies
 - [x] Refine Modal & Side Drawer primitives
@@ -30,7 +30,7 @@
 - [x] Transform Owner Header & Good Morning greeting ("Good morning, Rahul")
 - [x] Redesign KPI Metric Cards (Pipeline, Collections, Overdue, Projects, Team Present)
 - [x] Redesign Needs Attention Exception Queue cards
-- [x] Redesign Real-time Team Status View & Emperor AI Assistant
+- [x] Redesign Real-time Team Status View & MDZ AI Assistant
 - [x] Mobile responsiveness pass for Owner dashboard
 
 ## Phase 5 — Sales CRM Experience

@@ -16,7 +16,10 @@ export default function LeadsPage() {
   const [clientName, setClientName] = useState("");
   const [contactPerson, setContactPerson] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [leadValue, setLeadValue] = useState("");
+  const [gstNo, setGstNo] = useState("");
+  const [projectScope, setProjectScope] = useState("");
 
   const handleCreateLead = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,14 +27,20 @@ export default function LeadsPage() {
       clientName,
       contactPerson,
       email: email || "contact@prospect.com",
+      phone: phone || "+91 00000 00000",
       leadValue: Number(leadValue) || 250000,
+      gstNo,
+      projectScope: projectScope || "General inquiry",
     });
     showToast(`✓ Lead "${clientName || 'New Prospect'}" created in CRM`, "success");
     setIsAddOpen(false);
     setClientName("");
     setContactPerson("");
     setEmail("");
+    setPhone("");
     setLeadValue("");
+    setGstNo("");
+    setProjectScope("");
   };
 
   return (
@@ -110,6 +119,37 @@ export default function LeadsPage() {
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none transition-all"
               />
             </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Phone Number</label>
+              <input
+                type="text"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+91 98765 43210"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none transition-all"
+              />
+            </div>
+            <div>
+              <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">GST Number (Optional)</label>
+              <input
+                type="text"
+                value={gstNo}
+                onChange={(e) => setGstNo(e.target.value)}
+                placeholder="27AADCB2230M1Z2"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none transition-all"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Project Details / Scope</label>
+            <textarea
+              value={projectScope}
+              onChange={(e) => setProjectScope(e.target.value)}
+              placeholder="e.g. E-Commerce website development..."
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none transition-all resize-none h-20"
+            />
           </div>
           <div>
             <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Estimated Deal Value (₹)</label>

@@ -38,7 +38,7 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
     e.preventDefault();
     if (!noteText.trim()) return;
     setClientNotes([
-      { id: Date.now().toString(), author: "Rahul Emperor", text: noteText, time: "Just now" },
+      { id: Date.now().toString(), author: "Rahul MDZ", text: noteText, time: "Just now" },
       ...clientNotes,
     ]);
     showToast("✓ Note added to Client 360° log", "success");

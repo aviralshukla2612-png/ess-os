@@ -8,7 +8,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 
 export default function LoginPage() {
   const { login } = usePrototypeSession();
-  const [emailOrId, setEmailOrId] = useState("dev.patel@emperorsmart.com");
+  const [emailOrId, setEmailOrId] = useState("dev.patel@mdzcompany.com");
   const [password, setPassword] = useState("••••••••••••");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,7 +54,7 @@ export default function LoginPage() {
             E
           </div>
           <span>
-            EMPEROR <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">OS</span>
+            MDZ <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">OS</span>
           </span>
         </div>
 
@@ -69,7 +69,7 @@ export default function LoginPage() {
               Welcome back
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Sign in with your Emperor Smart Solutions credentials to access your workspace.
+              Sign in with your MDZ Company credentials to access your workspace.
             </p>
           </div>
 
@@ -92,7 +92,7 @@ export default function LoginPage() {
                   required
                   value={emailOrId}
                   onChange={(e) => setEmailOrId(e.target.value)}
-                  placeholder="e.g. dev.patel@emperorsmart.com or EMP-004"
+                  placeholder="e.g. dev.patel@mdzcompany.com or EMP-004"
                   className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all touch-target"
                 />
               </div>
@@ -222,7 +222,7 @@ export default function LoginPage() {
 
       {/* Footer */}
       <div className="text-center text-xs text-slate-400 pb-2 font-mono">
-        Emperor Smart Solutions © 2026 • Enterprise Business OS
+        MDZ Company © 2026 • Enterprise Business OS
       </div>
     </div>
   );

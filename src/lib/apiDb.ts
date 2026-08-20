@@ -103,7 +103,7 @@ class ApiDatabase {
         completedProjects: [],
         invoices: ["INV-2026-001", "INV-2026-002"],
         notes: [
-          { id: "cn1", author: "Rahul Emperor", text: "Client requested live staging preview access.", time: "Aug 1, 02:00 PM" },
+          { id: "cn1", author: "Rahul MDZ", text: "Client requested live staging preview access.", time: "Aug 1, 02:00 PM" },
         ],
       },
       {
@@ -148,8 +148,8 @@ class ApiDatabase {
       {
         id: "EMP-001",
         employeeId: "EMP-001",
-        name: "Rahul Emperor",
-        email: "owner@emperorsmart.com",
+        name: "Rahul MDZ",
+        email: "owner@mdzcompany.com",
         role: "OWNER",
         designation: "Founder & CEO",
         department: "Executive Management",
@@ -173,7 +173,7 @@ class ApiDatabase {
         id: "EMP-002",
         employeeId: "EMP-002",
         name: "Karan Verma",
-        email: "karan@emperorsmart.com",
+        email: "karan@mdzcompany.com",
         role: "SALES",
         designation: "Head of Sales",
         department: "Business Development",
@@ -196,7 +196,7 @@ class ApiDatabase {
         id: "EMP-003",
         employeeId: "EMP-003",
         name: "Meet Shah",
-        email: "meet.lead@emperorsmart.com",
+        email: "meet.lead@mdzcompany.com",
         role: "EMPLOYEE",
         designation: "Senior Tech Lead (TM)",
         department: "Engineering",
@@ -219,7 +219,7 @@ class ApiDatabase {
         id: "EMP-004",
         employeeId: "EMP-004",
         name: "Dev Patel",
-        email: "dev.patel@emperorsmart.com",
+        email: "dev.patel@mdzcompany.com",
         role: "EMPLOYEE",
         designation: "Full-Stack Developer",
         department: "Engineering",
@@ -243,7 +243,7 @@ class ApiDatabase {
         id: "EMP-005",
         employeeId: "EMP-005",
         name: "Priya Desai",
-        email: "priya.ux@emperorsmart.com",
+        email: "priya.ux@mdzcompany.com",
         role: "EMPLOYEE",
         designation: "Lead UI/UX Designer",
         department: "Product Design",
@@ -310,7 +310,7 @@ class ApiDatabase {
     ];
 
     this.activities = [
-      { id: "act-1", timestamp: "Today 11:45 AM", actor: "Dev Patel", action: "submitted Sir Help request", target: "Razorpay webhook blocker", targetType: "HELP" },
+
       { id: "act-2", timestamp: "Today 10:15 AM", actor: "Dev Patel", action: "logged work note", target: "Razorpay sandbox HMAC payload verified", targetType: "PROJECT" },
       { id: "act-3", timestamp: "Aug 1 · 10:20 AM", actor: "Karan Verma", action: "converted lead", target: "ABC Retailers Pvt Ltd (₹4,00,000)", targetType: "LEAD" },
     ];

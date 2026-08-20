@@ -30,8 +30,8 @@ export default function ClientPortalPage({ params }: { params: { token: string }
             E
           </div>
           <div>
-            <h1 className="text-lg font-extrabold text-slate-900 dark:text-slate-100">EMPEROR CLIENT PORTAL</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Emperor Smart Solutions • Verified Safe Token Session</p>
+            <h1 className="text-lg font-extrabold text-slate-900 dark:text-slate-100">MDZ CLIENT PORTAL</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">MDZ Company • Verified Safe Token Session</p>
           </div>
         </div>
 

@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const count = await prisma.employee.count();
     const code = `EMP-${Math.floor(100 + Math.random() * 900)}`;
-    const userEmail = body.email || `employee_${Date.now()}_${count}@emperorsmart.com`;
+    const userEmail = body.email || `employee_${Date.now()}_${count}@mdzcompany.com`;
 
     let user = await prisma.user.findUnique({ where: { email: userEmail } });
     if (!user) {

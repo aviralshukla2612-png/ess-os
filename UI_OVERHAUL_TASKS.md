@@ -1,4 +1,4 @@
-# EMPEROR OS — PRODUCTION UI/UX OVERHAUL MASTER TASK LIST
+# MDZ OS — PRODUCTION UI/UX OVERHAUL MASTER TASK LIST
 
 ## Phase 0 — Setup & Planning
 - [x] Create `implementation_plan.md` artifact

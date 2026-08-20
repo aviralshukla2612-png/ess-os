@@ -49,7 +49,8 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           { title: "Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" />, badge: "17 Active", badgeColor: "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20" },
           { title: "Team", href: "/employees", icon: <UserCheck className="w-4 h-4" /> },
           { title: "Attendance", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
-          { title: "Help Requests", href: "/help-queue", icon: <HelpCircle className="w-4 h-4" />, badge: "1 Urgent", badgeColor: "bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20" },
+          { title: "Punch Out Requests", href: "/attendance-requests", icon: <Clock className="w-4 h-4" />, badge: "Action Req", badgeColor: "bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-500/20" },
+
           { title: "Finance", href: "/finance", icon: <IndianRupee className="w-4 h-4" /> },
           { title: "Activity", href: "/audit", icon: <ShieldAlert className="w-4 h-4" /> },
           { title: "Settings", href: "/settings", icon: <Settings className="w-4 h-4" /> },
@@ -58,6 +59,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
       case "SALES":
         return [
           { title: "Sales Overview", href: "/sales", icon: <LayoutDashboard className="w-4 h-4" /> },
+          { title: "My Work Sessions", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
           { title: "Lead Pipeline", href: "/leads", icon: <Target className="w-4 h-4" />, badge: "14 Leads" },
           { title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
           { title: "Follow-ups Today", href: "/sales/followups", icon: <PhoneCall className="w-4 h-4" />, badge: "7 Today", badgeColor: "bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/20" },
@@ -69,7 +71,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           { title: "My Desk", href: "/employee", icon: <LayoutDashboard className="w-4 h-4" /> },
           { title: "My Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" />, badge: "3 Assigned" },
           { title: "My Work Sessions", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
-          { title: "My Help Requests", href: "/employee/help", icon: <HelpCircle className="w-4 h-4" /> },
+
           { title: "Documentation", href: "/docs", icon: <BookOpen className="w-4 h-4" /> },
         ];
 
@@ -164,7 +166,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
         <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 text-xs space-y-1.5 backdrop-blur-xl shadow-xs dark:shadow-xl">
           <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100">
             <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-pulse" />
-            <span>Emperor Smart OS</span>
+            <span>MDZ Smart OS</span>
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
             Project-Centered architecture with immutable audit history.

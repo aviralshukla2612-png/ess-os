@@ -1,0 +1,96 @@
+import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+export async function GET() {
+  try {
+    const employees = await prisma.employee.findMany({
+      include: {
+        user: true,
+      },
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const teamData = await Promise.all(
+      employees.map(async (emp) => {
+        // Fetch active break (if any)
+        const activeBreak = await prisma.employeeStatusEvent.findFirst({
+          where: {
+            employeeId: emp.id,
+            endedAt: null,
+            statusType: {
+              in: ["BREAK", "Lunch", "Tea", "LUNCH", "TEA_BREAK"]
+            }
+          },
+          orderBy: { startedAt: "desc" }
+        });
+
+        // Fetch active work session (if any)
+        const activeWork = await prisma.workSession.findFirst({
+          where: {
+            employeeId: emp.id,
+            endedAt: null,
+          },
+          include: {
+            project: true,
+            task: true,
+          },
+          orderBy: { startedAt: "desc" }
+        });
+
+        // Determine status
+        let status = "WORKING";
+        let statusColor = "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800";
+        let task = "General Work";
+        let project = "Internal";
+        let duration = "Active";
+
+        if (activeBreak) {
+          status = activeBreak.statusType === "Lunch" || activeBreak.statusType === "LUNCH" ? "LUNCH" : "ON_BREAK";
+          statusColor = "bg-orange-50 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800";
+          task = activeBreak.notes ? `Reason: ${activeBreak.notes}` : "On Break";
+          const startMs = new Date(activeBreak.startedAt).getTime();
+          const nowMs = Date.now();
+          const mins = Math.round((nowMs - startMs) / 60000);
+          duration = `${mins}m`;
+        } else if (activeWork) {
+          status = "WORKING";
+          if (activeWork.project) project = activeWork.project.title;
+          if (activeWork.task) task = `Task: ${activeWork.task.title}`;
+          const startMs = new Date(activeWork.startedAt).getTime();
+          const nowMs = Date.now();
+          const hrs = Math.floor((nowMs - startMs) / 3600000);
+          const mins = Math.round(((nowMs - startMs) % 3600000) / 60000);
+          duration = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+        } else {
+          // If neither, maybe not punched in or offline
+          status = "OFFLINE";
+          statusColor = "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700";
+          task = "Not currently working";
+          duration = "-";
+        }
+
+        return {
+          id: emp.id,
+          name: emp.user.name,
+          designation: emp.skillsJson ? "Team Member" : "Employee", // Can map from a real field if exists
+          status,
+          duration,
+          project,
+          task,
+          avatar: emp.user.image || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+          statusColor,
+          helpWaiting: false, // can be linked to a real flag in future
+        };
+      })
+    );
+
+    return NextResponse.json({ success: true, data: teamData });
+  } catch (error) {
+    console.error("Fetch Team Status Error:", error);
+    return NextResponse.json({ success: false, error: "Failed to fetch team status" }, { status: 500 });
+  }
+}

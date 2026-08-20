@@ -27,7 +27,7 @@ export default function AuditPage() {
         {
           id: "EVT-101",
           type: "PROJECT_MEMBER_REASSIGNED",
-          actor: "Rahul Emperor (Owner)",
+          actor: "Rahul MDZ (Owner)",
           entity: "ABC E-Commerce Storefront",
           timestamp: "Today 11:30 AM",
           details: "Priya Desai assigned as lead UI/UX designer. Approved project roadmap milestone 2.",
@@ -37,7 +37,7 @@ export default function AuditPage() {
         {
           id: "EVT-102",
           type: "CHANGE_REQUEST_APPROVED",
-          actor: "Rahul Emperor (Owner)",
+          actor: "Rahul MDZ (Owner)",
           entity: "CR-2026-001 (Multi-Address Checkout Flow)",
           timestamp: "28 Jul 2026",
           details: "Scope change approved (+4 timeline days, +₹25,000 cost impact).",
@@ -57,7 +57,7 @@ export default function AuditPage() {
         {
           id: "EVT-104",
           type: "PAYMENT_MILESTONE_RECEIVED",
-          actor: "Rahul Emperor (Owner)",
+          actor: "Rahul MDZ (Owner)",
           entity: "Milestone 1 Advance (INV-2026-001)",
           timestamp: "06 Jul 2026",
           details: "Received ₹1,00,000 via NEFT (Ref: NEFT202607060012).",

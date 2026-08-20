@@ -1,5 +1,5 @@
 async function testApis() {
-  console.log("🚀 Running Emperor OS REST API Verification Test Suite...\n");
+  console.log("🚀 Running MDZ OS REST API Verification Test Suite...\n");
 
   const baseUrl = "http://localhost:3020";
 
@@ -7,7 +7,7 @@ async function testApis() {
   const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: "owner@emperorsmart.com", password: "demo123" }),
+    body: JSON.stringify({ email: "owner@mdzcompany.com", password: "demo123" }),
   });
   const loginData = await loginRes.json();
   console.log("1. POST /api/auth/login ->", loginData.success ? `✅ SUCCESS (${loginData.session.name} as ${loginData.session.activeRole})` : `❌ FAILED`);
@@ -24,7 +24,7 @@ async function testApis() {
     body: JSON.stringify({
       clientName: "Automated Test Prospect",
       contactPerson: "QA Bot",
-      email: "qa@emperorsmart.com",
+      email: "qa@mdzcompany.com",
       leadValue: 450000,
       stage: "NEW",
     }),

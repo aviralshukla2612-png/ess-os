@@ -23,6 +23,7 @@ export async function GET() {
       expectedRevenue: l.expectedValue,
       projectScope: l.interestedService,
       assignedSales: "Karan Verma",
+      gstNo: l.remarks ? l.remarks.replace("GST: ", "") : undefined,
       nextFollowupDate: l.nextFollowupAt ? new Date(l.nextFollowupAt).toLocaleDateString() : "Tomorrow 10:00 AM",
       leadPriority: l.priority,
       notes: [],
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
         expectedValue: body.expectedRevenue || 200000,
         priority: body.leadPriority || "HIGH",
         status: body.stage || "NEW",
+        remarks: body.gstNo ? `GST: ${body.gstNo}` : null,
         createdById: salesUser!.id,
       },
     });
@@ -82,6 +84,7 @@ export async function POST(req: Request) {
         expectedRevenue: newLead.expectedValue,
         projectScope: newLead.interestedService,
         assignedSales: "Karan Verma",
+        gstNo: newLead.remarks ? newLead.remarks.replace("GST: ", "") : undefined,
         nextFollowupDate: "Tomorrow 10:00 AM",
         leadPriority: newLead.priority,
         notes: [],

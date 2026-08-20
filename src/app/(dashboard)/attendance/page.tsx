@@ -6,6 +6,7 @@ import { useWorkClock } from "@/lib/workClockContext";
 import { usePrototypeSession } from "@/lib/prototypeSession";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { OwnerBreakDashboard } from "@/components/owner/OwnerBreakDashboard";
 import {
   Clock,
   Play,
@@ -17,6 +18,7 @@ import {
   Sliders,
   Sparkles,
   Zap,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function AttendanceWorkClockPage() {
@@ -59,6 +61,7 @@ export default function AttendanceWorkClockPage() {
   // Form states for change work
   const [selectedProject, setSelectedProject] = useState(currentProject);
   const [selectedTask, setSelectedTask] = useState(currentTask);
+  const [punchOutReason, setPunchOutReason] = useState("");
 
   // Form states for break
   const [selectedBreakType, setSelectedBreakType] = useState("Lunch");
@@ -97,15 +100,24 @@ export default function AttendanceWorkClockPage() {
       showToast("Punch In unavailable: Morning Punch In must be initiated from your registered office laptop.", "error");
       return;
     }
-    punchIn();
     try {
-      await fetch("/api/attendance", {
+      const res = await fetch("/api/attendance/punch-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId: "EMP-004", actionType: "PUNCH_IN" }),
+        body: JSON.stringify({ employeeId: session?.employeeId || "EMP-004" }),
       });
-    } catch (e) {}
-    showToast("✓ Punched In successfully at " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), "success");
+      const data = await res.json();
+      
+      if (!res.ok || !data.success) {
+        showToast(data.error || "Failed to punch in.", "error");
+        return;
+      }
+      
+      punchIn();
+      showToast("✓ Punched In successfully at " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), "success");
+    } catch (e) {
+      showToast("Network error while punching in.", "error");
+    }
   };
 
   const handleConfirmBreak = async () => {
@@ -134,34 +146,63 @@ export default function AttendanceWorkClockPage() {
       setIsPunchOutConfirmOpen(true);
     } else {
       try {
-        await fetch("/api/attendance", {
+        await fetch("/api/attendance/workflow-action", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ employeeId: "EMP-004", actionType: "PUNCH_OUT" }),
+          body: JSON.stringify({ employeeId: session?.employeeId || "EMP-004", actionType: "PUNCH_OUT" }),
         });
       } catch (e) {}
       showToast("✓ Punched Out for today. Day complete!", "success");
     }
   };
 
-  const handleConfirmPunchOutAnyway = async () => {
-    confirmPunchOutAnyway();
-    setIsPunchOutConfirmOpen(false);
+  const handleConfirmPunchOutAnyway = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!punchOutReason.trim()) {
+      showToast("Please provide a reason for leaving early.", "error");
+      return;
+    }
+    
     try {
-      await fetch("/api/attendance", {
+      const response = await fetch("/api/attendance/punch-out-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId: "EMP-004", actionType: "PUNCH_OUT" }),
+        body: JSON.stringify({ employeeId: session?.employeeId || "EMP-004", reason: punchOutReason }),
       });
-    } catch (e) {}
-    showToast("✓ Punched Out (Exception logged). Day complete!", "info");
+      const data = await response.json();
+      
+      if (data.success) {
+        confirmPunchOutAnyway(); // locally change state
+        setIsPunchOutConfirmOpen(false);
+        showToast("Punch out request submitted for admin approval.", "info");
+      } else {
+        showToast(data.error || "Failed to submit request", "error");
+      }
+    } catch (e) {
+      showToast("Error submitting request", "error");
+    }
   };
+
+  // Admin/Owner View for Attendance Page
+  if (role === "OWNER") {
+    return (
+      <div className="space-y-8 pb-12">
+        <PageHeader
+          title="Team Attendance & Activity"
+          description="Live overview of team breaks and session statuses."
+          badge="OWNER VIEW"
+          icon={<Clock className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />}
+        />
+        <OwnerBreakDashboard />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-20 max-w-4xl mx-auto">
       {/* Module Header */}
       <PageHeader
-        title="Emperor Work Clock"
+        title="MDZ Work Clock"
         description="Employee day timeline, live stopwatch, work focus tracking, and break allowances."
         badge="WORK MODULE"
         icon={<Clock className="w-7 h-7 text-indigo-600 dark:text-indigo-400 animate-pulse" />}
@@ -184,19 +225,17 @@ export default function AttendanceWorkClockPage() {
         }
       />
 
-      {/* STATE 1: BEFORE PUNCH IN */}
+        {/* STATE 1: NOT PUNCHED IN */}
       {status === "NOT_PUNCHED_IN" && (
         <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-8 shadow-xl dark:shadow-2xl space-y-6 text-center">
+          <div className="w-20 h-20 mx-auto bg-indigo-50 dark:bg-indigo-500/10 rounded-full flex items-center justify-center">
+            <Clock className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
+          </div>
           <div className="space-y-2">
-            <span className="text-xs font-mono font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase block">
-              WORK CLOCK STOPWATCH
-            </span>
-            <div className="text-5xl sm:text-6xl font-black font-mono tracking-tight text-slate-900 dark:text-slate-100">
-              09:56 AM
-            </div>
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Shift Starts at 10:00 AM • Required Duration: 8h 00m
-            </div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Ready to start your day?</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+              Ensure you are connected to the office network or approved VPN. Location services must be enabled.
+            </p>
           </div>
 
           <div className="p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 max-w-md mx-auto text-left space-y-3 text-xs">
@@ -237,6 +276,21 @@ export default function AttendanceWorkClockPage() {
             <Play className="w-4 h-4 fill-white" />
             <span>Punch In to Work Clock</span>
           </button>
+        </div>
+      )}
+
+      {/* STATE 4: DAY COMPLETE */}
+      {status === "DAY_COMPLETE" && (
+        <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-emerald-200/80 dark:border-emerald-800/80 p-8 shadow-xl dark:shadow-2xl space-y-6 text-center">
+          <div className="w-20 h-20 mx-auto bg-emerald-50 dark:bg-emerald-500/10 rounded-full flex items-center justify-center">
+            <Clock className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Shift Completed</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+              You have successfully punched out for today. Great work!
+            </p>
+          </div>
         </div>
       )}
 
@@ -374,6 +428,92 @@ export default function AttendanceWorkClockPage() {
           ))}
         </div>
       </div>
+
+      {/* Take Break Sheet */}
+      <BottomSheet
+        isOpen={isBreakSheetOpen}
+        onClose={() => setIsBreakSheetOpen(false)}
+        title="Take a Break"
+        subtitle="Log your break time. Your work session timer will pause."
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setSelectedBreakType("Lunch")}
+              className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
+                selectedBreakType === "Lunch"
+                  ? "bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-500/20 dark:border-indigo-500/40 dark:text-indigo-300"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"
+              }`}
+            >
+              <Coffee className="w-5 h-5" />
+              <span className="text-xs font-bold">Lunch Break</span>
+            </button>
+            <button
+              onClick={() => setSelectedBreakType("Tea")}
+              className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
+                selectedBreakType === "Tea"
+                  ? "bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-500/20 dark:border-indigo-500/40 dark:text-indigo-300"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"
+              }`}
+            >
+              <Coffee className="w-5 h-5" />
+              <span className="text-xs font-bold">Tea Break</span>
+            </button>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Additional Notes (Optional)
+            </label>
+            <input
+              type="text"
+              value={customBreakReason}
+              onChange={(e) => setCustomBreakReason(e.target.value)}
+              placeholder="e.g. Grabbing coffee"
+              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+            />
+          </div>
+
+          <button
+            onClick={handleConfirmBreak}
+            className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs shadow-xs"
+          >
+            Start Break
+          </button>
+        </div>
+      </BottomSheet>
+
+      {/* Early Punch Out Reason Sheet */}
+      <BottomSheet
+        isOpen={isPunchOutConfirmOpen}
+        onClose={() => setIsPunchOutConfirmOpen(false)}
+        title="Early Punch Out Request"
+        subtitle="You are leaving before completing 8 hours. Please provide a reason for admin approval."
+      >
+        <form onSubmit={handleConfirmPunchOutAnyway} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Reason for leaving early
+            </label>
+            <input
+              type="text"
+              required
+              value={punchOutReason}
+              onChange={(e) => setPunchOutReason(e.target.value)}
+              placeholder="e.g. Doctor's appointment, family emergency"
+              className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs"
+          >
+            <Power className="w-4 h-4" />
+            <span>Submit Punch Out Request</span>
+          </button>
+        </form>
+      </BottomSheet>
     </div>
   );
 }
