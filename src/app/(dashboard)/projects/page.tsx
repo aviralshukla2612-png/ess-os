@@ -22,7 +22,7 @@ export default function ProjectsDirectoryPage() {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/projects");
+      const res = await fetch("/mdz-os/api/projects");
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setProjectsList(json.data);
@@ -37,7 +37,7 @@ export default function ProjectsDirectoryPage() {
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/projects", {
+      const res = await fetch("/mdz-os/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: projectName, contractValue: 450000 }),

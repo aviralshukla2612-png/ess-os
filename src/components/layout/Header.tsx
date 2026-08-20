@@ -35,7 +35,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
     if (currentUser.role !== "OWNER") return;
     const checkBreaks = async () => {
       try {
-        const res = await fetch("/api/attendance/breaks/today");
+        const res = await fetch("/mdz-os/api/attendance/breaks/today");
         const json = await res.json();
         if (json.success && json.data) {
           json.data.forEach((b: any) => {
@@ -70,7 +70,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
 
   const handlePunchInClick = async () => {
     try {
-      const res = await fetch("/api/attendance/punch-in", {
+      const res = await fetch("/mdz-os/api/attendance/punch-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ employeeId: currentUser.employeeId || "EMP-004" }),
@@ -96,7 +96,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
       setIsBreakSheetOpen(false); // close break sheet if open
     } else {
       try {
-        await fetch("/api/attendance/punch-out-request", {
+        await fetch("/mdz-os/api/attendance/punch-out-request", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ employeeId: currentUser.employeeId || "EMP-004", reason: "" }), // Assume 8+ hours
@@ -114,7 +114,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
     }
     
     try {
-      const response = await fetch("/api/attendance/punch-out-request", {
+      const response = await fetch("/mdz-os/api/attendance/punch-out-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ employeeId: currentUser.employeeId || "EMP-004", reason: punchOutReason }),

@@ -134,10 +134,10 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   const fetchAllData = async () => {
     try {
       const [leadsRes, clientsRes, projectsRes, employeesRes] = await Promise.all([
-        fetch("/api/leads").catch(() => null),
-        fetch("/api/clients").catch(() => null),
-        fetch("/api/projects").catch(() => null),
-        fetch("/api/employees").catch(() => null),
+        fetch("/mdz-os/api/leads").catch(() => null),
+        fetch("/mdz-os/api/clients").catch(() => null),
+        fetch("/mdz-os/api/projects").catch(() => null),
+        fetch("/mdz-os/api/employees").catch(() => null),
       ]);
 
       if (leadsRes) {
@@ -168,7 +168,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   }, []);
 
   const addLead = (leadData: Partial<LeadEntity>) => {
-    fetch("/api/leads", {
+    fetch("/mdz-os/api/leads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(leadData),
@@ -182,7 +182,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   };
 
   const updateLeadStage = (id: string, stage: LeadEntity["stage"]) => {
-    fetch(`/api/leads/${id}`, {
+    fetch(`/mdz-os/api/leads/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ stage }),
@@ -196,7 +196,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   };
 
   const convertLeadToClient = (leadId: string) => {
-    fetch(`/api/leads/${leadId}/convert`, {
+    fetch(`/mdz-os/api/leads/${leadId}/convert`, {
       method: "POST",
     })
       .then((r) => r.json())
@@ -213,7 +213,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   };
 
   const addClient = (clientData: Partial<ClientEntity>) => {
-    fetch("/api/clients", {
+    fetch("/mdz-os/api/clients", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(clientData),
@@ -227,7 +227,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   };
 
   const addLeadNote = (leadId: string, noteText: string) => {
-    fetch(`/api/leads/${leadId}`, {
+    fetch(`/mdz-os/api/leads/${leadId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ noteText }),
@@ -241,7 +241,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   };
 
   const addLeadFollowup = (leadId: string, date: string, note: string) => {
-    fetch(`/api/leads/${leadId}`, {
+    fetch(`/mdz-os/api/leads/${leadId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ followupDate: date, followupNote: note }),
@@ -255,7 +255,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   };
 
   const importClientsBatch = (imported: Array<{ companyName: string; contactPerson: string; email: string; phone: string }>) => {
-    fetch("/api/clients/import", {
+    fetch("/mdz-os/api/clients/import", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ imported }),

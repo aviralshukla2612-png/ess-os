@@ -28,7 +28,7 @@ export default function FinancePage() {
 
   const fetchFinanceData = async () => {
     try {
-      const res = await fetch("/api/finance");
+      const res = await fetch("/mdz-os/api/finance");
       const json = await res.json();
       if (json.success && json.data) {
         setFinanceMetrics({

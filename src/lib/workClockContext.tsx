@@ -125,7 +125,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     const pollStatus = async () => {
       try {
         const employeeId = session?.employeeId || "EMP-004";
-        const res = await fetch(`/api/attendance/status?employeeId=${employeeId}`);
+        const res = await fetch(`/mdz-os/api/attendance/status?employeeId=${employeeId}`);
         const json = await res.json();
         if (json.success && json.data) {
           const dbStatus = json.data.punchOutRequestStatus;
@@ -307,7 +307,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     // Send to database for Admin visibility
     try {
       const employeeId = session?.employeeId || "EMP-004";
-      await fetch("/api/attendance/breaks", {
+      await fetch("/mdz-os/api/attendance/breaks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -339,7 +339,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     // Send to database for Admin visibility
     try {
       const employeeId = session?.employeeId || "EMP-004";
-      await fetch("/api/attendance/breaks", {
+      await fetch("/mdz-os/api/attendance/breaks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

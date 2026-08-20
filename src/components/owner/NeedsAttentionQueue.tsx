@@ -16,7 +16,7 @@ export function NeedsAttentionQueue() {
 
   const fetchExceptions = async () => {
     try {
-      const res = await fetch("/api/exceptions").then((r) => r.json());
+      const res = await fetch("/mdz-os/api/exceptions").then((r) => r.json());
       if (res.success && Array.isArray(res.data)) {
         setExceptions(res.data);
       }

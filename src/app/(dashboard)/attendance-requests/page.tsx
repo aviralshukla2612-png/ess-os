@@ -17,7 +17,7 @@ export default function AttendanceRequestsPage() {
   const fetchPendingPunchOuts = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/attendance/pending-punch-outs");
+      const res = await fetch("/mdz-os/api/attendance/pending-punch-outs");
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setPendingPunchOuts(json.data);
@@ -32,7 +32,7 @@ export default function AttendanceRequestsPage() {
 
   const handleApproveReject = async (attendanceId: string, action: "APPROVE" | "REJECT") => {
     try {
-      const res = await fetch("/api/attendance/admin/approve-punch-out", {
+      const res = await fetch("/mdz-os/api/attendance/admin/approve-punch-out", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ attendanceId, action, adminId: "EMP-001" }), // Mock admin id
