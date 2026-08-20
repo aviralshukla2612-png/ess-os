@@ -184,7 +184,7 @@ export default function AttendanceWorkClockPage() {
   };
 
   // Admin/Owner View for Attendance Page
-  if (role === "OWNER") {
+  if ((role as string) === "OWNER") {
     return (
       <div className="space-y-8 pb-12">
         <PageHeader
@@ -207,7 +207,7 @@ export default function AttendanceWorkClockPage() {
         badge="WORK MODULE"
         icon={<Clock className="w-7 h-7 text-indigo-600 dark:text-indigo-400 animate-pulse" />}
         actions={
-          role === "OWNER" ? (
+          (role as string) === "OWNER" ? (
             <div className="flex items-center gap-3">
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Inspect Staff:</span>
               <select
