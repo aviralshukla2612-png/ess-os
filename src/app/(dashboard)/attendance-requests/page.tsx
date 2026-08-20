@@ -10,6 +10,7 @@ export default function AttendanceRequestsPage() {
   const [pendingPunchOuts, setPendingPunchOuts] = useState<any[]>([]);
   const [resolvedPunchOuts, setResolvedPunchOuts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchPendingPunchOuts();
@@ -33,6 +34,7 @@ export default function AttendanceRequestsPage() {
   };
 
   const handleApproveReject = async (attendanceId: string, action: "APPROVE" | "REJECT") => {
+    setProcessingIds(prev => new Set(prev).add(attendanceId));
     try {
       const res = await fetch("/mdz-os/api/attendance/admin/approve-punch-out", {
         method: "POST",
@@ -110,18 +112,26 @@ export default function AttendanceRequestsPage() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => handleApproveReject(p.id, "APPROVE")}
-                    className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm"
-                  >
-                    <CheckCircle className="w-3.5 h-3.5" /> Approve
-                  </button>
-                  <button
-                    onClick={() => handleApproveReject(p.id, "REJECT")}
-                    className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm"
-                  >
-                    <XCircle className="w-3.5 h-3.5" /> Reject
-                  </button>
+                  {processingIds.has(p.id) ? (
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5 px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                      <CheckCircle className="w-4 h-4 text-emerald-500 dark:text-emerald-400" /> Issue Addressed
+                    </span>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handleApproveReject(p.id, "APPROVE")}
+                        className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" /> Approve
+                      </button>
+                      <button
+                        onClick={() => handleApproveReject(p.id, "REJECT")}
+                        className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-sm"
+                      >
+                        <XCircle className="w-3.5 h-3.5" /> Reject
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
