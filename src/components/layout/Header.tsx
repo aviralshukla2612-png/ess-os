@@ -157,9 +157,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
         )}
 
         <Link href="/owner" className="flex items-center gap-3 select-none group">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white font-black text-sm flex items-center justify-center font-mono shadow-lg shadow-indigo-600/25 tracking-tighter group-hover:scale-105 transition-all">
-            M
-          </div>
+          <img src="/mdz-os/mdz-logo.jpg" alt="MDZ Logo" className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-contain bg-white dark:bg-white shadow-lg shadow-indigo-600/25 group-hover:scale-105 transition-all" />
           <span className="font-extrabold text-base sm:text-lg tracking-wider text-slate-900 dark:text-slate-100 uppercase font-sans flex items-center gap-1.5">
             <span className="md:hidden">MDZ</span>
             <span className="hidden md:inline font-bold">MDZ <span className="bg-gradient-to-r from-indigo-600 to-cyan-500 dark:from-indigo-400 dark:to-cyan-400 bg-clip-text text-transparent">OS</span></span>

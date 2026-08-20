@@ -52,9 +52,7 @@ export default function LoginPage() {
       {/* Header theme toggle */}
       <div className="flex items-center justify-between max-w-md mx-auto w-full pt-2">
         <div className="flex items-center gap-2 font-bold text-base text-slate-900 dark:text-slate-100">
-          <div className="w-7 h-7 rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-950 font-black text-sm flex items-center justify-center font-mono shadow-xs">
-            E
-          </div>
+          <img src="/mdz-os/mdz-logo.jpg" alt="MDZ Logo" className="w-8 h-8 rounded-lg object-contain bg-white dark:bg-white shadow-xs" />
           <span>
             MDZ <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">OS</span>
           </span>
