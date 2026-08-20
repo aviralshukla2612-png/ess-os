@@ -16,7 +16,7 @@ Here is your MDZ OS Executive Morning Brief for today:
 2. 🚀 **17 Active Projects** (12 on track, 3 at risk, 2 delayed).
 3. 🔴 **Project ABC is 2 days delayed**: Backend testing is waiting on Razorpay production credentials from Rajesh Mehta (Client).
 4. 💰 **₹85,000 Overdue**: Invoice INV-2026-002 for ABC Retailers is overdue by 3 days.
-5. 📞 **7 Sales Follow-ups** scheduled today by Karan Verma.
+5. 📞 **7 Sales Follow-ups** scheduled today by Karan Verma.\`;
 
     } else if (lower.includes("delay") || lower.includes("abc") || lower.includes("risk")) {
       responseText = `Analysing delay factors for **Project ABC (ABC E-Commerce Storefront & Mobile API)**:
