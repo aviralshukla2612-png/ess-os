@@ -44,7 +44,7 @@ export function CommandMetrics() {
       }
       if (attRes?.success && Array.isArray(attRes.data)) {
         const total = attRes.data.length;
-        const present = attRes.data.filter((e: any) => e.punchedIn).length;
+        const present = attRes.data.filter((e: any) => e.status !== "OFFLINE").length;
         setAttendanceStats({ present, total });
       }
     } catch (e) {
