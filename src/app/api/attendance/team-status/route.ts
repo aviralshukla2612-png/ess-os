@@ -58,7 +58,7 @@ export async function GET() {
           duration = `${mins}m`;
         } else if (activeWork) {
           status = "WORKING";
-          if (activeWork.project) project = activeWork.project.title;
+          if (activeWork.project) project = activeWork.project.name;
           if (activeWork.task) task = `Task: ${activeWork.task.title}`;
           const startMs = new Date(activeWork.startedAt).getTime();
           const nowMs = Date.now();
@@ -81,7 +81,7 @@ export async function GET() {
           duration,
           project,
           task,
-          avatar: emp.user.image || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+          avatar: emp.user.avatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
           statusColor,
           helpWaiting: false, // can be linked to a real flag in future
         };

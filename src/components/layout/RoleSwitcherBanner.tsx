@@ -9,15 +9,16 @@ export interface DemoUser {
   role: RoleContext;
   designation: string;
   icon: string | null;
+  employeeId?: string;
 }
 
 const DEMO_USERS: DemoUser[] = [
-  { email: "owner@mdzcompany.com", name: "Rahul MDZ", role: "OWNER", designation: "Founder & CEO (Owner Command Center)", icon: "👑" },
-  { email: "karan@mdzcompany.com", name: "Karan Verma", role: "SALES", designation: "Head of Sales (CRM Pipeline)", icon: "💼" },
-  { email: "meet.lead@mdzcompany.com", name: "Meet Shah", role: "EMPLOYEE", designation: "Tech Lead (TM for Project ABC)", icon: "🚀" },
-  { email: "dev.patel@mdzcompany.com", name: "Dev Patel", role: "EMPLOYEE", designation: "Full-Stack Dev (Member for Project ABC)", icon: "💻" },
-  { email: "priya.ux@mdzcompany.com", name: "Priya Desai", role: "EMPLOYEE", designation: "UI/UX Lead", icon: "🎨" },
-  { email: "rajesh@abcretailers.com", name: "Rajesh Mehta", role: "CLIENT", designation: "Client CEO (Isolated Safe Portal)", icon: "🔒" },
+  { email: "owner@mdzcompany.com", name: "Rahul MDZ", role: "OWNER", designation: "Founder & CEO (Owner Command Center)", icon: "👑", employeeId: "EMP-001" },
+  { email: "karan@mdzcompany.com", name: "Karan Verma", role: "SALES", designation: "Head of Sales (CRM Pipeline)", icon: "💼", employeeId: "EMP-002" },
+  { email: "meet.lead@mdzcompany.com", name: "Meet Shah", role: "EMPLOYEE", designation: "Tech Lead (TM for Project ABC)", icon: "🚀", employeeId: "EMP-003" },
+  { email: "dev.patel@mdzcompany.com", name: "Dev Patel", role: "EMPLOYEE", designation: "Full-Stack Dev (Member for Project ABC)", icon: "💻", employeeId: "EMP-004" },
+  { email: "priya.ux@mdzcompany.com", name: "Priya Desai", role: "EMPLOYEE", designation: "UI/UX Lead", icon: "🎨", employeeId: "EMP-005" },
+  { email: "rajesh@abcretailers.com", name: "Rajesh Mehta", role: "CLIENT", designation: "Client CEO (Isolated Safe Portal)", icon: "🔒", employeeId: "CLI-001" },
 ];
 
 interface Props {

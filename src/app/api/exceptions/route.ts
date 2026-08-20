@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const exceptions = [];
+    const exceptions: any[] = [];
 
     // 1. Overdue Invoices
     const now = new Date();

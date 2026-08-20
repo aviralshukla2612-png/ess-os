@@ -20,7 +20,7 @@ export async function GET() {
       punchIn: a.punchIn ? new Date(a.punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "09:00 AM",
       punchOut: a.punchOut ? new Date(a.punchOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "06:00 PM",
       status: a.status,
-      workHours: `${Math.floor(a.totalMinutes / 60)}h ${a.totalMinutes % 60}m`,
+      workHours: `${Math.floor((a.totalMinutes || 0) / 60)}h ${(a.totalMinutes || 0) % 60}m`,
     }));
 
     return NextResponse.json({ success: true, data: formatted });
