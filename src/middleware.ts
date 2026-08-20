@@ -9,7 +9,7 @@ export default withAuth(
     // Optional: Add fine-grained role checks here if needed in the future
     // For example, if a CLIENT tries to access /owner
     if (pathname.startsWith("/owner") && token?.role !== "OWNER") {
-      return NextResponse.redirect(new URL("/login", req.url));
+      return NextResponse.redirect(new URL("/mdz-os/login", req.url));
     }
   },
   {
@@ -17,7 +17,7 @@ export default withAuth(
       authorized: ({ token }) => !!token,
     },
     pages: {
-      signIn: "/login",
+      signIn: "/mdz-os/login",
     },
   }
 );

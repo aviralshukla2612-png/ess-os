@@ -63,7 +63,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: "/login",
+    signIn: "/mdz-os/login",
   },
   secret: process.env.NEXTAUTH_SECRET || "fallback_secret_for_development_only_12345",
 };
