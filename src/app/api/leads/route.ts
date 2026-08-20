@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
+import { leadSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -49,24 +52,39 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
+    
+    // Zod validation
+    const parsed = leadSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: "Validation failed", details: parsed.error.format() },
+        { status: 400 }
+      );
+    }
+    
+    const validData = parsed.data;
     const leadCount = await prisma.lead.count();
-    const salesUser = await prisma.user.findFirst({ where: { activeRole: "SALES" } }) || await prisma.user.findFirst();
 
     const newLead = await prisma.lead.create({
       data: {
         leadNumber: `LEAD-2026-00${leadCount + 1}`,
-        contactPerson: body.contactPerson || "Primary Contact",
-        companyName: body.clientName || "New Prospect",
-        mobile: body.phone || "+91 98000 00000",
-        email: body.email || "prospect@example.com",
-        interestedService: body.projectScope || "Custom Business Application",
-        estimatedBudget: body.leadValue || 250000,
-        expectedValue: body.expectedRevenue || 200000,
-        priority: body.leadPriority || "HIGH",
-        status: body.stage || "NEW",
-        remarks: body.gstNo ? `GST: ${body.gstNo}` : null,
-        createdById: salesUser!.id,
+        contactPerson: validData.contactPerson,
+        companyName: validData.clientName,
+        mobile: validData.phone,
+        email: validData.email,
+        interestedService: validData.projectScope,
+        estimatedBudget: validData.leadValue,
+        expectedValue: validData.expectedRevenue,
+        priority: validData.leadPriority,
+        status: validData.stage,
+        remarks: validData.gstNo ? `GST: ${validData.gstNo}` : null,
+        createdById: session.user.id,
       },
     });
 

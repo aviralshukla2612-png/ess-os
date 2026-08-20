@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -62,13 +63,15 @@ async function main() {
     create: { code: "CLIENT", name: "Client Portal User", description: "External safe portal access" },
   });
 
+  const defaultPasswordHash = await bcrypt.hash("password123", 10);
+
   // 2. Users
   const ownerUser = await prisma.user.upsert({
     where: { email: "owner@mdzcompany.com" },
     update: {},
     create: {
       email: "owner@mdzcompany.com",
-      passwordHash: "demo123",
+      passwordHash: defaultPasswordHash,
       name: "Rahul MDZ",
       designation: "Founder & CEO",
       department: "Management",
@@ -82,7 +85,7 @@ async function main() {
     update: {},
     create: {
       email: "karan.sales@mdzcompany.com",
-      passwordHash: "demo123",
+      passwordHash: defaultPasswordHash,
       name: "Karan Verma",
       designation: "Head of Sales",
       department: "Sales",
@@ -96,7 +99,7 @@ async function main() {
     update: {},
     create: {
       email: "meet.lead@mdzcompany.com",
-      passwordHash: "demo123",
+      passwordHash: defaultPasswordHash,
       name: "Meet Shah",
       designation: "Senior Tech Lead",
       department: "Engineering",
@@ -110,7 +113,7 @@ async function main() {
     update: {},
     create: {
       email: "dev.patel@mdzcompany.com",
-      passwordHash: "demo123",
+      passwordHash: defaultPasswordHash,
       name: "Dev Patel",
       designation: "Full-Stack Developer",
       department: "Engineering",
@@ -124,7 +127,7 @@ async function main() {
     update: {},
     create: {
       email: "priya.ux@mdzcompany.com",
-      passwordHash: "demo123",
+      passwordHash: defaultPasswordHash,
       name: "Priya Desai",
       designation: "Lead UI/UX Designer",
       department: "Design",
@@ -138,7 +141,7 @@ async function main() {
     update: {},
     create: {
       email: "jay.qa@mdzcompany.com",
-      passwordHash: "demo123",
+      passwordHash: defaultPasswordHash,
       name: "Jay Shah",
       designation: "QA Lead",
       department: "Quality Assurance",
@@ -152,7 +155,7 @@ async function main() {
     update: {},
     create: {
       email: "rajesh@abcretailers.com",
-      passwordHash: "demo123",
+      passwordHash: defaultPasswordHash,
       name: "Rajesh Mehta",
       designation: "CEO",
       department: "Client",

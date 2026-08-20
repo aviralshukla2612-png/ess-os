@@ -2,12 +2,13 @@
 
 import React, { useState } from "react";
 import { Crown, Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck, KeyRound } from "lucide-react";
-import { usePrototypeSession, MOCK_USERS } from "@/lib/prototypeSession";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 
 export default function LoginPage() {
-  const { login } = usePrototypeSession();
+  const router = useRouter();
   const [emailOrId, setEmailOrId] = useState("dev.patel@mdzcompany.com");
   const [password, setPassword] = useState("••••••••••••");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,19 +28,20 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const res = await fetch("/mdz-os/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailOrId, password }),
+      const res = await signIn("credentials", {
+        redirect: false,
+        email: emailOrId,
+        password: password,
       });
-      const data = await res.json();
-      if (data.success && data.session) {
-        login(data.session.email);
+
+      if (res?.error) {
+        setError(res.error);
       } else {
-        setError(data.error || "Invalid credentials.");
+        router.push("/owner"); // or dynamic redirect based on role if needed, but NextAuth middleware handles it
+        router.refresh();
       }
     } catch (err) {
-      login(emailOrId);
+      setError("An unexpected error occurred.");
     } finally {
       setLoading(false);
     }
@@ -149,24 +151,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Prototype Role Switcher for Fast Inspection */}
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
-              Quick Prototype Demo Access
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              {MOCK_USERS.slice(0, 4).map((user) => (
-                <button
-                  key={user.email}
-                  onClick={() => login(user.email)}
-                  className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 text-left border border-slate-200 dark:border-slate-700/80 transition-colors"
-                >
-                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{user.name}</div>
-                  <div className="text-[10px] text-indigo-600 dark:text-indigo-400 font-mono">{user.role}</div>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 

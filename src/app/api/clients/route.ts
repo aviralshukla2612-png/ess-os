@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-options";
+import { clientSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -39,26 +42,41 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
+    
+    // Zod validation
+    const parsed = clientSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: "Validation failed", details: parsed.error.format() },
+        { status: 400 }
+      );
+    }
+    
+    const validData = parsed.data;
     const clientCount = await prisma.client.count();
-    const ownerUser = await prisma.user.findFirst({ where: { activeRole: "OWNER" } }) || await prisma.user.findFirst();
 
     const newClient = await prisma.client.create({
       data: {
         clientNumber: `CLT-00${clientCount + 1}`,
-        companyName: body.companyName || "New Client Corp",
-        email: body.email || "client@company.com",
-        phone: body.phone || "+91 98000 22222",
-        totalBusiness: body.totalBilling || 350000,
-        outstandingBalance: body.totalBilling || 350000,
-        createdById: ownerUser!.id,
+        companyName: validData.companyName,
+        email: validData.email,
+        phone: validData.phone,
+        totalBusiness: validData.totalBilling,
+        outstandingBalance: validData.totalBilling,
+        createdById: session.user.id,
         contacts: {
           create: [
             {
-              name: body.contactPerson || "CEO",
+              name: validData.contactPerson,
               designation: "Primary Contact",
-              email: body.email || "client@company.com",
-              phone: body.phone || "+91 98000 22222",
+              email: validData.email,
+              phone: validData.phone,
               isPrimary: true,
             },
           ],

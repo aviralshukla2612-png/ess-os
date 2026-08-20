@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { DemoUser } from "./RoleSwitcherBanner";
 import { Search, ChevronDown, LogOut, Coffee, Play, Power, Sparkles, Clock, ShieldCheck } from "lucide-react";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { BottomSheet } from "../ui/BottomSheet";
@@ -10,7 +9,14 @@ import { useWorkClock } from "@/lib/workClockContext";
 import { useToast } from "@/components/ui/Toast";
 
 interface Props {
-  currentUser: DemoUser;
+  currentUser: {
+    name: string;
+    email: string;
+    role: string;
+    designation?: string;
+    employeeId?: string;
+    icon?: any;
+  };
   onOpenSearch: () => void;
   onOpenHelpDrawer?: () => void;
   onToggleMobileMenu?: () => void;

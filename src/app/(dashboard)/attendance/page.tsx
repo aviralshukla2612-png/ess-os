@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useWorkClock } from "@/lib/workClockContext";
-import { usePrototypeSession } from "@/lib/prototypeSession";
+import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { OwnerBreakDashboard } from "@/components/owner/OwnerBreakDashboard";
@@ -22,8 +22,8 @@ import {
 } from "lucide-react";
 
 export default function AttendanceWorkClockPage() {
-  const { session } = usePrototypeSession();
-  const role = session?.role;
+  const { data: session } = useSession();
+  const role = session?.user?.role;
   const { showToast } = useToast();
   const {
     status,
@@ -104,7 +104,7 @@ export default function AttendanceWorkClockPage() {
       const res = await fetch("/mdz-os/api/attendance/punch-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId: session?.employeeId || "EMP-004" }),
+        body: JSON.stringify({ employeeId: session?.user?.employeeId || "EMP-004" }),
       });
       const data = await res.json();
       
@@ -149,7 +149,7 @@ export default function AttendanceWorkClockPage() {
         await fetch("/mdz-os/api/attendance/workflow-action", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ employeeId: session?.employeeId || "EMP-004", actionType: "PUNCH_OUT" }),
+          body: JSON.stringify({ employeeId: session?.user?.employeeId || "EMP-004", actionType: "PUNCH_OUT" }),
         });
       } catch (e) {}
       showToast("✓ Punched Out for today. Day complete!", "success");
@@ -167,7 +167,7 @@ export default function AttendanceWorkClockPage() {
       const response = await fetch("/mdz-os/api/attendance/punch-out-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId: session?.employeeId || "EMP-004", reason: punchOutReason }),
+        body: JSON.stringify({ employeeId: session?.user?.employeeId || "EMP-004", reason: punchOutReason }),
       });
       const data = await response.json();
       

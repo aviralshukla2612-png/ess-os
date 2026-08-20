@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "@/components/ui/Toast";
-import { usePrototypeSession } from "@/lib/prototypeSession";
+import { useSession } from "next-auth/react";
 
 export type ClockState = "NOT_PUNCHED_IN" | "WORKING" | "ON_BREAK" | "DAY_COMPLETE";
 
@@ -112,7 +112,8 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
   const lastPunchOutStatusRef = React.useRef<string | null>(null);
   const statusRef = React.useRef<ClockState>("WORKING");
   const { showToast } = useToast();
-  const { session } = usePrototypeSession();
+  const { data: session } = useSession();
+  const currentEmployeeId = session?.user?.employeeId;
 
   useEffect(() => {
     statusRef.current = status;
@@ -124,7 +125,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
 
     const pollStatus = async () => {
       try {
-        const employeeId = session?.employeeId || "EMP-004";
+        const employeeId = session?.user?.employeeId || "EMP-004";
         const res = await fetch(`/mdz-os/api/attendance/status?employeeId=${employeeId}`);
         const json = await res.json();
         if (json.success && json.data) {
@@ -162,11 +163,11 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     pollStatus(); // Run immediately on mount or status change
     const intervalId = setInterval(pollStatus, 5000);
     return () => clearInterval(intervalId);
-  }, [isLoaded, status, showToast, session?.employeeId]);
+  }, [isLoaded, status, showToast, session?.user?.employeeId]);
 
   // Load from localStorage on mount (hydration safe)
   useEffect(() => {
-    const employeeId = session?.employeeId || "EMP-004";
+    const employeeId = session?.user?.employeeId || "EMP-004";
     const saved = localStorage.getItem(`mdz_work_clock_state_${employeeId}`);
     if (saved) {
       try {
@@ -191,7 +192,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
       if (status !== "WORKING") setStatus("WORKING");
     }
     setIsLoaded(true);
-  }, [session?.employeeId]);
+  }, [session?.user?.employeeId]);
 
   // Save to localStorage when state changes
   useEffect(() => {
@@ -210,7 +211,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
       usedTeaSeconds,
       timeline,
     };
-    const employeeId = session?.employeeId || "EMP-004";
+    const employeeId = session?.user?.employeeId || "EMP-004";
     localStorage.setItem(`mdz_work_clock_state_${employeeId}`, JSON.stringify(stateToSave));
   }, [
     isLoaded,
@@ -226,7 +227,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     usedLunchSeconds,
     usedTeaSeconds,
     timeline,
-    session?.employeeId,
+    session?.user?.employeeId,
   ]);
 
   // Ticker
@@ -306,7 +307,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
 
     // Send to database for Admin visibility
     try {
-      const employeeId = session?.employeeId || "EMP-004";
+      const employeeId = session?.user?.employeeId || "EMP-004";
       await fetch("/mdz-os/api/attendance/breaks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -338,7 +339,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
 
     // Send to database for Admin visibility
     try {
-      const employeeId = session?.employeeId || "EMP-004";
+      const employeeId = session?.user?.employeeId || "EMP-004";
       await fetch("/mdz-os/api/attendance/breaks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -5,13 +5,14 @@ import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { GlobalSearchModal } from "@/components/layout/GlobalSearchModal";
-import { usePrototypeSession } from "@/lib/prototypeSession";
+import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { TopLoadingBar } from "@/components/ui/TopLoadingBar";
+import { RoleContext } from "@/lib/auth";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { session, logout } = usePrototypeSession();
+  const { data: session } = useSession();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -20,7 +21,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return <main className="min-h-screen">{children}</main>;
   }
 
-  const currentRole = session?.role || "OWNER";
+  const currentRole = (session?.user?.role || "EMPLOYEE") as RoleContext;
 
   return (
     <div className="bg-slate-50 dark:bg-[#090E18] text-slate-900 dark:text-slate-100 h-screen overflow-hidden flex flex-col font-sans transition-colors relative">
@@ -28,15 +29,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <Header
         currentUser={{
-          email: session?.email || "owner@mdzcompany.com",
-          name: session?.name || "Rahul MDZ",
+          email: session?.user?.email || "",
+          name: session?.user?.name || "User",
           role: currentRole,
-          designation: session?.designation || "Founder & CEO",
+          designation: "Employee",
+          employeeId: session?.user?.employeeId || undefined,
           icon: null,
         }}
         onOpenSearch={() => setIsSearchOpen(true)}
         onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        onLogout={logout}
+        onLogout={() => signOut({ callbackUrl: "/login" })}
       />
 
       {/* Global Search Modal */}
