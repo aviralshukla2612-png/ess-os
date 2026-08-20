@@ -7,7 +7,7 @@ export async function GET(req: Request) {
   try {
     const pendingRequests = await prisma.attendance.findMany({
       where: {
-        punchOutRequestStatus: "PENDING"
+        punchOutRequestStatus: { not: null }
       },
       include: {
         employee: {
