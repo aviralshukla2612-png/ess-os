@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { Plus, PhoneCall, Calendar, ArrowRight, ArrowUpRight, CheckCircle2, User, Building, IndianRupee } from "lucide-react";
 import { ConvertLeadModal } from "./ConvertLeadModal";
 import { useToast } from "@/components/ui/Toast";
-import { usePrototypeStore } from "@/lib/prototypeStore";
 
 export interface Lead {
   id: string;
@@ -22,15 +21,10 @@ export interface Lead {
   assignedSales: string;
   nextFollowupDate: string;
   leadPriority: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
-export function LeadPipelineBoard() {
-  const { leads, convertLeadToClient, updateLeadStage } = usePrototypeStore();
-  const { showToast } = useToast();
-  const router = useRouter();
-  const [selectedLeadForConvert, setSelectedLeadForConvert] = useState<any>(null);
-
+export function LeadPipelineBoard({ leads, updateLeadStageApi, convertLeadToClientApi }: { leads: Lead[], updateLeadStageApi: any, convertLeadToClientApi: any }) {
   const STAGES = [
     { id: "NEW", title: "New Prospects" },
     { id: "CONTACTED", title: "Contacted" },
@@ -63,8 +57,7 @@ export function LeadPipelineBoard() {
                 e.currentTarget.classList.remove("border-indigo-500/50", "bg-indigo-50/50", "dark:bg-indigo-950/20");
                 const leadId = e.dataTransfer.getData("leadId");
                 if (leadId) {
-                  updateLeadStage(leadId, stage.id as any);
-                  showToast(`Moved to ${stage.title}`, "success");
+                  updateLeadStageApi(leadId, stage.id);
                 }
               }}
             >
@@ -92,7 +85,7 @@ export function LeadPipelineBoard() {
                     onClick={(e) => {
                       const target = e.target as HTMLElement;
                       if (!target.closest("button")) {
-                        router.push(`/leads/${lead.id}`);
+                        // Optional: Navigate to lead details
                       }
                     }}
                     className="p-3.5 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800/80 shadow-xs hover:border-indigo-500/50 dark:hover:border-indigo-500/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/90 hover:scale-[1.01] hover:shadow-sm transition-all duration-200 space-y-2 group cursor-grab active:cursor-grabbing"
@@ -128,8 +121,7 @@ export function LeadPipelineBoard() {
                       <button
                         onClick={(e) => {
                           e.preventDefault();
-                          const { client } = convertLeadToClient(lead.id);
-                          showToast(`🎉 Converted to Client "${client.companyName}"`, "success");
+                          convertLeadToClientApi(lead.id);
                         }}
                         className="w-full mt-2 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] flex items-center justify-center gap-1 shadow-xs transition-colors touch-target"
                       >

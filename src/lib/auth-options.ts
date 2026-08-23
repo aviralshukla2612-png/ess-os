@@ -15,7 +15,9 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        console.log("NEXTAUTH AUTHORIZE CALLBACK FOR:", credentials?.email);
         if (!credentials?.email || !credentials?.password) {
+          console.log("NEXTAUTH ERROR: Invalid credentials object");
           throw new Error("Invalid credentials");
         }
 
@@ -23,6 +25,8 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email },
           include: { employeeProfile: true },
         });
+
+        console.log("NEXTAUTH FOUND USER:", user ? user.email : "null");
 
         if (!user || !user.isActive) {
           throw new Error("User not found or inactive");
@@ -39,7 +43,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.activeRole,
-          employeeId: user.employeeProfile?.employeeIdCode || undefined,
+          employeeId: user.employeeProfile?.id || undefined,
         };
       },
     }),
@@ -63,7 +67,12 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: "/mdz-os/login",
+    signIn: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET || "fallback_secret_for_development_only_12345",
+  debug: true,
+  secret: process.env.NEXTAUTH_SECRET,
 };
+
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error("CRITICAL SECURITY ERROR: NEXTAUTH_SECRET environment variable is missing.");
+}

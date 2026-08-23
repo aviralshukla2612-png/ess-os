@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
+import { requireRole } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
+    const authRes = await requireRole(["OWNER"]);
+    if (authRes instanceof NextResponse) return authRes;
+
     const { prompt } = await req.json();
 
     const lower = (prompt || "").toLowerCase();

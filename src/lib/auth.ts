@@ -1,4 +1,7 @@
 import { prisma } from "./prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth-options";
+import { NextResponse } from "next/server";
 
 export type RoleContext = "OWNER" | "SALES" | "EMPLOYEE" | "CLIENT";
 
@@ -13,14 +16,23 @@ export interface CurrentUserSession {
   employeeId?: string;
 }
 
-export async function getCurrentUser(email?: string): Promise<CurrentUserSession | null> {
-  const targetEmail = email || "owner@mdzcompany.com"; // Default to Owner for initial setup
+/**
+ * Retrieves the currently authenticated user based on the secure server session.
+ * Does NOT accept a client-provided email or user ID.
+ */
+export async function getCurrentUser(): Promise<CurrentUserSession | null> {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.email) {
+    return null;
+  }
+
   const user = await prisma.user.findUnique({
-    where: { email: targetEmail },
+    where: { email: session.user.email },
     include: { employeeProfile: true },
   });
 
-  if (!user) return null;
+  if (!user || !user.isActive) return null;
 
   return {
     id: user.id,
@@ -32,4 +44,33 @@ export async function getCurrentUser(email?: string): Promise<CurrentUserSession
     avatarUrl: user.avatarUrl,
     employeeId: user.employeeProfile?.id,
   };
+}
+
+/**
+ * Standardized auth helper for APIs. 
+ * Returns the CurrentUserSession, or a 401 NextResponse if unauthenticated.
+ */
+export async function requireAuth(): Promise<CurrentUserSession | NextResponse> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+  return user;
+}
+
+/**
+ * Standardized role authorization helper for APIs.
+ * Returns the CurrentUserSession if they have the role, or a 401/403 NextResponse otherwise.
+ */
+export async function requireRole(allowedRoles: RoleContext[]): Promise<CurrentUserSession | NextResponse> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+  
+  if (!allowedRoles.includes(user.activeRole)) {
+    return NextResponse.json({ success: false, error: "Forbidden: Insufficient Permissions" }, { status: 403 });
+  }
+  
+  return user;
 }

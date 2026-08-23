@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePrototypeStore } from "@/lib/prototypeStore";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import {
@@ -24,10 +23,49 @@ import {
 } from "lucide-react";
 
 export default function ProjectWorkspacePage({ params }: { params: { id: string } }) {
-  const { projects, getProjectById, employees } = usePrototypeStore();
   const { showToast } = useToast();
+  const [project, setProject] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const project = getProjectById(params.id) || projects[0];
+  React.useEffect(() => {
+    fetchProject();
+  }, []);
+
+  const fetchProject = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/mdz-os/api/projects/${params.id}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        const p = json.data;
+        setProject({
+          ...p,
+          projectCode: p.projectNumber,
+          clientName: p.client?.companyName || "Unknown Client",
+          status: p.status,
+          health: p.priority === "HIGH" ? "AT_RISK" : "ON_TRACK",
+          progress: p.progressPercentage,
+          contractValue: p.contractValue,
+          paidValue: p.paymentMilestones?.reduce((s: number, m: any) => s + m.paidAmount, 0) || 0,
+          deadline: p.targetDeadline ? new Date(p.targetDeadline).toLocaleDateString() : "No Deadline",
+          teamMembers: p.memberships?.map((m: any) => ({
+            id: m.id,
+            name: m.employee?.user?.name || "Unknown",
+            role: m.roleInProject,
+            active: m.isActive,
+          })) || [],
+          tasks: p.tasks || [],
+          livingDocs: p.documents || [],
+          scopeItems: [], // Fallback since Prisma model doesn't have it natively
+          changeRequests: p.changeRequests || [],
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [activeTab, setActiveTab] = useState<
     "overview" | "workflow" | "tasks" | "team" | "docs" | "notes" | "calls" | "changes" | "payments"
@@ -63,6 +101,9 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
     { id: "changes", label: `Change Requests (${project.changeRequests.length})` },
     { id: "payments", label: "Payment Milestones" },
   ];
+
+  if (loading) return <div className="p-12 text-center text-slate-400 animate-pulse">Loading Workspace...</div>;
+  if (!project) return <div className="p-12 text-center text-rose-400">Project Not Found or Access Denied</div>;
 
   return (
     <div className="space-y-6 pb-16">
@@ -151,7 +192,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
           <div className="md:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Project Scope & Core Requirements</h3>
             <ol className="list-decimal list-inside space-y-2.5 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-              {project.scopeItems.map((item, idx) => (
+              {project.scopeItems?.map((item: any, idx: number) => (
                 <li key={idx} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
                   {item}
                 </li>
@@ -178,7 +219,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
 
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3 text-xs">
               <h3 className="font-bold text-slate-900 dark:text-slate-100">Active Team Members</h3>
-              {project.teamMembers.map((m) => (
+              {project.teamMembers?.slice(0, 3).map((m: any) => (
                 <div key={m.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                   <Link href={`/employees/${m.id}`} className="hover:underline">
                     <div className="font-bold text-slate-900 dark:text-slate-100">{m.name}</div>
@@ -237,7 +278,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
             </button>
           </div>
           <div className="space-y-3 text-xs">
-            {project.tasks.map((tsk) => (
+            {project.tasks?.map((tsk: any) => (
               <div key={tsk.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-mono font-bold text-slate-400">{tsk.id}</span>
@@ -265,7 +306,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Active Assigned Team Members</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              {project.teamMembers.map((m) => (
+              {project.teamMembers?.map((m: any) => (
                 <div key={m.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1">
                   <Link href={`/employees/${m.id}`} className="font-bold text-slate-900 dark:text-slate-100 hover:underline block text-sm">
                     {m.name}
@@ -287,7 +328,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
               Historical work performed by past team members remains permanently preserved in the project execution record even after reassignment.
             </p>
             <div className="space-y-3 text-xs">
-              {project.removalHistory.map((rem) => (
+              {project.removalHistory?.map((rem: any) => (
                 <div key={rem.id} className="p-3.5 rounded-xl bg-amber-50/60 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 space-y-1">
                   <div className="flex items-center justify-between font-bold text-slate-900 dark:text-slate-100">
                     <span>{rem.name} ({rem.role})</span>
@@ -306,7 +347,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
           <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Living Technical Documentation (v2)</h3>
           <div className="space-y-3 text-xs">
-            {project.livingDocs.map((doc) => (
+            {project.livingDocs?.map((doc: any) => (
               <div key={doc.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-2">
                 <div className="flex items-center justify-between font-bold text-slate-900 dark:text-slate-100">
                   <span className="text-sm">{doc.title}</span>

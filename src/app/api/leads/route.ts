@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth-options";
+import { requireRole } from "@/lib/auth";
 import { leadSchema } from "@/lib/validations";
 
 export async function GET() {
+  const authRes = await requireRole(["OWNER", "SALES"]);
+  if (authRes instanceof NextResponse) return authRes;
+
   try {
     const leads = await prisma.lead.findMany({
       orderBy: { createdAt: "desc" },
@@ -51,12 +53,10 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
+  const authRes = await requireRole(["OWNER", "SALES"]);
+  if (authRes instanceof NextResponse) return authRes;
 
+  try {
     const body = await req.json();
     
     // Zod validation
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
         priority: validData.leadPriority,
         status: validData.stage,
         remarks: validData.gstNo ? `GST: ${validData.gstNo}` : null,
-        createdById: session.user.id,
+        createdById: authRes.id,
       },
     });
 

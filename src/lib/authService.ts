@@ -26,8 +26,8 @@ export async function verifyUserCredentials(email: string, passwordHash: string)
     return null;
   }
 
-  // Simple demo password check (or exact match)
-  if (user.passwordHash !== passwordHash && passwordHash !== "password" && passwordHash !== "demo123") {
+  // Check password hash
+  if (user.passwordHash !== passwordHash) {
     return null;
   }
 

@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const authResult = await requireAuth();
+    if (authResult instanceof NextResponse) return authResult;
+    
+    if (authResult.activeRole !== "OWNER" && authResult.activeRole !== "SALES") {
+      return NextResponse.json({ success: false, error: "Forbidden: Insufficient Permissions" }, { status: 403 });
+    }
+
     const exceptions: any[] = [];
 
     // 1. Overdue Invoices

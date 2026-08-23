@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/auth";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
+  const authRes = await requireRole(["OWNER", "SALES"]);
+  if (authRes instanceof NextResponse) return authRes;
+
   try {
     const lead = await prisma.lead.findFirst({
       where: { OR: [{ id: params.id }, { leadNumber: params.id }] },
@@ -19,6 +23,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  const authRes = await requireRole(["OWNER", "SALES"]);
+  if (authRes instanceof NextResponse) return authRes;
+
   try {
     const body = await req.json();
     const lead = await prisma.lead.update({
@@ -38,6 +45,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 }
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  const authRes = await requireRole(["OWNER", "SALES"]);
+  if (authRes instanceof NextResponse) return authRes;
+
   try {
     await prisma.lead.delete({
       where: { id: params.id },

@@ -1,0 +1,19 @@
+{
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2021": true
+  },
+  "extends": [
+    "next/core-web-vitals",
+    "eslint:recommended"
+  ],
+  "rules": {
+    "react/no-unescaped-entities": "off",
+    "@next/next/no-img-element": "off",
+    "no-unused-vars": "off",
+    "no-undef": "off",
+    "no-empty": "warn",
+    "no-console": ["warn", { "allow": ["warn", "error", "log"] }]
+  }
+}

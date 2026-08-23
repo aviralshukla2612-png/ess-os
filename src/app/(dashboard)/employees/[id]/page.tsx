@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePrototypeStore } from "@/lib/prototypeStore";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import {
@@ -21,13 +20,131 @@ import {
 } from "lucide-react";
 
 export default function EmployeeDetailPage({ params }: { params: { id: string } }) {
-  const { employees, getEmployeeById, projects } = usePrototypeStore();
   const { showToast } = useToast();
+  const [employee, setEmployee] = useState<any>(null);
+  const [assignedProjs, setAssignedProjs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const employee = getEmployeeById(params.id) || employees[3]; // Default Dev Patel
-  const assignedProjs = projects.filter((p) => employee.assignedProjects.includes(p.id));
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDesignation, setEditDesignation] = useState("");
+  const [editDepartment, setEditDepartment] = useState("");
+  const [editSalary, setEditSalary] = useState<number>(0);
+
+  React.useEffect(() => {
+    fetchEmployee();
+  }, []);
+
+  const fetchEmployee = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/mdz-os/api/employees/${params.id}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        const e = json.data;
+        setEmployee({
+          ...e,
+          employeeId: e.employeeIdCode,
+          name: e.user.name,
+          email: e.user.email,
+          role: e.user.activeRole,
+          designation: e.user.designation,
+          department: e.user.department,
+          phone: "+91 98980 000" + (e.employeeIdCode?.length > 3 ? e.employeeIdCode.slice(-2) : "01"),
+          punchedIn: e.attendances?.some((a: any) => a.punchIn && !a.punchOut),
+          punchInTime: e.attendances?.[0]?.punchIn ? new Date(e.attendances[0].punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "09:00 AM",
+          todayWorkSeconds: (e.attendances?.[0]?.totalMinutes || 120) * 60,
+          currentProject: e.workSessions?.[0]?.project?.name || "General Workspace",
+          currentTask: e.workSessions?.[0]?.notes || "Focusing on active tasks",
+          assignedProjects: ["PRJ-2026-001"],
+          todayTimeline: e.workSessions?.map((w: any) => ({
+            id: w.id,
+            timeRange: "09:00 AM - 11:00 AM",
+            activity: w.notes || "Core development",
+            project: w.project?.name || "General",
+            duration: `${w.durationMinutes}m`,
+          })) || [],
+          attendanceRecord: e.attendances?.map((a: any) => ({
+            date: new Date(a.date).toLocaleDateString(),
+            punchIn: a.punchIn ? new Date(a.punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "09:00 AM",
+            punchOut: a.punchOut ? new Date(a.punchOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "On-Going",
+            status: a.status,
+            workHours: `${Math.floor((a.totalMinutes || 0) / 60)}h ${(a.totalMinutes || 0) % 60}m`,
+          })) || [],
+          isActive: e.user?.isActive !== false,
+          empStatus: e.status,
+        });
+        
+        setEditName(e.user?.name || "");
+        setEditDesignation(e.user?.designation || "");
+        setEditDepartment(e.user?.department || "");
+        setEditSalary(e.salaryMonthly || 0);
+
+        // Dummy project for now since we don't have an API to fetch projects assigned to employee yet
+        setAssignedProjs([]);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [activeTab, setActiveTab] = useState<"timeline" | "projects" | "attendance" | "help">("timeline");
+
+  const handleUpdateEmployee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/mdz-os/api/employees/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editName,
+          designation: editDesignation,
+          department: editDepartment,
+          salaryMonthly: editSalary,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast("Employee profile updated successfully", "success");
+        setIsEditOpen(false);
+        fetchEmployee();
+      } else {
+        showToast(json.error || "Failed to update employee", "error");
+      }
+    } catch (e) {
+      showToast("Network error", "error");
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    if (!confirm(`Are you sure you want to ${employee.isActive ? 'deactivate' : 'activate'} this employee?`)) return;
+    try {
+      const newIsActive = !employee.isActive;
+      const newStatus = newIsActive ? "ACTIVE" : "INACTIVE";
+      const res = await fetch(`/mdz-os/api/employees/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isActive: newIsActive,
+          status: newStatus,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(`Employee ${newIsActive ? 'Activated' : 'Deactivated'} successfully`, "success");
+        fetchEmployee();
+      } else {
+        showToast(json.error || "Failed to change status", "error");
+      }
+    } catch (e) {
+      showToast("Network error", "error");
+    }
+  };
+
+  if (loading) return <div className="p-12 text-center text-slate-400 animate-pulse">Loading Employee Data...</div>;
+  if (!employee) return <div className="p-12 text-center text-rose-400">Employee Not Found or Access Denied</div>;
 
   return (
     <div className="space-y-6 pb-16">
@@ -81,6 +198,18 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
                 Not Punched In Today
               </span>
             )}
+            <button
+              onClick={() => setIsEditOpen(true)}
+              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all"
+            >
+              Edit
+            </button>
+            <button
+              onClick={handleToggleStatus}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${employee.isActive ? 'bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200'}`}
+            >
+              {employee.isActive ? 'Deactivate' : 'Activate'}
+            </button>
           </div>
         </div>
 
@@ -128,7 +257,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
           </div>
 
           <div className="space-y-3 text-xs">
-            {employee.todayTimeline.map((item) => (
+            {employee.todayTimeline.map((item: any) => (
               <div
                 key={item.id}
                 className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
@@ -155,7 +284,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
       {/* Tab 2: Assigned Projects */}
       {activeTab === "projects" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {assignedProjs.map((p) => (
+          {assignedProjs?.map((p: any) => (
             <div
               key={p.id}
               className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3 flex flex-col justify-between"
@@ -185,7 +314,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
           <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Attendance & Punch Log</h3>
           <div className="space-y-2 text-xs">
-            {employee.attendanceRecord.map((rec, idx) => (
+            {employee.attendanceRecord.map((rec: any, idx: number) => (
               <div key={idx} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between font-mono">
                 <div>
                   <span className="font-bold text-slate-900 dark:text-slate-100">{rec.date}</span>
@@ -202,6 +331,62 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
           </div>
         </div>
       )}
+
+      {/* Edit Employee Bottom Sheet */}
+      <BottomSheet
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        title="Edit Employee Profile"
+        subtitle="Update employee details and department."
+      >
+        <form onSubmit={handleUpdateEmployee} className="space-y-4 text-xs">
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Full Name</label>
+            <input
+              type="text"
+              required
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
+            />
+          </div>
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Designation</label>
+            <input
+              type="text"
+              required
+              value={editDesignation}
+              onChange={(e) => setEditDesignation(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
+            />
+          </div>
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Department</label>
+            <input
+              type="text"
+              required
+              value={editDepartment}
+              onChange={(e) => setEditDepartment(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
+            />
+          </div>
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Monthly Salary</label>
+            <input
+              type="number"
+              value={editSalary}
+              onChange={(e) => setEditSalary(Number(e.target.value))}
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all mt-2"
+          >
+            Save Changes
+          </button>
+        </form>
+      </BottomSheet>
     </div>
   );
 }

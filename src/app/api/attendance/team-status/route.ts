@@ -1,45 +1,39 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/auth";
 
 export async function GET() {
+  const authRes = await requireRole(["OWNER"]);
+  if (authRes instanceof NextResponse) return authRes;
+
   try {
     const employees = await prisma.employee.findMany({
       include: {
         user: true,
+        statusEvents: {
+          where: { 
+            endedAt: null, 
+            statusType: { in: ["BREAK", "Lunch", "Tea", "LUNCH", "TEA_BREAK"] } 
+          },
+          orderBy: { startedAt: "desc" },
+          take: 1
+        },
+        workSessions: {
+          where: { endedAt: null },
+          include: { project: true, task: true },
+          orderBy: { startedAt: "desc" },
+          take: 1
+        }
       },
     });
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const teamData = await Promise.all(
-      employees.map(async (emp) => {
-        // Fetch active break (if any)
-        const activeBreak = await prisma.employeeStatusEvent.findFirst({
-          where: {
-            employeeId: emp.id,
-            endedAt: null,
-            statusType: {
-              in: ["BREAK", "Lunch", "Tea", "LUNCH", "TEA_BREAK"]
-            }
-          },
-          orderBy: { startedAt: "desc" }
-        });
-
-        // Fetch active work session (if any)
-        const activeWork = await prisma.workSession.findFirst({
-          where: {
-            employeeId: emp.id,
-            endedAt: null,
-          },
-          include: {
-            project: true,
-            task: true,
-          },
-          orderBy: { startedAt: "desc" }
-        });
+    const teamData = employees.map((emp) => {
+        // Use included relations instead of separate queries (Fixes N+1)
+        const activeBreak = emp.statusEvents?.[0] || null;
+        const activeWork = emp.workSessions?.[0] || null;
 
         // Determine status
         let status = "WORKING";
@@ -76,17 +70,16 @@ export async function GET() {
         return {
           id: emp.id,
           name: emp.user.name,
-          designation: emp.skillsJson ? "Team Member" : "Employee", // Can map from a real field if exists
+          designation: emp.skillsJson ? "Team Member" : "Employee",
           status,
           duration,
           project,
           task,
           avatar: emp.user.avatarUrl || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
           statusColor,
-          helpWaiting: false, // can be linked to a real flag in future
+          helpWaiting: false,
         };
-      })
-    );
+      });
 
     return NextResponse.json({ success: true, data: teamData });
   } catch (error) {

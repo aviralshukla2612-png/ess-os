@@ -1,15 +1,22 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(req: Request) {
+  const authRes = await requireAuth();
+  if (authRes instanceof NextResponse) return authRes;
+
+  if (!authRes.employeeId) {
+    return NextResponse.json({ success: false, error: "Forbidden: No employee profile linked" }, { status: 403 });
+  }
+
   try {
     const body = await req.json();
-    const { employeeId, action, statusType, notes } = body;
+    const { action, statusType, notes } = body;
+    const employeeId = authRes.employeeId;
 
-    if (!employeeId || !action) {
-      return NextResponse.json({ success: false, error: "Missing parameters" }, { status: 400 });
+    if (!action) {
+      return NextResponse.json({ success: false, error: "Missing action parameter" }, { status: 400 });
     }
 
     if (action === "START") {
@@ -37,11 +44,21 @@ export async function POST(req: Request) {
       });
 
       if (openEvent) {
-        const updated = await prisma.employeeStatusEvent.update({
-          where: { id: openEvent.id },
-          data: { endedAt: new Date() }
-        });
-        return NextResponse.json({ success: true, data: updated });
+        const [updated, newWorkEvent] = await prisma.$transaction([
+          prisma.employeeStatusEvent.update({
+            where: { id: openEvent.id },
+            data: { endedAt: new Date() }
+          }),
+          prisma.employeeStatusEvent.create({
+            data: {
+              employeeId,
+              statusType: "WORKING",
+              startedAt: new Date(),
+              notes: "Resumed work after break"
+            }
+          })
+        ]);
+        return NextResponse.json({ success: true, data: updated, newEvent: newWorkEvent });
       } else {
         return NextResponse.json({ success: true, message: "No open event found" });
       }

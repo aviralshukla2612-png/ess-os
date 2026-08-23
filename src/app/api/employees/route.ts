@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/auth";
+import bcrypt from "bcryptjs";
 
 export async function GET() {
+  const authRes = await requireRole(["OWNER"]);
+  if (authRes instanceof NextResponse) return authRes;
+
   try {
     const employees = await prisma.employee.findMany({
       orderBy: { createdAt: "desc" },
@@ -52,40 +57,53 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const authRes = await requireRole(["OWNER"]);
+  if (authRes instanceof NextResponse) return authRes;
+
   try {
     const body = await req.json();
+    
+    if (!body.name || !body.email || !body.password) {
+      return NextResponse.json({ success: false, error: "Missing required fields: name, email, password" }, { status: 400 });
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email: body.email } });
+    if (existingUser) {
+      return NextResponse.json({ success: false, error: "Email already exists" }, { status: 409 });
+    }
+
     const count = await prisma.employee.count();
     const code = `EMP-${Math.floor(100 + Math.random() * 900)}`;
-    const userEmail = body.email || `employee_${Date.now()}_${count}@mdzcompany.com`;
+    const hashedPassword = await bcrypt.hash(body.password, 10);
 
-    let user = await prisma.user.findUnique({ where: { email: userEmail } });
-    if (!user) {
-      user = await prisma.user.create({
+    const result = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
         data: {
-          email: userEmail,
-          passwordHash: "demo123",
-          name: body.name || "Team Member",
-          designation: body.designation || "Software Engineer",
-          department: body.department || "Engineering",
-          activeRole: body.role || "EMPLOYEE",
+          email: body.email,
+          passwordHash: hashedPassword,
+          name: body.name,
+          designation: body.designation || "Team Member",
+          department: body.department || "General",
+          activeRole: "EMPLOYEE", // FORCE ROLE TO EMPLOYEE
           avatarUrl: `https://images.unsplash.com/photo-${1500000000000 + count * 100}?w=150`,
         },
       });
-    }
 
-    let employee = await prisma.employee.findUnique({ where: { userId: user.id } });
-    if (!employee) {
-      employee = await prisma.employee.create({
+      const newEmployee = await tx.employee.create({
         data: {
-          userId: user.id,
+          userId: newUser.id,
           employeeIdCode: code,
-          salaryMonthly: body.salaryMonthly || 85000,
-          skillsJson: JSON.stringify(body.skills || ["TypeScript", "Next.js", "Node.js"]),
+          salaryMonthly: body.salaryMonthly || 0,
+          skillsJson: JSON.stringify(body.skills || []),
         },
       });
-    }
 
-    return NextResponse.json({ success: true, data: { id: employee.id, code, user } });
+      return { user: newUser, employee: newEmployee };
+    });
+
+    const { passwordHash, ...safeUser } = result.user;
+
+    return NextResponse.json({ success: true, data: { id: result.employee.id, code, user: safeUser } });
   } catch (error) {
     return NextResponse.json({ success: false, error: "Failed to create employee" }, { status: 500 });
   }

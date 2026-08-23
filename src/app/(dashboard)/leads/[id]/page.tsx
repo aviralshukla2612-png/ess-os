@@ -2,8 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { usePrototypeStore } from "@/lib/prototypeStore";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import {
@@ -25,10 +23,59 @@ import {
 } from "lucide-react";
 
 export default function LeadDetailPage({ params }: { params: { id: string } }) {
-  const { leads, getLeadById, addLeadNote, addLeadFollowup, convertLeadToClient, updateLeadStage } = usePrototypeStore();
   const { showToast } = useToast();
+  const [lead, setLead] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const lead = getLeadById(params.id) || leads[0];
+  React.useEffect(() => {
+    fetchLead();
+  }, []);
+
+  const fetchLead = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/mdz-os/api/leads/${params.id}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        const l = json.data;
+        setLead({
+          ...l,
+          leadNumber: l.leadNumber,
+          leadPriority: l.priority,
+          stage: l.status,
+          clientName: l.companyName || l.contactPerson,
+          contactPerson: l.contactPerson,
+          email: l.email || "No Email",
+          phone: l.mobile,
+          leadValue: l.expectedValue || 0,
+          projectScope: l.description || "General Inquiry",
+          timeline: l.activities?.map((a: any) => ({
+            id: a.id,
+            type: a.action,
+            text: a.detailsJson || a.action,
+            timestamp: new Date(a.createdAt).toLocaleString(),
+          })) || [],
+          scheduledFollowups: l.followups?.map((f: any) => ({
+            id: f.id,
+            date: new Date(f.scheduledAt).toLocaleString(),
+            note: f.notes || "Followup",
+            completed: f.status === "COMPLETED",
+          })) || [],
+          callLogs: [],
+          notes: l.activities?.filter((a: any) => a.action === "NOTE_ADDED").map((a: any) => ({
+            id: a.id,
+            text: a.detailsJson,
+            author: "System",
+            timestamp: new Date(a.createdAt).toLocaleString(),
+          })) || [],
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "calls" | "notes">("overview");
   const [isNoteSheetOpen, setIsNoteSheetOpen] = useState(false);
@@ -40,8 +87,13 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
   const handleAddNoteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNoteText.trim()) return;
-    addLeadNote(lead.id, newNoteText);
-    showToast("✓ Note added to Lead activity log", "success");
+    // Mock local update since no POST /notes endpoint exists in Phase 2
+    setLead((prev: any) => ({
+      ...prev,
+      notes: [...prev.notes, { id: Date.now().toString(), text: newNoteText, author: "You", timestamp: "Just now" }],
+      timeline: [{ id: Date.now().toString(), type: "NOTE_ADDED", text: `Note added: "${newNoteText}"`, timestamp: "Just now" }, ...prev.timeline],
+    }));
+    showToast("✓ Note added to Lead activity log (local)", "success");
     setNewNoteText("");
     setIsNoteSheetOpen(false);
   };
@@ -49,16 +101,53 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
   const handleAddFollowupSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!followupNote.trim()) return;
-    addLeadFollowup(lead.id, followupDate, followupNote);
-    showToast(`✓ Follow-up scheduled for ${followupDate}`, "success");
+    // Mock local update
+    setLead((prev: any) => ({
+      ...prev,
+      scheduledFollowups: [...prev.scheduledFollowups, { id: Date.now().toString(), date: followupDate, note: followupNote, completed: false }],
+      timeline: [{ id: Date.now().toString(), type: "FOLLOWUP_SCHEDULED", text: `Scheduled for ${followupDate}: ${followupNote}`, timestamp: "Just now" }, ...prev.timeline],
+    }));
+    showToast(`✓ Follow-up scheduled for ${followupDate} (local)`, "success");
     setFollowupNote("");
     setIsFollowupSheetOpen(false);
   };
 
-  const handleConvertLead = () => {
-    const { client, project } = convertLeadToClient(lead.id);
-    showToast(`🎉 Converted to Client "${client.companyName}" & Project Workspace!`, "success");
+  const handleConvertLead = async () => {
+    try {
+      const res = await fetch(`/mdz-os/api/leads/${lead.id}/convert`, { method: "POST" });
+      const json = await res.json();
+      if (json.success) {
+        showToast(`🎉 Converted to Client "${json.data.client.companyName}"`, "success");
+        fetchLead();
+      } else {
+        showToast(json.error || "Failed to convert lead", "error");
+      }
+    } catch (e) {
+      showToast("Network error converting lead", "error");
+    }
   };
+
+  const updateLeadStage = async (leadId: string, newStage: string) => {
+    setLead((prev: any) => ({ ...prev, stage: newStage }));
+    try {
+      const res = await fetch(`/mdz-os/api/leads/${leadId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: newStage }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        showToast("Failed to update lead stage", "error");
+        fetchLead();
+      }
+    } catch (e) {
+      showToast("Network error", "error");
+      fetchLead();
+    }
+  };
+
+  if (loading) return <div className="p-12 text-center text-slate-400 animate-pulse">Loading Lead...</div>;
+  if (!lead) return <div className="p-12 text-center text-rose-400">Lead Not Found</div>;
 
   return (
     <div className="space-y-6 pb-16">
@@ -245,7 +334,7 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
           <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Audit & Change History Timeline</h3>
           <div className="space-y-3 text-xs">
-            {lead.activityHistory.map((act) => (
+            {lead.timeline?.map((act: any) => (
               <div key={act.id} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
                 <div className="space-y-0.5">
@@ -271,14 +360,14 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
             </button>
           </div>
           <div className="space-y-3 text-xs">
-            {lead.callHistory.map((call) => (
+            {lead.calls?.map((call: any) => (
               <div key={call.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1">
                 <div className="flex items-center justify-between font-bold text-slate-900 dark:text-slate-100">
-                  <span>Caller: {call.caller}</span>
+                  <span>Caller: {call.callerName}</span>
                   <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">{call.outcome}</span>
                 </div>
                 <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{call.notes}</p>
-                <div className="text-[10px] font-mono text-slate-400">{call.date}</div>
+                <div className="text-[10px] font-mono text-slate-400">{call.createdAt}</div>
               </div>
             ))}
           </div>
@@ -298,11 +387,11 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
             </button>
           </div>
           <div className="space-y-3 text-xs">
-            {lead.notes.map((n) => (
+            {lead.notes?.map((n: any) => (
               <div key={n.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1">
-                <div className="font-bold text-slate-900 dark:text-slate-100">{n.author}</div>
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{n.text}</p>
-                <div className="text-[10px] font-mono text-slate-400">{n.time}</div>
+                <div className="font-bold text-slate-900 dark:text-slate-100">{n.authorName}</div>
+                <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{n.content}</p>
+                <div className="text-[10px] font-mono text-slate-400">{n.createdAt}</div>
               </div>
             ))}
           </div>

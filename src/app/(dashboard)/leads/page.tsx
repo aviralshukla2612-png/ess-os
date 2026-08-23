@@ -3,14 +3,14 @@
 import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { LeadPipelineBoard } from "@/components/sales/LeadPipelineBoard";
-import { usePrototypeStore } from "@/lib/prototypeStore";
+import { Lead } from "@/components/sales/LeadPipelineBoard";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Target, Plus, Sparkles } from "lucide-react";
 
 export default function LeadsPage() {
-  const { addLead } = usePrototypeStore();
   const { showToast } = useToast();
+  const [leads, setLeads] = useState<Lead[]>([]);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [clientName, setClientName] = useState("");
@@ -21,18 +21,90 @@ export default function LeadsPage() {
   const [gstNo, setGstNo] = useState("");
   const [projectScope, setProjectScope] = useState("");
 
+  React.useEffect(() => {
+    fetchLeads();
+  }, []);
+
+  const fetchLeads = async () => {
+    try {
+      const res = await fetch("/mdz-os/api/leads");
+      const json = await res.json();
+      if (json.success) {
+        setLeads(json.data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const updateLeadStageApi = async (leadId: string, newStage: string) => {
+    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: newStage } : l)));
+    try {
+      const res = await fetch(`/mdz-os/api/leads/${leadId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: newStage }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        showToast("Failed to update lead stage", "error");
+        fetchLeads();
+      } else {
+        showToast(`Moved lead to ${newStage}`, "success");
+      }
+    } catch (e) {
+      showToast("Network error", "error");
+      fetchLeads();
+    }
+  };
+
+  const convertLeadToClientApi = async (leadId: string) => {
+    try {
+      const res = await fetch(`/mdz-os/api/leads/${leadId}/convert`, { method: "POST" });
+      const json = await res.json();
+      if (json.success) {
+        showToast(`🎉 Converted to Client "${json.data.client.companyName}"`, "success");
+        fetchLeads();
+      } else {
+        showToast(json.error || "Failed to convert lead", "error");
+      }
+    } catch (e) {
+      showToast("Network error converting lead", "error");
+    }
+  };
+
   const handleCreateLead = (e: React.FormEvent) => {
     e.preventDefault();
-    addLead({
-      clientName,
-      contactPerson,
-      email: email || "contact@prospect.com",
-      phone: phone || "+91 00000 00000",
-      leadValue: Number(leadValue) || 250000,
-      gstNo,
-      projectScope: projectScope || "General inquiry",
-    });
-    showToast(`✓ Lead "${clientName || 'New Prospect'}" created in CRM`, "success");
+    const createApi = async () => {
+      try {
+        const res = await fetch("/mdz-os/api/leads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientName,
+            contactPerson,
+            phone: phone || "+91 00000 00000",
+            email: email || "contact@prospect.com",
+            projectScope: projectScope || "General inquiry",
+            leadValue: Number(leadValue) || 250000,
+            expectedRevenue: Number(leadValue) || 250000,
+            stage: "NEW",
+            leadPriority: "HIGH",
+          }),
+        });
+        const json = await res.json();
+        if (json.success) {
+          showToast(`✓ Lead "${clientName || 'New Prospect'}" created in CRM`, "success");
+          fetchLeads();
+        } else {
+          showToast("Failed to add lead", "error");
+        }
+      } catch (e) {
+        showToast("Network error", "error");
+      }
+    };
+    createApi();
+
     setIsAddOpen(false);
     setClientName("");
     setContactPerson("");
@@ -75,7 +147,7 @@ export default function LeadsPage() {
           </span>
         </div>
 
-        <LeadPipelineBoard />
+        <LeadPipelineBoard leads={leads} updateLeadStageApi={updateLeadStageApi} convertLeadToClientApi={convertLeadToClientApi} />
       </div>
 
       {/* Add New Lead Bottom Sheet */}

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/auth";
 
 export async function GET() {
+  const authRes = await requireRole(["OWNER"]);
+  if (authRes instanceof NextResponse) return authRes;
+
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);

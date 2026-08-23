@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  mdz-os-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mdz-os-app-test
+    volumes:
+      - ./prisma-test:/app/prisma
+    environment:
+      - NODE_ENV=production
+      - PORT=3020
+      - NEXTAUTH_URL=http://localhost:8080/mdz-os
+      - NEXTAUTH_SECRET=super_secret_mdz_os_test_key_!@#
+      - DATABASE_URL=file:./test-prod.db
+    restart: unless-stopped
+    networks:
+      - mdz-test-network
+
+  nginx-test:
+    image: nginx:alpine
+    container_name: mdz-nginx-test
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx-test.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - mdz-os-test
+    networks:
+      - mdz-test-network
+
+networks:
+  mdz-test-network:
+    driver: bridge

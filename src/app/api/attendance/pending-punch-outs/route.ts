@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/auth";
 
 export async function GET(req: Request) {
+  const authRes = await requireRole(["OWNER"]);
+  if (authRes instanceof NextResponse) return authRes;
+
   try {
     const pendingRequests = await prisma.attendance.findMany({
       where: {

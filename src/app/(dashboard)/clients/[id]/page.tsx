@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePrototypeStore } from "@/lib/prototypeStore";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import {
@@ -23,18 +22,57 @@ import {
 } from "lucide-react";
 
 export default function ClientDetailPage({ params }: { params: { id: string } }) {
-  const { clients, getClientById, projects, getProjectById } = usePrototypeStore();
   const { showToast } = useToast();
 
-  const client = getClientById(params.id) || clients[0];
-  const linkedProjects = projects.filter((p) => client.activeProjects.includes(p.id) || p.clientId === client.id);
+  const [client, setClient] = useState<any>(null);
+  const [linkedProjects, setLinkedProjects] = useState<any[]>([]);
+  const [clientNotes, setClientNotes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState<"overview" | "projects" | "invoices" | "notes">("overview");
   const [isNoteSheetOpen, setIsNoteSheetOpen] = useState(false);
   const [noteText, setNoteText] = useState("");
-  const [clientNotes, setClientNotes] = useState(client.notes || []);
 
-  const handleAddNote = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    fetchClientData();
+  }, []);
+
+  const fetchClientData = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/mdz-os/api/clients/${params.id}`);
+      const json = await res.json();
+      
+      if (json.success && json.data) {
+        const c = json.data;
+        const formattedClient = {
+          id: c.id,
+          clientCode: c.clientNumber,
+          companyName: c.companyName,
+          contactPerson: c.contacts?.[0]?.name || "Primary Contact",
+          email: c.email,
+          phone: c.phone,
+          industry: "E-Commerce & Technology", // Placeholder until added to DB
+          totalBilling: c.totalBusiness || 0,
+          paidBilling: c.totalBusiness - c.outstandingBalance,
+          pendingBilling: c.outstandingBalance || 0,
+          status: "ACTIVE",
+          portalToken: `token-${c.id}`, // Placeholder until Portal token model is joined
+          invoices: c.invoices || [],
+          notes: c.notes ? [{ id: "n1", author: "Rahul MDZ", text: c.notes, time: "Aug 1" }] : [],
+        };
+        setClient(formattedClient);
+        setLinkedProjects(c.projects || []);
+        setClientNotes(formattedClient.notes);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!noteText.trim()) return;
     setClientNotes([
@@ -45,6 +83,9 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
     setNoteText("");
     setIsNoteSheetOpen(false);
   };
+
+  if (loading) return <div className="p-12 text-center text-slate-400 animate-pulse">Loading Client Data...</div>;
+  if (!client) return <div className="p-12 text-center text-rose-400">Client Not Found</div>;
 
   return (
     <div className="space-y-6 pb-16">

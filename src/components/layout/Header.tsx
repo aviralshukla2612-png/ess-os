@@ -24,7 +24,7 @@ interface Props {
 }
 
 export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout }: Props) {
-  const { status, workSeconds, breakSeconds, breakType, formatHMS, punchIn, startBreak, resumeWork, punchOut, confirmPunchOutAnyway } = useWorkClock();
+  const { status, workSeconds, breakSeconds, breakType, formatHMS, punchIn, startBreak, resumeWork, punchOut, confirmPunchOutAnyway, markPunchOutPending } = useWorkClock();
   const { showToast } = useToast();
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -128,7 +128,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
       const data = await response.json();
       
       if (data.success) {
-        confirmPunchOutAnyway(); // local state update
+        markPunchOutPending();
         setIsPunchOutConfirmOpen(false);
         showToast("Punch out request submitted for admin approval.", "info");
       } else {

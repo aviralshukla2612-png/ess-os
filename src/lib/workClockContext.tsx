@@ -126,7 +126,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     const pollStatus = async () => {
       try {
         const employeeId = session?.user?.employeeId || "EMP-004";
-        const res = await fetch(`/mdz-os/api/attendance/status?employeeId=${employeeId}`);
+        const res = await fetch(`/mdz-os/api/attendance/status?employeeId=${employeeId}&t=${Date.now()}`, { cache: "no-store" });
         const json = await res.json();
         if (json.success && json.data) {
           const dbStatus = json.data.punchOutRequestStatus;
@@ -135,6 +135,20 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
           if (lastPunchOutStatusRef.current === "PENDING" && dbStatus === "APPROVED") {
             showToast("✓ Your early punch-out request was approved!", "success");
             setStatus("DAY_COMPLETE");
+            if (json.data.punchOut) {
+              const serverTime = new Date(json.data.punchOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+              setPunchOutTime(serverTime);
+              setTimeline((prev) => [
+                ...prev,
+                {
+                  id: `evt-${Date.now()}`,
+                  time: serverTime,
+                  type: "PUNCH_OUT",
+                  title: "Punch Out",
+                  subtitle: `Day Complete at ${serverTime}`,
+                },
+              ]);
+            }
           } else if (lastPunchOutStatusRef.current === "PENDING" && dbStatus === "REJECTED") {
             showToast("⚠️ Your punch-out request was REJECTED by admin. You must continue working.", "error");
             setStatus("WORKING");
@@ -151,6 +165,19 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
                 // Soft reset for clean slate on switch
                 setWorkSeconds(0);
                 setTimeline([]);
+              } else if (generalStatus === "DAY_COMPLETE" && json.data.punchOut && !punchOutTime) {
+                const serverTime = new Date(json.data.punchOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                setPunchOutTime(serverTime);
+                setTimeline((prev) => [
+                  ...prev,
+                  {
+                    id: `evt-${Date.now()}`,
+                    time: serverTime,
+                    type: "PUNCH_OUT",
+                    title: "Punch Out",
+                    subtitle: `Day Complete at ${serverTime}`,
+                  },
+                ]);
               }
             }
           }
@@ -382,25 +409,44 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const confirmPunchOutAnyway = () => {
-    const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    setPunchOutTime(now);
-    setStatus("DAY_COMPLETE");
+  const confirmPunchOutAnyway = async () => {
+    try {
+      const res = await fetch("/mdz-os/api/attendance/punch-out", { method: "POST" });
+      const json = await res.json();
+      
+      if (json.success) {
+        const serverPunchOutTime = new Date(json.data.punchOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        
+        setPunchOutTime(serverPunchOutTime);
+        setStatus("DAY_COMPLETE");
 
-    setTimeline((prev) => [
-      ...prev,
-      {
-        id: `evt-${Date.now()}`,
-        time: now,
-        type: "PUNCH_OUT",
-        title: "Punch Out",
-        subtitle: `Day Complete at ${now}`,
-      },
-    ]);
+        setTimeline((prev) => [
+          ...prev,
+          {
+            id: `evt-${Date.now()}`,
+            time: serverPunchOutTime,
+            type: "PUNCH_OUT",
+            title: "Punch Out",
+            subtitle: `Day Complete at ${serverPunchOutTime}`,
+          },
+        ]);
+        
+        showToast("Successfully punched out for the day.", "success");
+      } else {
+        showToast("Failed to punch out: " + json.error, "error");
+      }
+    } catch (e) {
+      console.error("Punch out error:", e);
+      showToast("Network error. Please try again.", "error");
+    }
   };
 
   const toggleGeofenceError = () => setSimulatedGeofenceError((prev) => !prev);
   const toggleDeviceError = () => setSimulatedDeviceError((prev) => !prev);
+
+  const markPunchOutPending = () => {
+    lastPunchOutStatusRef.current = "PENDING";
+  };
 
   return (
     <WorkClockContext.Provider
@@ -429,6 +475,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
         changeWork,
         punchOut,
         confirmPunchOutAnyway,
+        markPunchOutPending,
         toggleGeofenceError,
         toggleDeviceError,
         formatHMS,

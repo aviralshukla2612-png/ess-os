@@ -1,14 +1,37 @@
-"use client";
-
 import React from "react";
 import { ShieldCheck, CheckCircle2, ExternalLink, Calendar, FolderKanban } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
 
-export default function ClientPortalPage({ params }: { params: { token: string } }) {
+export default async function ClientPortalPage({ params }: { params: { token: string } }) {
+  const { token } = params;
+
+  // Verify the token exists in the ClientPortalToken model
+  const portalToken = await prisma.clientPortalToken.findUnique({
+    where: { token },
+    include: {
+      client: true,
+      project: true,
+    }
+  });
+
+  if (!portalToken) {
+    return notFound();
+  }
+
+  if (!portalToken.isActive || portalToken.expiresAt < new Date()) {
+    // In a real application, you might show a specific "Token Expired" page instead of a 404
+    return notFound();
+  }
+
+  const clientRecord = portalToken.client;
+  const activeProject = portalToken.project;
+
   const project = {
-    clientCompany: "ABC RETAILERS PVT LTD",
-    projectName: "ABC E-Commerce Storefront & Mobile API",
-    launchDate: "15 Sep 2026",
-    progress: 72,
+    clientCompany: clientRecord.companyName,
+    projectName: activeProject ? activeProject.name : "Onboarding Stage",
+    launchDate: activeProject?.targetDeadline ? new Date(activeProject.targetDeadline).toLocaleDateString() : "TBD",
+    progress: activeProject ? activeProject.progressPercentage : 0,
     milestones: [
       { name: "1. Requirements & Scope Signoff", status: "Completed", progress: 100 },
       { name: "2. UI/UX Design Approval", status: "Completed", progress: 100 },

@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -106,6 +106,9 @@ model Lead {
   assignedSalesperson   User?          @relation("AssignedSalesperson", fields: [assignedSalespersonId], references: [id])
   activities            LeadActivity[]
   followups             LeadFollowup[]
+
+  @@index([assignedSalespersonId])
+  @@index([status])
 }
 
 model LeadFollowup {
@@ -153,6 +156,8 @@ model Client {
   portalTokens       ClientPortalToken[]
   invoices           Invoice[]
   projects           Project[]
+
+  @@index([createdById])
 }
 
 model ClientContact {
@@ -213,6 +218,9 @@ model Project {
   stages               ProjectStage[]
   tasks                Task[]
   workSessions         WorkSession[]
+
+  @@index([clientId])
+  @@index([status])
 }
 
 model ProjectMembership {
@@ -291,6 +299,10 @@ model Task {
   stage          ProjectStage? @relation(fields: [stageId], references: [id])
   project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   workSessions   WorkSession[]
+
+  @@index([projectId])
+  @@index([assignedToId])
+  @@index([status])
 }
 
 model ProjectDocument {
@@ -402,6 +414,8 @@ model Attendance {
   punchOutRequestedAt   DateTime?
   punchOutApprovedById  String?
   employee              Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, date])
 }
 
 model EmployeeStatusEvent {
@@ -461,6 +475,10 @@ model Invoice {
   createdAt     DateTime @default(now())
   client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([projectId])
+  @@index([status])
 }
 
 model ClientPortalToken {

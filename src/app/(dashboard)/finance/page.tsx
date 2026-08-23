@@ -32,9 +32,9 @@ export default function FinancePage() {
       const json = await res.json();
       if (json.success && json.data) {
         setFinanceMetrics({
-          totalContractedRevenue: json.data.companyMetrics?.totalContractedRevenue || 23720000,
-          totalCollectedRevenue: json.data.companyMetrics?.totalCollectedRevenue || 2200000,
-          totalPendingCollection: json.data.companyMetrics?.totalPendingCollection || 320000,
+          totalContractedRevenue: json.data.metrics?.totalBilling || 0,
+          totalCollectedRevenue: json.data.metrics?.paidBilling || 0,
+          totalPendingCollection: (json.data.metrics?.pendingBilling || 0) + (json.data.metrics?.overdueBilling || 0),
           invoices: Array.isArray(json.data.invoices) ? json.data.invoices : [],
         });
       }

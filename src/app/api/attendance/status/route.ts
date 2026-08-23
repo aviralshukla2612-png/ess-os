@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
+  const authRes = await requireAuth();
+  if (authRes instanceof NextResponse) return authRes;
+
   try {
     const employeeIdCode = req.nextUrl.searchParams.get("employeeId");
 
@@ -11,13 +13,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing employeeId" }, { status: 400 });
     }
 
-    // Look up the real Employee UUID
-    const employee = await prisma.employee.findUnique({
-      where: { employeeIdCode }
+    // Look up the real Employee by UUID or employeeIdCode
+    const employee = await prisma.employee.findFirst({
+      where: {
+        OR: [
+          { id: employeeIdCode },
+          { employeeIdCode: employeeIdCode }
+        ]
+      }
     });
 
     if (!employee) {
       return NextResponse.json({ success: false, error: "Employee not found" }, { status: 404 });
+    }
+
+    if (authRes.activeRole !== "OWNER" && authRes.employeeId !== employee.id) {
+      return NextResponse.json({ success: false, error: "Forbidden: You cannot view another employee's status" }, { status: 403 });
     }
 
     const startOfDay = new Date();
@@ -48,6 +59,7 @@ export async function GET(req: NextRequest) {
       data: {
         status: attendance.punchOut ? "DAY_COMPLETE" : "WORKING",
         punchOutRequestStatus: attendance.punchOutRequestStatus, // PENDING, APPROVED, REJECTED, or null
+        punchOut: attendance.punchOut,
       } 
     });
 

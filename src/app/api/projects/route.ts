@@ -1,9 +1,30 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth, requireRole } from "@/lib/auth";
 
 export async function GET() {
+  const authRes = await requireAuth();
+  if (authRes instanceof NextResponse) return authRes;
+
+  if (authRes.activeRole === "CLIENT") {
+    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+  }
+
+  let whereClause = {};
+  if (authRes.activeRole === "EMPLOYEE") {
+    if (!authRes.employeeId) {
+      return NextResponse.json({ success: false, error: "Forbidden: No employee profile linked" }, { status: 403 });
+    }
+    whereClause = {
+      memberships: {
+        some: { employeeId: authRes.employeeId, isActive: true }
+      }
+    };
+  }
+
   try {
     const projects = await prisma.project.findMany({
+      where: whereClause,
       orderBy: { createdAt: "desc" },
       include: {
         client: true,
@@ -90,9 +111,11 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const authRes = await requireRole(["OWNER", "SALES"]);
+  if (authRes instanceof NextResponse) return authRes;
+
   try {
     const body = await req.json();
-    const ownerUser = await prisma.user.findFirst({ where: { activeRole: "OWNER" } }) || await prisma.user.findFirst();
     const firstClient = await prisma.client.findFirst();
 
     const uniqueCode = `PRJ-2026-${Math.floor(100 + Math.random() * 900)}`;
@@ -107,7 +130,7 @@ export async function POST(req: Request) {
         priority: body.priority || "HIGH",
         progressPercentage: body.progressPercentage || 25,
         targetDeadline: body.deadline ? new Date(body.deadline) : new Date(Date.now() + 86400000 * 45),
-        createdById: ownerUser!.id,
+        createdById: authRes.id,
       },
       include: {
         client: true,

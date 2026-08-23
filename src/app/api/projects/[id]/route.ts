@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth, requireRole } from "@/lib/auth";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
+  const authRes = await requireAuth();
+  if (authRes instanceof NextResponse) return authRes;
+
+  if (authRes.activeRole === "CLIENT") {
+    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+  }
+
   try {
     const project = await prisma.project.findFirst({
       where: { OR: [{ id: params.id }, { projectNumber: params.id }] },
@@ -20,6 +28,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 });
     }
 
+    if (authRes.activeRole === "EMPLOYEE") {
+      const isAssigned = project.memberships.some(m => m.employeeId === authRes.employeeId && m.isActive);
+      if (!isAssigned) {
+        return NextResponse.json({ success: false, error: "Forbidden: You are not assigned to this project" }, { status: 403 });
+      }
+    }
+
     return NextResponse.json({ success: true, data: project });
   } catch (error) {
     return NextResponse.json({ success: false, error: "Failed to fetch project" }, { status: 500 });
@@ -27,6 +42,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  const authRes = await requireRole(["OWNER", "SALES"]);
+  if (authRes instanceof NextResponse) return authRes;
+
   try {
     const body = await req.json();
     const project = await prisma.project.update({
@@ -47,6 +65,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 }
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  const authRes = await requireRole(["OWNER", "SALES"]);
+  if (authRes instanceof NextResponse) return authRes;
+
   try {
     await prisma.project.delete({
       where: { id: params.id },

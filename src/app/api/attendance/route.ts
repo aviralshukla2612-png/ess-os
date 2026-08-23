@@ -1,9 +1,23 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const authResult = await requireAuth();
+    if (authResult instanceof NextResponse) return authResult;
+    const user = authResult;
+
+    let whereClause = {};
+    if (user.activeRole !== "OWNER") {
+      if (!user.employeeId) {
+        return NextResponse.json({ success: false, data: [] });
+      }
+      whereClause = { employeeId: user.employeeId };
+    }
+
     const attendances = await prisma.attendance.findMany({
+      where: whereClause,
       orderBy: { date: "desc" },
       include: {
         employee: {
@@ -31,11 +45,20 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { employeeId, actionType, timestamp, notes, dateOffsetDays } = body;
+    const authResult = await requireAuth();
+    if (authResult instanceof NextResponse) return authResult;
+    const user = authResult;
 
-    const emp = await prisma.employee.findFirst({
-      where: { OR: [{ id: employeeId }, { employeeIdCode: employeeId }] },
+    if (!user.employeeId) {
+      return NextResponse.json({ success: false, error: "Not associated with an employee profile" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    // IGNORE browser employeeId! Use server-derived employeeId.
+    const { actionType, notes, dateOffsetDays } = body;
+
+    const emp = await prisma.employee.findUnique({
+      where: { id: user.employeeId },
     });
 
     if (!emp) {
@@ -45,24 +68,25 @@ export async function POST(req: Request) {
     const logDate = dateOffsetDays ? new Date(Date.now() - 86400000 * dateOffsetDays) : new Date();
 
     if (actionType === "PUNCH_IN") {
-      const att = await prisma.attendance.create({
-        data: {
-          employeeId: emp.id,
-          date: logDate,
-          punchIn: logDate,
-          status: "PRESENT",
-          totalMinutes: 480,
-        },
-      });
-
-      await prisma.employeeStatusEvent.create({
-        data: {
-          employeeId: emp.id,
-          statusType: "WORKING",
-          startedAt: logDate,
-          notes: notes || "Punched in for daily sprint tasks",
-        },
-      });
+      const [att] = await prisma.$transaction([
+        prisma.attendance.create({
+          data: {
+            employeeId: emp.id,
+            date: logDate,
+            punchIn: logDate,
+            status: "PRESENT",
+            totalMinutes: 480,
+          },
+        }),
+        prisma.employeeStatusEvent.create({
+          data: {
+            employeeId: emp.id,
+            statusType: "WORKING",
+            startedAt: logDate,
+            notes: notes || "Punched in for daily sprint tasks",
+          },
+        })
+      ]);
 
       return NextResponse.json({ success: true, data: att });
     } else if (actionType === "PUNCH_OUT") {

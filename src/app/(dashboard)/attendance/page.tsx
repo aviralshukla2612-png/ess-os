@@ -47,6 +47,7 @@ export default function AttendanceWorkClockPage() {
     changeWork,
     punchOut,
     confirmPunchOutAnyway,
+    markPunchOutPending,
     toggleGeofenceError,
     toggleDeviceError,
     formatHMS,
@@ -124,13 +125,20 @@ export default function AttendanceWorkClockPage() {
     startBreak(selectedBreakType, customBreakReason);
     setIsBreakSheetOpen(false);
     try {
-      await fetch("/mdz-os/api/attendance", {
+      const res = await fetch("/mdz-os/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId: "EMP-004", actionType: "BREAK", notes: `${selectedBreakType} break` }),
+        body: JSON.stringify({ employeeId: session?.user?.employeeId || "EMP-004", actionType: "BREAK", notes: `${selectedBreakType} break` }),
       });
-    } catch (e) {}
-    showToast(`✓ Break started: ${selectedBreakType}`, "info");
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast(data.error || "Failed to start break.", "error");
+        return;
+      }
+      showToast(`✓ Break started: ${selectedBreakType}`, "info");
+    } catch (e) {
+      showToast("Network error while starting break.", "error");
+    }
   };
 
   const handleChangeWorkSubmit = (e: React.FormEvent) => {
@@ -145,14 +153,8 @@ export default function AttendanceWorkClockPage() {
     if (res.requiresConfirmation) {
       setIsPunchOutConfirmOpen(true);
     } else {
-      try {
-        await fetch("/mdz-os/api/attendance/workflow-action", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ employeeId: session?.user?.employeeId || "EMP-004", actionType: "PUNCH_OUT" }),
-        });
-      } catch (e) {}
-      showToast("✓ Punched Out for today. Day complete!", "success");
+      // Normal punch out path (8 hours completed)
+      confirmPunchOutAnyway();
     }
   };
 
@@ -172,7 +174,7 @@ export default function AttendanceWorkClockPage() {
       const data = await response.json();
       
       if (data.success) {
-        confirmPunchOutAnyway(); // locally change state
+        markPunchOutPending();
         setIsPunchOutConfirmOpen(false);
         showToast("Punch out request submitted for admin approval.", "info");
       } else {

@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/auth";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
+  const authRes = await requireRole(["OWNER", "SALES"]);
+  if (authRes instanceof NextResponse) return authRes;
+
   try {
     // 1. Fetch lead from Prisma DB
     const lead = await prisma.lead.findFirst({
@@ -35,14 +39,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       );
     }
 
-    // Fetch active owner user ID for createdById references
-    const ownerUser =
-      (await prisma.user.findFirst({ where: { activeRole: "OWNER" } })) ||
-      (await prisma.user.findFirst());
-
-    if (!ownerUser) {
-      return NextResponse.json({ success: false, error: "System User not initialized" }, { status: 500 });
-    }
+    // Deriving identity from the session instead of querying random OWNER
+    const actorId = authRes.id;
 
     // 3. Execute Atomic Prisma Transaction
     const result = await prisma.$transaction(async (tx) => {
@@ -59,7 +57,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
           phone: lead.mobile || "+91 98000 11111",
           totalBusiness: lead.expectedValue || lead.estimatedBudget || 400000,
           outstandingBalance: lead.expectedValue || lead.estimatedBudget || 400000,
-          createdById: ownerUser.id,
+          createdById: actorId,
           contacts: {
             create: [
               {
@@ -90,7 +88,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
           status: "IN_PROGRESS",
           priority: lead.priority || "MEDIUM",
           progressPercentage: 10,
-          createdById: ownerUser.id,
+          createdById: actorId,
         },
         include: {
           client: true,
@@ -109,7 +107,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       await tx.activityEvent.create({
         data: {
           eventType: "LEAD_WON_CONVERTED",
-          actorId: ownerUser.id,
+          actorId: actorId,
           entityType: "LEAD",
           entityId: lead.id,
           clientId: newClient.id,
@@ -138,7 +136,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   } catch (error: any) {
     console.error("Lead conversion transaction failed:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to convert lead via Prisma transaction", details: error.message },
+      { success: false, error: "Failed to convert lead via Prisma transaction" },
       { status: 500 }
     );
   }

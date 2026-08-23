@@ -27,6 +27,8 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
+    console.log("SIGN IN TRIGGERED WITH EMAIL:", emailOrId, "PASSWORD:", password);
+
     try {
       const res = await signIn("credentials", {
         redirect: false,
@@ -37,8 +39,7 @@ export default function LoginPage() {
       if (res?.error) {
         setError(res.error);
       } else {
-        router.push("/owner"); // or dynamic redirect based on role if needed, but NextAuth middleware handles it
-        router.refresh();
+        window.location.href = "/mdz-os";
       }
     } catch (err) {
       setError("An unexpected error occurred.");

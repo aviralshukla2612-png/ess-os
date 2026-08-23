@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { usePrototypeStore } from "@/lib/prototypeStore";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import {
@@ -12,21 +11,63 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
-
 export default function EmployeesPage() {
-  const { employees } = usePrototypeStore();
   const { showToast } = useToast();
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [empName, setEmpName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [designation, setDesignation] = useState("");
 
-  const handleAddEmployee = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/mdz-os/api/employees");
+      const json = await res.json();
+      if (json.success) {
+        setEmployees(json.data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
-    showToast(`✓ Employee profile for "${empName || 'New Employee'}" created`, "success");
-    setIsAddOpen(false);
-    setEmpName("");
-    setDesignation("");
+    try {
+      const res = await fetch("/mdz-os/api/employees", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: empName, email, password, designation }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(`✓ Employee profile for "${empName || 'New Employee'}" created`, "success");
+        fetchEmployees();
+        setIsAddOpen(false);
+        setEmpName("");
+        setEmail("");
+        setPassword("");
+        setDesignation("");
+      } else {
+        if (res.status === 409) {
+          showToast("Email already exists in the system", "error");
+        } else {
+          showToast(json.error || "Failed to create employee", "error");
+        }
+      }
+    } catch (e) {
+      showToast("Network error", "error");
+    }
   };
 
   return (
@@ -46,10 +87,12 @@ export default function EmployeesPage() {
           </button>
         }
       />
-
       {/* Employees Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {employees.map((emp) => (
+      {loading ? (
+        <div className="p-12 text-center text-slate-400 text-sm animate-pulse">Loading employee directory...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {employees.map((emp) => (
           <div
             key={emp.id}
             className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6 shadow-xs dark:shadow-2xl hover:border-indigo-500/50 hover:-translate-y-1 transition-all duration-200 space-y-4 flex flex-col justify-between group"
@@ -111,8 +154,9 @@ export default function EmployeesPage() {
               </Link>
             </div>
           </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Add Employee Bottom Sheet */}
       <BottomSheet
@@ -130,6 +174,28 @@ export default function EmployeesPage() {
               value={empName}
               onChange={(e) => setEmpName(e.target.value)}
               placeholder="e.g. Ankit Sharma"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
+            />
+          </div>
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Email Address</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="employee@mdzcompany.com"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
+            />
+          </div>
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Temporary Password</label>
+            <input
+              type="text"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Secure temporary password"
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
             />
           </div>

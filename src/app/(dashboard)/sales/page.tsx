@@ -7,24 +7,99 @@ import { TrendingUp, PhoneCall, Plus, Target, Sparkles, Flame, CheckCircle2 } fr
 import Link from "next/link";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { usePrototypeStore } from "@/lib/prototypeStore";
+import { Lead } from "@/components/sales/LeadPipelineBoard";
 
 export default function SalesDashboardPage() {
-  const { leads, addLead } = usePrototypeStore();
   const { showToast } = useToast();
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [isAddLeadOpen, setIsAddLeadOpen] = useState(false);
   const [companyName, setCompanyName] = useState("");
   const [estValue, setEstValue] = useState("");
 
+  React.useEffect(() => {
+    fetchLeads();
+  }, []);
+
+  const fetchLeads = async () => {
+    try {
+      const res = await fetch("/mdz-os/api/leads");
+      const json = await res.json();
+      if (json.success) {
+        setLeads(json.data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const updateLeadStageApi = async (leadId: string, newStage: string) => {
+    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: newStage } : l)));
+    try {
+      const res = await fetch(`/mdz-os/api/leads/${leadId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: newStage }),
+      });
+      const json = await res.json();
+      if (!json.success) {
+        showToast("Failed to update lead stage", "error");
+        fetchLeads();
+      } else {
+        showToast(`Moved lead to ${newStage}`, "success");
+      }
+    } catch (e) {
+      showToast("Network error", "error");
+      fetchLeads();
+    }
+  };
+
+  const convertLeadToClientApi = async (leadId: string) => {
+    try {
+      const res = await fetch(`/mdz-os/api/leads/${leadId}/convert`, { method: "POST" });
+      const json = await res.json();
+      if (json.success) {
+        showToast(`🎉 Converted to Client "${json.data.client.companyName}"`, "success");
+        fetchLeads();
+      } else {
+        showToast(json.error || "Failed to convert lead", "error");
+      }
+    } catch (e) {
+      showToast("Network error converting lead", "error");
+    }
+  };
+
   const handleCreateLead = (e: React.FormEvent) => {
     e.preventDefault();
-    addLead({
-      clientName: companyName,
-      leadValue: Number(estValue) || 250000,
-      stage: "NEW",
-      leadPriority: "HIGH",
-    });
-    showToast(`✓ Lead "${companyName || "New Lead"}" added to Pipeline`, "success");
+    const createApi = async () => {
+      try {
+        const res = await fetch("/mdz-os/api/leads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientName: companyName,
+            contactPerson: "Unknown",
+            phone: "0000000000",
+            email: "unknown@example.com",
+            projectScope: "Standard Deployment",
+            leadValue: Number(estValue) || 250000,
+            expectedRevenue: Number(estValue) || 250000,
+            stage: "NEW",
+            leadPriority: "HIGH",
+          }),
+        });
+        const json = await res.json();
+        if (json.success) {
+          showToast(`✓ Lead "${companyName || "New Lead"}" added to Pipeline`, "success");
+          fetchLeads();
+        } else {
+          showToast("Failed to add lead", "error");
+        }
+      } catch (e) {
+        showToast("Network error", "error");
+      }
+    };
+    createApi();
+
     setIsAddLeadOpen(false);
     setCompanyName("");
     setEstValue("");
@@ -171,7 +246,7 @@ export default function SalesDashboardPage() {
           </span>
         </div>
 
-        <LeadPipelineBoard />
+        <LeadPipelineBoard leads={leads} updateLeadStageApi={updateLeadStageApi} convertLeadToClientApi={convertLeadToClientApi} />
       </div>
     </div>
   );
