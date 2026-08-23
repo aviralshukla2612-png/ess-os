@@ -20,12 +20,3 @@ services:
       - DATABASE_URL=file:/app/prisma/data/production.db
     restart: unless-stopped
 
-  nginx:
-    image: nginx:alpine
-    container_name: mdz-os-nginx
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx-test.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - mdz-os
