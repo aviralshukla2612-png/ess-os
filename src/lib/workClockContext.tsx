@@ -42,6 +42,7 @@ interface WorkClockContextType {
   changeWork: (project: string, task: string) => void;
   punchOut: () => { success: boolean; requiresConfirmation: boolean; remainingSeconds: number };
   confirmPunchOutAnyway: () => void;
+  markPunchOutPending: () => void;
   toggleGeofenceError: () => void;
   toggleDeviceError: () => void;
   formatHMS: (sec: number) => string;
