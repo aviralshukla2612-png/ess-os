@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { LeadPipelineBoard } from "@/components/sales/LeadPipelineBoard";
-import { TrendingUp, PhoneCall, Plus, Target, Sparkles, Flame, CheckCircle2 } from "lucide-react";
+import { TrendingUp, PhoneCall, Plus, Target, Sparkles, Flame, CheckCircle2, FileSpreadsheet } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
