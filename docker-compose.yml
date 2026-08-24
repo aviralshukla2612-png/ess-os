@@ -15,7 +15,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3020
-      - NEXTAUTH_URL=http://localhost/mdz-crm
+      - NEXTAUTH_URL=http://200.97.161.91/mdz-crm
       - NEXTAUTH_SECRET=super_secret_mdz_os_key_2026_!@#
       - DATABASE_URL=file:/app/prisma/data/production.db
     restart: unless-stopped
