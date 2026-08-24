@@ -145,7 +145,7 @@ export default function SettingsPage() {
     setEmailLoading(true);
 
     try {
-      const res = await fetch("/api/auth/update-credentials", {
+      const res = await fetch("/mdz-crm/api/auth/update-credentials", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -193,7 +193,7 @@ export default function SettingsPage() {
     setPwLoading(true);
 
     try {
-      const res = await fetch("/api/auth/update-credentials", {
+      const res = await fetch("/mdz-crm/api/auth/update-credentials", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
