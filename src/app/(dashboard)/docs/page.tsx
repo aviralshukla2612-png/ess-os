@@ -8,28 +8,7 @@ import { useToast } from "@/components/ui/Toast";
 export default function DocsPage() {
   const { showToast } = useToast();
 
-  const docs = [
-    {
-      id: "DOC-001",
-      project: "ABC E-Commerce Storefront & Mobile API",
-      title: "System Architecture & Payment Gateway Specs",
-      category: "ARCHITECTURE",
-      version: "v2",
-      updatedBy: "Meet Shah (Tech Lead)",
-      updatedAt: "28 Jul 2026",
-      summary: "Razorpay HMAC webhook configuration details and local testing signatures.",
-    },
-    {
-      id: "DOC-002",
-      project: "Apex SaaS Cloud Inventory System",
-      title: "Multi-Tenant Database Isolation Strategy",
-      category: "DATABASE",
-      version: "v1",
-      updatedBy: "Dev Patel (Full-Stack Dev)",
-      updatedAt: "20 Jul 2026",
-      summary: "Comparison of Row-level tenant ID vs Schema-per-tenant isolation for cloud scaling.",
-    },
-  ];
+  const docs: any[] = [];
 
   return (
     <div className="space-y-8 pb-16">

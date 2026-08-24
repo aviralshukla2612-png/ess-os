@@ -9,8 +9,8 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [emailOrId, setEmailOrId] = useState("dev.patel@mdzcompany.com");
-  const [password, setPassword] = useState("••••••••••••");
+  const [emailOrId, setEmailOrId] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
