@@ -38,7 +38,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }}
         onOpenSearch={() => setIsSearchOpen(true)}
         onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        onLogout={() => signOut({ callbackUrl: "/mdz-crm/login" })}
+        onLogout={() => signOut({ callbackUrl: "/login" })}
       />
 
       {/* Global Search Modal */}
