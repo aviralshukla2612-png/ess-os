@@ -390,7 +390,8 @@ export default function SettingsPage() {
       </div>
 
       {/* ── Company & Playbooks ─────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {session?.user?.role === "OWNER" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Company Identity */}
         <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6 md:p-8 shadow-xl dark:shadow-2xl space-y-6">
           <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 pb-4">
@@ -481,7 +482,8 @@ export default function SettingsPage() {
             ))}
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

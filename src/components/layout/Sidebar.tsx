@@ -64,6 +64,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           { title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
           { title: "Follow-ups Today", href: "/sales/followups", icon: <PhoneCall className="w-4 h-4" /> },
           { title: "Clients Directory", href: "/clients", icon: <Users className="w-4 h-4" /> },
+          { title: "Settings", href: "/settings", icon: <Settings className="w-4 h-4" /> },
         ];
 
       case "EMPLOYEE":
@@ -71,8 +72,8 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           { title: "My Desk", href: "/employee", icon: <LayoutDashboard className="w-4 h-4" /> },
           { title: "My Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" /> },
           { title: "My Work Sessions", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
-
           { title: "Documentation", href: "/docs", icon: <BookOpen className="w-4 h-4" /> },
+          { title: "Settings", href: "/settings", icon: <Settings className="w-4 h-4" /> },
         ];
 
       case "CLIENT":

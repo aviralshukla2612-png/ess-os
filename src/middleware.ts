@@ -24,7 +24,7 @@ export async function middleware(req: any) {
   }
 
   // OWNER only routes
-  const ownerOnlyRoutes = ["/owner", "/finance", "/audit", "/attendance-requests", "/employees", "/settings"];
+  const ownerOnlyRoutes = ["/owner", "/finance", "/audit", "/attendance-requests", "/employees"];
   if (ownerOnlyRoutes.some(r => pathname.startsWith(r)) && token?.role !== "OWNER") {
     return NextResponse.redirect(new URL("/mdz-crm/login", req.url));
   }
