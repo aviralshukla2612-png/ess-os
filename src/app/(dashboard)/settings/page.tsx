@@ -161,7 +161,7 @@ export default function SettingsPage() {
         showToast("✅ Email updated! Please log in again.", "success");
         setEmailForm({ currentPassword: "", newEmail: "" });
         // Sign out so user re-authenticates with new email
-        setTimeout(() => signOut({ callbackUrl: "/login" }), 2500);
+        setTimeout(() => signOut({ callbackUrl: "/mdz-crm/login" }), 2500);
       } else {
         setEmailStatus({ type: "error", msg: data.error || "Failed to update email." });
       }

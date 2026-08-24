@@ -20,19 +20,19 @@ export async function middleware(req: any) {
   console.log("MIDDLEWARE TOKEN ROLE:", token?.role, "FOR PATH:", pathname);
 
   if (!token) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/mdz-crm/login", req.url));
   }
 
   // OWNER only routes
   const ownerOnlyRoutes = ["/owner", "/finance", "/audit", "/attendance-requests", "/employees", "/settings"];
   if (ownerOnlyRoutes.some(r => pathname.startsWith(r)) && token?.role !== "OWNER") {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/mdz-crm/login", req.url));
   }
 
   // SALES or OWNER routes
   const salesRoutes = ["/leads", "/clients", "/sales", "/quotes"];
   if (salesRoutes.some(r => pathname.startsWith(r)) && token?.role !== "OWNER" && token?.role !== "SALES") {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/mdz-crm/login", req.url));
   }
 
   return NextResponse.next();
