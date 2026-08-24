@@ -21,6 +21,7 @@ export default function EmployeesPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [designation, setDesignation] = useState("");
+  const [role, setRole] = useState("EMPLOYEE");
 
   React.useEffect(() => {
     fetchEmployees();
@@ -47,7 +48,7 @@ export default function EmployeesPage() {
       const res = await fetch("/mdz-os/api/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: empName, email, password, designation }),
+        body: JSON.stringify({ name: empName, email, password, designation, role }),
       });
       const json = await res.json();
       if (json.success) {
@@ -58,6 +59,7 @@ export default function EmployeesPage() {
         setEmail("");
         setPassword("");
         setDesignation("");
+        setRole("EMPLOYEE");
       } else {
         if (res.status === 409) {
           showToast("Email already exists in the system", "error");
@@ -209,6 +211,17 @@ export default function EmployeesPage() {
               placeholder="Backend Developer"
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
             />
+          </div>
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">System Role</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all font-semibold"
+            >
+              <option value="EMPLOYEE">Standard Employee</option>
+              <option value="SALES">Sales Representative</option>
+            </select>
           </div>
           <button
             type="submit"

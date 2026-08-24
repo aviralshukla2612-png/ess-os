@@ -84,7 +84,7 @@ export async function POST(req: Request) {
           name: body.name,
           designation: body.designation || "Team Member",
           department: body.department || "General",
-          activeRole: "EMPLOYEE", // FORCE ROLE TO EMPLOYEE
+          activeRole: body.role === "SALES" ? "SALES" : "EMPLOYEE",
           avatarUrl: `https://images.unsplash.com/photo-${1500000000000 + count * 100}?w=150`,
         },
       });
