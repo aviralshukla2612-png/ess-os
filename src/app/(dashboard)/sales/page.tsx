@@ -13,8 +13,13 @@ export default function SalesDashboardPage() {
   const { showToast } = useToast();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isAddLeadOpen, setIsAddLeadOpen] = useState(false);
-  const [companyName, setCompanyName] = useState("");
-  const [estValue, setEstValue] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [leadValue, setLeadValue] = useState("");
+  const [gstNo, setGstNo] = useState("");
+  const [projectScope, setProjectScope] = useState("");
 
   React.useEffect(() => {
     fetchLeads();
@@ -76,20 +81,20 @@ export default function SalesDashboardPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            clientName: companyName,
-            contactPerson: "Unknown",
-            phone: "0000000000",
-            email: "unknown@example.com",
-            projectScope: "Standard Deployment",
-            leadValue: Number(estValue) || 250000,
-            expectedRevenue: Number(estValue) || 250000,
+            clientName: clientName,
+            contactPerson: contactPerson,
+            phone: phone || "+91 00000 00000",
+            email: email || "contact@prospect.com",
+            projectScope: projectScope || "General inquiry",
+            leadValue: Number(leadValue) || 250000,
+            expectedRevenue: Number(leadValue) || 250000,
             stage: "NEW",
             leadPriority: "HIGH",
           }),
         });
         const json = await res.json();
         if (json.success) {
-          showToast(`✓ Lead "${companyName || "New Lead"}" added to Pipeline`, "success");
+          showToast(`✓ Lead "${clientName || "New Lead"}" added to Pipeline`, "success");
           fetchLeads();
         } else {
           showToast("Failed to add lead", "error");
@@ -101,8 +106,13 @@ export default function SalesDashboardPage() {
     createApi();
 
     setIsAddLeadOpen(false);
-    setCompanyName("");
-    setEstValue("");
+    setClientName("");
+    setContactPerson("");
+    setEmail("");
+    setPhone("");
+    setLeadValue("");
+    setGstNo("");
+    setProjectScope("");
   };
 
   // Dynamic calculations
@@ -154,32 +164,86 @@ export default function SalesDashboardPage() {
       >
         <form onSubmit={handleCreateLead} className="space-y-4 text-xs">
           <div>
-            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Company / Client Name</label>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Company / Prospect Name</label>
             <input
               type="text"
               required
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
               placeholder="e.g. Acme Tech Corp"
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
             />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Contact Person</label>
+              <input
+                type="text"
+                required
+                value={contactPerson}
+                onChange={(e) => setContactPerson(e.target.value)}
+                placeholder="Rajesh Shah"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none transition-all"
+              />
+            </div>
+            <div>
+              <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="rajesh@acme.com"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none transition-all"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Phone Number</label>
+              <input
+                type="text"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+91 98765 43210"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none transition-all"
+              />
+            </div>
+            <div>
+              <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">GST Number (Optional)</label>
+              <input
+                type="text"
+                value={gstNo}
+                onChange={(e) => setGstNo(e.target.value)}
+                placeholder="27AADCB2230M1Z2"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none transition-all"
+              />
+            </div>
+          </div>
           <div>
-            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Estimated Contract Value (₹)</label>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Project Details / Scope</label>
+            <textarea
+              value={projectScope}
+              onChange={(e) => setProjectScope(e.target.value)}
+              placeholder="e.g. E-Commerce website development..."
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none transition-all resize-none h-20"
+            />
+          </div>
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Estimated Deal Value (₹)</label>
             <input
               type="number"
               required
-              value={estValue}
-              onChange={(e) => setEstValue(e.target.value)}
+              value={leadValue}
+              onChange={(e) => setLeadValue(e.target.value)}
               placeholder="350000"
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none transition-all"
             />
           </div>
           <button
             type="submit"
             className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all mt-2"
           >
-            Save Prospect Lead
+            Create Prospect Lead
           </button>
         </form>
       </BottomSheet>
