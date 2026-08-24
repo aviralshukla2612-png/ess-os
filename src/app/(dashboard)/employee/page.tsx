@@ -18,35 +18,9 @@ import {
 } from "lucide-react";
 
 export default function EmployeeDeskPage() {
-  const [tasks, setTasks] = useState([
-    {
-      id: "TSK-001",
-      title: "Razorpay HMAC Webhook Signature Verification",
-      project: "ABC E-Commerce Storefront",
-      status: "IN_PROGRESS",
-      priority: "HIGH",
-      blockedReason: "Waiting for production API secret key from client.",
-    },
-    {
-      id: "TSK-002",
-      title: "WhatsApp Order Confirmation Webhook Notification",
-      project: "ABC E-Commerce Storefront",
-      status: "TODO",
-      priority: "HIGH",
-    },
-    {
-      id: "TSK-003",
-      title: "Review Figma Wireframes for Checkout Flow",
-      project: "Apex SaaS Solutions",
-      status: "TODO",
-      priority: "MEDIUM",
-    },
-  ]);
+  const [tasks, setTasks] = useState<any[]>([]);
 
-  const [notes, setNotes] = useState([
-    { id: "1", text: "Tested Razorpay sandbox webhook payload. HMAC SHA256 matches in local environment.", time: "10:15 AM" },
-    { id: "2", text: "Requested client CEO Rajesh for live production credentials during morning standup.", time: "09:30 AM" },
-  ]);
+  const [notes, setNotes] = useState<any[]>([]);
 
 
 

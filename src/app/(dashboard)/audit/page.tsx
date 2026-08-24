@@ -23,58 +23,7 @@ export default function AuditPage() {
   const fetchAuditEvents = async () => {
     try {
       setLoading(true);
-      const auditEvents = [
-        {
-          id: "EVT-101",
-          type: "PROJECT_MEMBER_REASSIGNED",
-          actor: "Rahul MDZ (Owner)",
-          entity: "ABC E-Commerce Storefront",
-          timestamp: "Today 11:30 AM",
-          details: "Priya Desai assigned as lead UI/UX designer. Approved project roadmap milestone 2.",
-          badgeColor: "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20",
-          icon: <User className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
-        },
-        {
-          id: "EVT-102",
-          type: "CHANGE_REQUEST_APPROVED",
-          actor: "Rahul MDZ (Owner)",
-          entity: "CR-2026-001 (Multi-Address Checkout Flow)",
-          timestamp: "28 Jul 2026",
-          details: "Scope change approved (+4 timeline days, +₹25,000 cost impact).",
-          badgeColor: "bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/20",
-          icon: <GitPullRequest className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />,
-        },
-        {
-          id: "EVT-103",
-          type: "LEAD_WON_CONVERTED",
-          actor: "Karan Verma (Sales)",
-          entity: "Lead LEAD-2026-001 (ABC Retailers Pvt Ltd)",
-          timestamp: "01 Aug 2026",
-          details: "Lead marked WON. Converted to Client CLT-001 and generated Project PRJ-2026-001.",
-          badgeColor: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20",
-          icon: <Target className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
-        },
-        {
-          id: "EVT-104",
-          type: "PAYMENT_MILESTONE_RECEIVED",
-          actor: "Rahul MDZ (Owner)",
-          entity: "Milestone 1 Advance (INV-2026-001)",
-          timestamp: "06 Jul 2026",
-          details: "Received ₹1,00,000 via NEFT (Ref: NEFT202607060012).",
-          badgeColor: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20",
-          icon: <IndianRupee className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
-        },
-        {
-          id: "EVT-105",
-          type: "SIR_HELP_BLOCKER_SUBMITTED",
-          actor: "Dev Patel (Full-Stack Dev)",
-          entity: "ABC E-Commerce Storefront",
-          timestamp: "Today 11:45 AM",
-          details: "Waiting for production Razorpay API keys from client to verify live signature.",
-          badgeColor: "bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20",
-          icon: <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400" />,
-        },
-      ];
+      const auditEvents: any[] = [];
       setEvents(auditEvents);
     } catch (e) {
       console.error(e);
