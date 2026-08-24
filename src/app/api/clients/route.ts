@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
 import { clientSchema } from "@/lib/validations";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const authRes = await requireRole(["OWNER", "SALES"]);
   if (authRes instanceof NextResponse) return authRes;

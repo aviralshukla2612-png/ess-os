@@ -58,24 +58,25 @@ export default function ClientsPage() {
         body: JSON.stringify({
           companyName,
           contactPerson,
-          email: email || "client@company.com",
-          phone: phone || "+91 98000 00000",
-          totalBilling: 500000,
+          email,
+          phone,
         }),
       });
       const json = await res.json();
       if (json.success) {
         showToast(`✓ Client "${companyName || "New Client"}" created`, "success");
         fetchClients();
+        setIsAddOpen(false);
+        setCompanyName("");
+        setContactPerson("");
+        setEmail("");
+        setPhone("");
+      } else {
+        showToast(`✕ Failed to create client: ${json.error || "Unknown error"}`, "error");
       }
     } catch (error) {
-      showToast(`✓ Client created`, "success");
+      showToast(`✕ Error creating client`, "error");
     }
-    setIsAddOpen(false);
-    setCompanyName("");
-    setContactPerson("");
-    setEmail("");
-    setPhone("");
   };
 
   const handleImportData = async (data: any[]) => {
@@ -221,6 +222,7 @@ export default function ClientsPage() {
               <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Email</label>
               <input
                 type="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="vikram@paramount.com"
@@ -231,6 +233,7 @@ export default function ClientsPage() {
               <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Phone</label>
               <input
                 type="text"
+                required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+91 98222 11000"
