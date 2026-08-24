@@ -61,6 +61,23 @@ export default function SalesDashboardPage() {
     }
   };
 
+  const deleteLeadApi = async (leadId: string) => {
+    setLeads((prev) => prev.filter((l) => l.id !== leadId));
+    try {
+      const res = await fetch(`/mdz-crm/api/leads/${leadId}`, { method: "DELETE" });
+      const json = await res.json();
+      if (!json.success) {
+        showToast("Failed to delete lead", "error");
+        fetchLeads();
+      } else {
+        showToast("Lead permanently deleted", "success");
+      }
+    } catch (e) {
+      showToast("Network error while deleting", "error");
+      fetchLeads();
+    }
+  };
+
   const convertLeadToClientApi = async (leadId: string) => {
     try {
       const res = await fetch(`/mdz-crm/api/leads/${leadId}/convert`, { method: "POST" });
@@ -360,7 +377,7 @@ export default function SalesDashboardPage() {
           </span>
         </div>
 
-        <LeadPipelineBoard leads={leads} updateLeadStageApi={updateLeadStageApi} convertLeadToClientApi={convertLeadToClientApi} />
+        <LeadPipelineBoard leads={leads} updateLeadStageApi={updateLeadStageApi} convertLeadToClientApi={convertLeadToClientApi} deleteLeadApi={deleteLeadApi} />
       </div>
 
       <DataImportModal

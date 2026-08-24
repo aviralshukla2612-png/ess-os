@@ -3,8 +3,9 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, PhoneCall, Calendar, ArrowRight, ArrowUpRight, CheckCircle2, User, Building, IndianRupee } from "lucide-react";
+import { Plus, PhoneCall, Calendar, ArrowRight, ArrowUpRight, CheckCircle2, User, Building, IndianRupee, Trash } from "lucide-react";
 import { ConvertLeadModal } from "./ConvertLeadModal";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { useToast } from "@/components/ui/Toast";
 
 export interface Lead {
@@ -24,7 +25,7 @@ export interface Lead {
   updatedAt?: string;
 }
 
-export function LeadPipelineBoard({ leads, updateLeadStageApi, convertLeadToClientApi }: { leads: Lead[], updateLeadStageApi: any, convertLeadToClientApi: any }) {
+export function LeadPipelineBoard({ leads, updateLeadStageApi, convertLeadToClientApi, deleteLeadApi }: { leads: Lead[], updateLeadStageApi: any, convertLeadToClientApi: any, deleteLeadApi?: any }) {
   const STAGES = [
     { id: "NEW", title: "New Prospects" },
     { id: "CONTACTED", title: "Contacted" },
@@ -33,6 +34,8 @@ export function LeadPipelineBoard({ leads, updateLeadStageApi, convertLeadToClie
     { id: "NEGOTIATION", title: "Negotiation" },
     { id: "WON", title: "Won / Closing" },
   ];
+  
+  const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
 
   return (
     <div className="space-y-4">
@@ -103,6 +106,18 @@ export function LeadPipelineBoard({ leads, updateLeadStageApi, convertLeadToClie
                           {lead.leadPriority}
                         </span>
                         <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200 shrink-0" />
+                        {deleteLeadApi && (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDeleteLeadId(lead.id);
+                            }}
+                            className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/20 transition-colors ml-1"
+                          >
+                            <Trash className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -136,6 +151,20 @@ export function LeadPipelineBoard({ leads, updateLeadStageApi, convertLeadToClie
           );
         })}
       </div>
+      
+      <ConfirmModal
+        isOpen={!!deleteLeadId}
+        onClose={() => setDeleteLeadId(null)}
+        onConfirm={() => {
+          if (deleteLeadId && deleteLeadApi) {
+            deleteLeadApi(deleteLeadId);
+          }
+        }}
+        title="Delete Lead"
+        message="Are you sure you want to permanently delete this lead? This action cannot be undone and will remove all associated follow-ups and data."
+        confirmText="Delete Lead"
+        isDestructive={true}
+      />
     </div>
   );
 }
