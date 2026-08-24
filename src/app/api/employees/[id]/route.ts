@@ -77,6 +77,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 
     return NextResponse.json({ success: true, data: updatedEmployee });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Failed to update employee" }, { status: 500 });
   }
 }
 
