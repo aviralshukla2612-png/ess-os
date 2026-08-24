@@ -26,30 +26,7 @@ export default function QuotesPage() {
     { id: "3", description: "Payment Gateway & Webhook Security", qty: 1, rate: 50000 },
   ]);
 
-  const [quotesList, setQuotesList] = useState([
-    {
-      id: "QUO-2026-001",
-      client: "Paramount Retail Group",
-      title: "E-Commerce Mobile App & Web Storefront Proposal",
-      subtotal: 275000,
-      tax: 49500,
-      total: 324500,
-      status: "SENT",
-      validUntil: "25 Aug 2026",
-      createdAt: "05 Aug 2026",
-    },
-    {
-      id: "QUO-2026-002",
-      client: "Apex SaaS Cloud Inventory",
-      title: "Multi-Tenant Architecture & Cloud Migration Quote",
-      subtotal: 450000,
-      tax: 81000,
-      total: 531000,
-      status: "ACCEPTED",
-      validUntil: "30 Aug 2026",
-      createdAt: "01 Aug 2026",
-    },
-  ]);
+  const [quotesList, setQuotesList] = useState<any[]>([]);
 
   const subtotal = items.reduce((sum, item) => sum + item.qty * item.rate, 0);
   const taxAmount = (subtotal * taxRate) / 100;

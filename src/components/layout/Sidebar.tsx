@@ -43,13 +43,13 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
       case "OWNER":
         return [
           { title: "Overview", href: "/owner", icon: <LayoutDashboard className="w-4 h-4" /> },
-          { title: "Sales & Leads", href: "/leads", icon: <Target className="w-4 h-4" />, badge: "3 Hot", badgeColor: "bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20" },
-          { title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" />, badge: "New", badgeColor: "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20" },
+          { title: "Sales & Leads", href: "/leads", icon: <Target className="w-4 h-4" /> },
+          { title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
           { title: "Clients", href: "/clients", icon: <Users className="w-4 h-4" /> },
-          { title: "Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" />, badge: "17 Active", badgeColor: "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20" },
+          { title: "Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" /> },
           { title: "Team", href: "/employees", icon: <UserCheck className="w-4 h-4" /> },
           { title: "Attendance", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
-          { title: "Punch Out Requests", href: "/attendance-requests", icon: <Clock className="w-4 h-4" />, badge: "Action Req", badgeColor: "bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-500/20" },
+          { title: "Punch Out Requests", href: "/attendance-requests", icon: <Clock className="w-4 h-4" /> },
 
           { title: "Finance", href: "/finance", icon: <IndianRupee className="w-4 h-4" /> },
           { title: "Activity", href: "/audit", icon: <ShieldAlert className="w-4 h-4" /> },
@@ -60,16 +60,16 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
         return [
           { title: "Sales Overview", href: "/sales", icon: <LayoutDashboard className="w-4 h-4" /> },
           { title: "My Work Sessions", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
-          { title: "Lead Pipeline", href: "/leads", icon: <Target className="w-4 h-4" />, badge: "14 Leads" },
+          { title: "Lead Pipeline", href: "/leads", icon: <Target className="w-4 h-4" /> },
           { title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
-          { title: "Follow-ups Today", href: "/sales/followups", icon: <PhoneCall className="w-4 h-4" />, badge: "7 Today", badgeColor: "bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/20" },
+          { title: "Follow-ups Today", href: "/sales/followups", icon: <PhoneCall className="w-4 h-4" /> },
           { title: "Clients Directory", href: "/clients", icon: <Users className="w-4 h-4" /> },
         ];
 
       case "EMPLOYEE":
         return [
           { title: "My Desk", href: "/employee", icon: <LayoutDashboard className="w-4 h-4" /> },
-          { title: "My Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" />, badge: "3 Assigned" },
+          { title: "My Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" /> },
           { title: "My Work Sessions", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
 
           { title: "Documentation", href: "/docs", icon: <BookOpen className="w-4 h-4" /> },
