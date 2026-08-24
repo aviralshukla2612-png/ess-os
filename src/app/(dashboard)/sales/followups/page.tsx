@@ -26,17 +26,19 @@ export default function SalesFollowupsPage() {
           let status = idx % 3 === 0 ? "COMPLETED" : idx % 3 === 1 ? "OVERDUE" : "UPCOMING";
           let notes = `Follow-up scheduled regarding: ${l.projectScope || "Project requirements & commercial agreement"}`;
 
-          return {
-            id: `FOL-${l.id || idx}`,
-            leadId: l.id,
-            company: l.clientName || "Prospect Company",
-            contactPerson: l.contactPerson || "Primary Lead Contact",
-            type,
-            scheduledAt: l.nextFollowupDate || "Tomorrow 11:00 AM",
-            status,
-            notes,
-          };
-        });
+            return {
+              id: `FOL-${l.id || idx}`,
+              leadId: l.id,
+              company: l.clientName || l.companyName || "Prospect Company",
+              contactPerson: l.contactPerson || "Primary Lead Contact",
+              phone: l.mobile || l.phone || "0000000000",
+              whatsapp: l.whatsapp || l.mobile || l.phone || "0000000000",
+              type,
+              scheduledAt: l.nextFollowupAt ? new Date(l.nextFollowupAt).toLocaleString() : "Tomorrow 11:00 AM",
+              status,
+              notes,
+            };
+          });
         setFollowups(mapped);
       }
     } catch (e) {
@@ -114,26 +116,38 @@ export default function SalesFollowupsPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 pt-1">
-                  <button
+                  <a
+                    href={`tel:${f.phone}`}
                     onClick={() => showToast(`📞 Dialing ${f.contactPerson}...`, "info")}
                     className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2"
                   >
                     <Phone className="w-3.5 h-3.5" />
                     Log Call Session
-                  </button>
+                  </a>
 
-                  <button
-                    onClick={() => showToast(`💬 WhatsApp message drafted for ${f.contactPerson}`, "info")}
+                  <a
+                    href={`https://wa.me/${f.whatsapp.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => showToast(`💬 Opening WhatsApp for ${f.contactPerson}`, "info")}
                     className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2"
                   >
                     <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
                     Send WhatsApp
-                  </button>
+                  </a>
 
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       setFollowups((prev) => prev.map((item) => (item.id === f.id ? { ...item, status: "COMPLETED" } : item)));
                       showToast("✓ Follow-up task marked COMPLETED", "success");
+                      // Optionally, update the lead in the backend if needed
+                      try {
+                        await fetch(`/mdz-os/api/leads/${f.leadId}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ status: 'CONTACTED' }) // Example of persisting status
+                        });
+                      } catch (e) {}
                     }}
                     className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2"
                   >
