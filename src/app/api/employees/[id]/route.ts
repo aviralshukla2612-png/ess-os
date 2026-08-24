@@ -96,10 +96,27 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ success: false, error: "Employee not found" }, { status: 404 });
     }
 
-    // Since Employee deletes cascade from User, deleting the User cleans up everything cleanly.
-    await prisma.user.delete({
-      where: { id: employee.userId },
-    });
+    // We cannot delete the User record because they might be the "createdBy" on Projects/Leads.
+    // Doing so would cascade-delete important company data or fail due to FK constraints.
+    // Instead, we delete the Employee profile (which cascades to attendances, memberships) 
+    // and soft-delete/deactivate the User account.
+    
+    await prisma.$transaction([
+      prisma.employee.delete({
+        where: { id: params.id },
+      }),
+      prisma.user.update({
+        where: { id: employee.userId },
+        data: { 
+          isActive: false,
+          activeRole: "DEACTIVATED",
+        }
+      }),
+      // Remove all specific role assignments
+      prisma.userRole.deleteMany({
+        where: { userId: employee.userId }
+      })
+    ]);
 
     return NextResponse.json({ success: true, data: "Employee deleted successfully" });
   } catch (error) {
