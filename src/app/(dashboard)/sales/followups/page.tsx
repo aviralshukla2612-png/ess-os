@@ -18,7 +18,7 @@ export default function SalesFollowupsPage() {
   const fetchFollowups = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/mdz-os/api/leads");
+      const res = await fetch("/mdz-crm/api/leads");
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         const mapped = json.data.map((l: any, idx: number) => {
@@ -142,7 +142,7 @@ export default function SalesFollowupsPage() {
                       showToast("✓ Follow-up task marked COMPLETED", "success");
                       // Optionally, update the lead in the backend if needed
                       try {
-                        await fetch(`/mdz-os/api/leads/${f.leadId}`, {
+                        await fetch(`/mdz-crm/api/leads/${f.leadId}`, {
                           method: 'PATCH',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ status: 'CONTACTED' }) // Example of persisting status

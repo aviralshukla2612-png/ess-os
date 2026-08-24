@@ -1,6 +1,6 @@
 
 
-const BASE_URL = "http://localhost:3020/mdz-os";
+const BASE_URL = "http://localhost:3020/mdz-crm";
 
 async function login(email: string, password: string): Promise<string> {
   // Get CSRF token

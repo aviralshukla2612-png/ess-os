@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Employee Attendance Flow', () => {
   test('Complete day workflow for EMPLOYEE', async ({ page }) => {
     // 1. Login as EMPLOYEE
-    await page.goto('/mdz-os/login');
+    await page.goto('/mdz-crm/login');
     await page.getByPlaceholder('dev.patel@mdzcompany.com').fill('emp@test.com');
     await page.getByPlaceholder('Enter your password').fill('TestPassword123!');
     const callbackDone = page.waitForResponse(
@@ -19,7 +19,7 @@ test.describe('Employee Attendance Flow', () => {
     await page.waitForURL(url => !url.toString().includes('login'), { timeout: 10000 });
 
     // 2. Navigate to Attendance
-    await page.goto('/mdz-os/attendance');
+    await page.goto('/mdz-crm/attendance');
     await expect(page.locator('text=Ready to start your day?')).toBeVisible({ timeout: 15000 });
 
     // 3. Punch In

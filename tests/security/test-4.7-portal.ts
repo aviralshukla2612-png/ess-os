@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import crypto from "crypto";
 
 const prisma = new PrismaClient();
-const BASE_URL = "http://localhost:3025/mdz-os";
+const BASE_URL = "http://localhost:3025/mdz-crm";
 
 // Test data
 const MOCK_CLIENT_A = {

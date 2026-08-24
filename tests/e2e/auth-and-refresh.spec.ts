@@ -35,7 +35,7 @@ const authenticate = async (
   email: string,
   password = 'TestPassword123!'
 ): Promise<{ role: string; userId: string }> => {
-  await page.goto('/mdz-os/login');
+  await page.goto('/mdz-crm/login');
 
   // pressSequentially triggers React onChange (fill() can bypass synthetic events)
   await page.getByPlaceholder('dev.patel@mdzcompany.com').clear();
@@ -52,7 +52,7 @@ const authenticate = async (
   await callbackDone;
 
   // Authoritative server-side session check via the API
-  const sessionRes = await page.request.get('/mdz-os/api/auth/session');
+  const sessionRes = await page.request.get('/mdz-crm/api/auth/session');
   expect(sessionRes.status(), 'Session API should return 200').toBe(200);
   const session = await sessionRes.json();
   expect(session?.user?.email, `Session must contain email for ${email}`).toBe(email);
@@ -68,12 +68,12 @@ test.describe('OWNER role', () => {
   test('login → /owner navigation (documents hardcoded redirect)', async ({ page }) => {
     await authenticate(page, 'owner@test.com');
     // OWNER gets /owner successfully — the hardcoded redirect works for this role
-    await page.waitForURL(/\/mdz-os\/owner/, { timeout: 10000 });
+    await page.waitForURL(/\/mdz-crm\/owner/, { timeout: 10000 });
   });
 
   test('direct URL access to /finance', async ({ page }) => {
     await authenticate(page, 'owner@test.com');
-    const res = await page.goto('/mdz-os/finance');
+    const res = await page.goto('/mdz-crm/finance');
     expect(res?.status(), '/finance must not return 4xx for OWNER').toBeLessThan(400);
     await page.waitForLoadState('networkidle');
     await expect(page.locator('text=Total Contracted Revenue')).toBeVisible({ timeout: 10000 });
@@ -81,7 +81,7 @@ test.describe('OWNER role', () => {
 
   test('hard refresh on /finance preserves session', async ({ page }) => {
     await authenticate(page, 'owner@test.com');
-    await page.goto('/mdz-os/finance');
+    await page.goto('/mdz-crm/finance');
     await page.waitForLoadState('networkidle');
     await page.reload();
     await page.waitForLoadState('networkidle');
@@ -95,7 +95,7 @@ test.describe('OWNER role', () => {
 
   test('logout invalidates session', async ({ page }) => {
     await authenticate(page, 'owner@test.com');
-    await page.goto('/mdz-os/finance');
+    await page.goto('/mdz-crm/finance');
     await page.waitForLoadState('networkidle');
 
     // "Logout Session" button is in the profile dropdown in the header
@@ -113,7 +113,7 @@ test.describe('OWNER role', () => {
     await page.waitForURL(/.*login/, { timeout: 10000 });
 
     // Session API must return no user after logout
-    const sessionAfter = await page.request.get('/mdz-os/api/auth/session');
+    const sessionAfter = await page.request.get('/mdz-crm/api/auth/session');
     const data = await sessionAfter.json();
     expect(data?.user, 'Session must be empty after logout').toBeFalsy();
   });
@@ -127,21 +127,21 @@ test.describe('SALES role', () => {
     const { role } = await authenticate(page, 'sales@test.com');
     expect(role).toBe('SALES');
     // SALES should now go to /sales
-    await page.waitForURL(/\/mdz-os\/sales/, { timeout: 10000 });
+    await page.waitForURL(/\/mdz-crm\/sales/, { timeout: 10000 });
   });
 
   test('direct URL access to /leads (allowed)', async ({ page }) => {
     await authenticate(page, 'sales@test.com');
-    const res = await page.goto('/mdz-os/leads');
+    const res = await page.goto('/mdz-crm/leads');
     expect(res?.status(), '/leads must not return 4xx for SALES').toBeLessThan(400);
     await page.waitForLoadState('networkidle');
-    await expect(page).toHaveURL(/\/mdz-os\/leads/);
+    await expect(page).toHaveURL(/\/mdz-crm\/leads/);
     await expect(page.locator('text=Sales CRM')).toBeVisible({ timeout: 10000 });
   });
 
   test('hard refresh on /leads preserves session', async ({ page }) => {
     await authenticate(page, 'sales@test.com');
-    await page.goto('/mdz-os/leads');
+    await page.goto('/mdz-crm/leads');
     await page.waitForLoadState('networkidle');
     await page.reload();
     await page.waitForLoadState('networkidle');
@@ -150,13 +150,13 @@ test.describe('SALES role', () => {
 
   test('role boundary: /finance denied → redirected to /login', async ({ page }) => {
     await authenticate(page, 'sales@test.com');
-    await page.goto('/mdz-os/finance');
+    await page.goto('/mdz-crm/finance');
     await page.waitForURL(/.*login/, { timeout: 10000 });
   });
 
   test('role boundary: /employees denied → redirected to /login', async ({ page }) => {
     await authenticate(page, 'sales@test.com');
-    await page.goto('/mdz-os/employees');
+    await page.goto('/mdz-crm/employees');
     await page.waitForURL(/.*login/, { timeout: 10000 });
   });
 });
@@ -168,21 +168,21 @@ test.describe('EMPLOYEE role', () => {
   test('authentication succeeds — documents ⚠️ hardcoded /owner redirect', async ({ page }) => {
     const { role } = await authenticate(page, 'emp@test.com');
     expect(role).toBe('EMPLOYEE');
-    await page.waitForURL(/\/mdz-os\/attendance/, { timeout: 10000 });
+    await page.waitForURL(/\/mdz-crm\/attendance/, { timeout: 10000 });
   });
 
   test('direct URL access to /attendance (allowed)', async ({ page }) => {
     await authenticate(page, 'emp@test.com');
-    const res = await page.goto('/mdz-os/attendance');
+    const res = await page.goto('/mdz-crm/attendance');
     expect(res?.status(), '/attendance must not return 4xx for EMPLOYEE').toBeLessThan(400);
     await page.waitForLoadState('networkidle');
-    await expect(page).toHaveURL(/\/mdz-os\/attendance/);
+    await expect(page).toHaveURL(/\/mdz-crm\/attendance/);
     await expect(page.locator('text=MDZ Work Clock')).toBeVisible({ timeout: 10000 });
   });
 
   test('hard refresh on /attendance preserves session', async ({ page }) => {
     await authenticate(page, 'emp@test.com');
-    await page.goto('/mdz-os/attendance');
+    await page.goto('/mdz-crm/attendance');
     await page.waitForLoadState('networkidle');
     await page.reload();
     await page.waitForLoadState('networkidle');
@@ -191,13 +191,13 @@ test.describe('EMPLOYEE role', () => {
 
   test('role boundary: /finance denied → redirected to /login', async ({ page }) => {
     await authenticate(page, 'emp@test.com');
-    await page.goto('/mdz-os/finance');
+    await page.goto('/mdz-crm/finance');
     await page.waitForURL(/.*login/, { timeout: 10000 });
   });
 
   test('role boundary: /leads denied → redirected to /login', async ({ page }) => {
     await authenticate(page, 'emp@test.com');
-    await page.goto('/mdz-os/leads');
+    await page.goto('/mdz-crm/leads');
     await page.waitForURL(/.*login/, { timeout: 10000 });
   });
 });
@@ -207,13 +207,13 @@ test.describe('EMPLOYEE role', () => {
 // ---------------------------------------------------------------------------
 test.describe('Anonymous access', () => {
   const protectedRoutes = [
-    '/mdz-os/owner',
-    '/mdz-os/finance',
-    '/mdz-os/leads',
-    '/mdz-os/clients',
-    '/mdz-os/projects',
-    '/mdz-os/employees',
-    '/mdz-os/attendance',
+    '/mdz-crm/owner',
+    '/mdz-crm/finance',
+    '/mdz-crm/leads',
+    '/mdz-crm/clients',
+    '/mdz-crm/projects',
+    '/mdz-crm/employees',
+    '/mdz-crm/attendance',
   ];
 
   for (const route of protectedRoutes) {
@@ -224,7 +224,7 @@ test.describe('Anonymous access', () => {
   }
 
   test('/portal/[valid-token] → ALLOWED (client portal is public)', async ({ page }) => {
-    const res = await page.goto('/mdz-os/portal/test-portal-token-123');
+    const res = await page.goto('/mdz-crm/portal/test-portal-token-123');
     // Portal must not redirect to login — it is intentionally public
     expect(page.url()).not.toMatch(/.*login/);
     expect(res?.status()).not.toBe(302);

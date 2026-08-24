@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('CLIENT PORTAL E2E', () => {
   test('Anonymous user can access valid portal token', async ({ page }) => {
     // Assuming a valid token is seeded. From global setup, usually 'test-portal-token-123'
-    const res = await page.goto('/mdz-os/portal/test-portal-token-123');
+    const res = await page.goto('/mdz-crm/portal/test-portal-token-123');
     
     // Portal must not redirect to login
     expect(page.url()).not.toMatch(/.*login/);
@@ -15,7 +15,7 @@ test.describe('CLIENT PORTAL E2E', () => {
   });
 
   test('Invalid portal token denies access', async ({ page }) => {
-    const res = await page.goto('/mdz-os/portal/invalid-token-abc');
+    const res = await page.goto('/mdz-crm/portal/invalid-token-abc');
     
     // Can redirect to login or show 404/403. Either way, should not reveal project data.
     const text = await page.locator('body').innerText();

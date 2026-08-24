@@ -30,7 +30,7 @@ export default function SalesDashboardPage() {
 
   const fetchLeads = async () => {
     try {
-      const res = await fetch("/mdz-os/api/leads");
+      const res = await fetch("/mdz-crm/api/leads");
       const json = await res.json();
       if (json.success) {
         setLeads(json.data);
@@ -43,7 +43,7 @@ export default function SalesDashboardPage() {
   const updateLeadStageApi = async (leadId: string, newStage: string) => {
     setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: newStage } : l)));
     try {
-      const res = await fetch(`/mdz-os/api/leads/${leadId}`, {
+      const res = await fetch(`/mdz-crm/api/leads/${leadId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stage: newStage }),
@@ -63,7 +63,7 @@ export default function SalesDashboardPage() {
 
   const convertLeadToClientApi = async (leadId: string) => {
     try {
-      const res = await fetch(`/mdz-os/api/leads/${leadId}/convert`, { method: "POST" });
+      const res = await fetch(`/mdz-crm/api/leads/${leadId}/convert`, { method: "POST" });
       const json = await res.json();
       if (json.success) {
         showToast(`🎉 Converted to Client "${json.data.client.companyName}"`, "success");
@@ -80,7 +80,7 @@ export default function SalesDashboardPage() {
     e.preventDefault();
     const createApi = async () => {
       try {
-        const res = await fetch("/mdz-os/api/leads", {
+        const res = await fetch("/mdz-crm/api/leads", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -132,7 +132,7 @@ export default function SalesDashboardPage() {
         
         if (!client) continue;
 
-        const res = await fetch("/mdz-os/api/leads", {
+        const res = await fetch("/mdz-crm/api/leads", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

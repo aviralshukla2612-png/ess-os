@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
 const prisma = new PrismaClient();
-const BASE_URL = "http://localhost:3025/mdz-os";
+const BASE_URL = "http://localhost:3025/mdz-crm";
 
 // --- Test Fixtures Data ---
 const TEST_EMAIL = "test-auth-4.6@mdzcompany.com";
@@ -177,7 +177,7 @@ async function runTests() {
 
     // 5. No session -> protected page
     let pageRes = await fetch(`${BASE_URL}/leads`);
-    // Next.js middleware redirects to /mdz-os/login
+    // Next.js middleware redirects to /mdz-crm/login
     assert(pageRes.url.includes("login"), "No session -> protected page -> Redirect/deny");
     
     // 6. Logout -> protected API

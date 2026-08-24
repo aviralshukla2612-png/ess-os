@@ -37,7 +37,7 @@ export default function ClientsPage() {
   const fetchClients = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/mdz-os/api/clients");
+      const res = await fetch("/mdz-crm/api/clients");
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setClientsList(json.data);
@@ -52,7 +52,7 @@ export default function ClientsPage() {
   const handleCreateClient = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/mdz-os/api/clients", {
+      const res = await fetch("/mdz-crm/api/clients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -91,7 +91,7 @@ export default function ClientsPage() {
 
         if (!company) continue;
 
-        const res = await fetch("/mdz-os/api/clients", {
+        const res = await fetch("/mdz-crm/api/clients", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

@@ -1,7 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 
 const authenticate = async (page: Page, email: string) => {
-  await page.goto('/mdz-os/login');
+  await page.goto('/mdz-crm/login');
   await page.getByPlaceholder('dev.patel@mdzcompany.com').clear();
   await page.getByPlaceholder('dev.patel@mdzcompany.com').pressSequentially(email, { delay: 10 });
   await page.getByPlaceholder('Enter your password').clear();
@@ -14,7 +14,7 @@ const authenticate = async (page: Page, email: string) => {
   await page.click('button[type="submit"]');
   await callbackPromise;
 
-  const sessionRes = await page.request.get('/mdz-os/api/auth/session');
+  const sessionRes = await page.request.get('/mdz-crm/api/auth/session');
   expect(sessionRes.status()).toBe(200);
 };
 
@@ -24,7 +24,7 @@ test.describe('ATTENDANCE Workflow', () => {
   });
 
   test('Employee attendance flow (Working -> Break -> Resume -> Punch Out)', async ({ page }) => {
-    await page.goto('/mdz-os/attendance');
+    await page.goto('/mdz-crm/attendance');
     await page.waitForLoadState('networkidle');
     await expect(page.locator('text=MDZ Work Clock')).toBeVisible({ timeout: 10000 });
 

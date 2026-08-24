@@ -78,7 +78,7 @@ export default function AttendanceWorkClockPage() {
 
   const fetchAttendanceLogs = async () => {
     try {
-      const res = await fetch("/mdz-os/api/attendance");
+      const res = await fetch("/mdz-crm/api/attendance");
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setAttendanceRecords(json.data);
@@ -102,7 +102,7 @@ export default function AttendanceWorkClockPage() {
       return;
     }
     try {
-      const res = await fetch("/mdz-os/api/attendance/punch-in", {
+      const res = await fetch("/mdz-crm/api/attendance/punch-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ employeeId: session?.user?.employeeId || "EMP-004" }),
@@ -125,7 +125,7 @@ export default function AttendanceWorkClockPage() {
     startBreak(selectedBreakType, customBreakReason);
     setIsBreakSheetOpen(false);
     try {
-      const res = await fetch("/mdz-os/api/attendance", {
+      const res = await fetch("/mdz-crm/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ employeeId: session?.user?.employeeId || "EMP-004", actionType: "BREAK", notes: `${selectedBreakType} break` }),
@@ -166,7 +166,7 @@ export default function AttendanceWorkClockPage() {
     }
     
     try {
-      const response = await fetch("/mdz-os/api/attendance/punch-out-request", {
+      const response = await fetch("/mdz-crm/api/attendance/punch-out-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ employeeId: session?.user?.employeeId || "EMP-004", reason: punchOutReason }),
