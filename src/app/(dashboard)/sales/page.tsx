@@ -7,6 +7,7 @@ import { TrendingUp, PhoneCall, Plus, Target, Sparkles, Flame, CheckCircle2 } fr
 import Link from "next/link";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { DataImportModal } from "@/components/ui/DataImportModal";
 import { Lead } from "@/components/sales/LeadPipelineBoard";
 
 export default function SalesDashboardPage() {
@@ -20,6 +21,8 @@ export default function SalesDashboardPage() {
   const [leadValue, setLeadValue] = useState("");
   const [gstNo, setGstNo] = useState("");
   const [projectScope, setProjectScope] = useState("");
+
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   React.useEffect(() => {
     fetchLeads();
@@ -115,6 +118,46 @@ export default function SalesDashboardPage() {
     setProjectScope("");
   };
 
+  const handleImportData = async (data: any[]) => {
+    let successCount = 0;
+    
+    for (const row of data) {
+      try {
+        const client = row["Company"] || row["clientName"] || row["Client"] || row["Company Name"];
+        const contact = row["Contact Person"] || row["contactPerson"] || row["Contact"] || row["Name"];
+        const rowEmail = row["Email"] || row["email"];
+        const rowPhone = row["Phone"] || row["phone"] || row["Mobile"];
+        const value = row["Value"] || row["Deal Value"] || row["leadValue"];
+        const scope = row["Scope"] || row["projectScope"] || row["Project Details"];
+        
+        if (!client) continue;
+
+        const res = await fetch("/mdz-os/api/leads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clientName: client,
+            contactPerson: contact || "Unknown",
+            phone: rowPhone || "+91 00000 00000",
+            email: rowEmail || "contact@prospect.com",
+            projectScope: scope || "Imported inquiry",
+            leadValue: Number(value) || 250000,
+            expectedRevenue: Number(value) || 250000,
+            stage: "NEW",
+            leadPriority: "HIGH",
+          }),
+        });
+        
+        if (res.ok) successCount++;
+      } catch (e) {
+        console.error("Import error on row:", row);
+      }
+    }
+    
+    showToast(`✓ Imported ${successCount} leads successfully`, "success");
+    fetchLeads();
+  };
+
   // Dynamic calculations
   const activeLeads = leads.filter((l) => l.stage !== "WON" && l.stage !== "LOST");
   const pipelineValue = activeLeads.reduce((sum, l) => sum + l.leadValue, 0);
@@ -144,6 +187,13 @@ export default function SalesDashboardPage() {
               <PhoneCall className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
               <span>Follow-ups Today ({activeLeads.length})</span>
             </Link>
+            <button
+              onClick={() => setIsImportOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Import CSV/XLS</span>
+            </button>
             <button
               onClick={() => setIsAddLeadOpen(true)}
               className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2"
@@ -312,6 +362,13 @@ export default function SalesDashboardPage() {
 
         <LeadPipelineBoard leads={leads} updateLeadStageApi={updateLeadStageApi} convertLeadToClientApi={convertLeadToClientApi} />
       </div>
+
+      <DataImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onImport={handleImportData}
+        title="Import Sales Leads"
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { DataImportModal } from "@/components/ui/DataImportModal";
 import {
   Users,
   Plus,
@@ -28,8 +29,6 @@ export default function ClientsPage() {
   const [phone, setPhone] = useState("");
 
   const [isImportOpen, setIsImportOpen] = useState(false);
-  const [importStep, setImportStep] = useState<1 | 2 | 3 | 4>(1);
-  const [importProgress, setImportProgress] = useState(0);
 
   useEffect(() => {
     fetchClients();
@@ -79,6 +78,41 @@ export default function ClientsPage() {
     setPhone("");
   };
 
+  const handleImportData = async (data: any[]) => {
+    let successCount = 0;
+    
+    for (const row of data) {
+      try {
+        const company = row["Company Name"] || row["companyName"] || row["Company"] || row["clientName"];
+        const contact = row["Contact Person"] || row["contactPerson"] || row["Contact"] || row["Name"];
+        const rowEmail = row["Email"] || row["email"];
+        const rowPhone = row["Phone"] || row["phone"] || row["Mobile"];
+        const billing = row["Total Billing"] || row["totalBilling"] || row["Billing"] || 500000;
+
+        if (!company) continue;
+
+        const res = await fetch("/mdz-os/api/clients", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            companyName: company,
+            contactPerson: contact || "Unknown Contact",
+            email: rowEmail || "client@company.com",
+            phone: rowPhone || "+91 00000 00000",
+            totalBilling: Number(billing) || 500000,
+          }),
+        });
+        
+        if (res.ok) successCount++;
+      } catch (e) {
+        console.error("Import error on row:", row);
+      }
+    }
+    
+    showToast(`✓ Imported ${successCount} clients successfully`, "success");
+    fetchClients();
+  };
+
   return (
     <div className="space-y-8 pb-16">
       <PageHeader
@@ -89,10 +123,7 @@ export default function ClientsPage() {
         actions={
           <div className="flex items-center gap-3">
             <button
-              onClick={() => {
-                setImportStep(1);
-                setIsImportOpen(true);
-              }}
+              onClick={() => setIsImportOpen(true)}
               className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2"
             >
               <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -222,6 +253,13 @@ export default function ClientsPage() {
           </button>
         </form>
       </BottomSheet>
+
+      <DataImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onImport={handleImportData}
+        title="Import Client Directory"
+      />
     </div>
   );
 }

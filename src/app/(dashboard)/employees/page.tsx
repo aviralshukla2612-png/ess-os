@@ -5,12 +5,15 @@ import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { DataImportModal } from "@/components/ui/DataImportModal";
 import {
   UserCheck,
   Plus,
   ArrowRight,
   Sparkles,
   Trash2,
+  FileSpreadsheet,
 } from "lucide-react";
 export default function EmployeesPage() {
   const { showToast } = useToast();
@@ -23,6 +26,13 @@ export default function EmployeesPage() {
   const [password, setPassword] = useState("");
   const [designation, setDesignation] = useState("");
   const [role, setRole] = useState("EMPLOYEE");
+
+  const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; id: string; name: string }>({
+    isOpen: false,
+    id: "",
+    name: "",
+  });
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   React.useEffect(() => {
     fetchEmployees();
@@ -74,8 +84,6 @@ export default function EmployeesPage() {
   };
 
   const handleDeleteEmployee = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to fire and permanently remove ${name}? This action cannot be undone.`)) return;
-    
     try {
       const res = await fetch(`/mdz-os/api/employees/${id}`, { method: "DELETE" });
       const json = await res.json();
@@ -90,6 +98,39 @@ export default function EmployeesPage() {
     }
   };
 
+  const handleImportData = async (data: any[]) => {
+    let successCount = 0;
+    
+    for (const row of data) {
+      try {
+        const rowName = row["Full Name"] || row["Name"] || row["name"];
+        const rowEmail = row["Email"] || row["email"] || row["Email Address"];
+        const rowDesignation = row["Designation"] || row["Role"] || "Employee";
+        
+        if (!rowName || !rowEmail) continue;
+
+        const res = await fetch("/mdz-os/api/employees", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            name: rowName, 
+            email: rowEmail, 
+            password: "Password123!", 
+            designation: rowDesignation, 
+            role: "EMPLOYEE" 
+          }),
+        });
+        
+        if (res.ok) successCount++;
+      } catch (e) {
+        console.error("Import error on row:", row);
+      }
+    }
+    
+    showToast(`✓ Imported ${successCount} employees successfully`, "success");
+    fetchEmployees();
+  };
+
   return (
     <div className="space-y-8 pb-16">
       <PageHeader
@@ -98,13 +139,22 @@ export default function EmployeesPage() {
         badge="WORKFORCE HUB"
         icon={<UserCheck className="w-7 h-7 text-indigo-600 dark:text-indigo-400 animate-pulse" />}
         actions={
-          <button
-            onClick={() => setIsAddOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Employee</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsImportOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Import CSV/XLS</span>
+            </button>
+            <button
+              onClick={() => setIsAddOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Employee</span>
+            </button>
+          </div>
         }
       />
       {/* Employees Grid */}
@@ -169,7 +219,7 @@ export default function EmployeesPage() {
                 <button
                   onClick={(e) => {
                     e.preventDefault();
-                    handleDeleteEmployee(emp.id, emp.name);
+                    setConfirmDelete({ isOpen: true, id: emp.id, name: emp.name });
                   }}
                   className="px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold text-xs flex items-center gap-1.5 transition-all shadow-xs"
                   title="Fire Employee"
@@ -261,6 +311,23 @@ export default function EmployeesPage() {
           </button>
         </form>
       </BottomSheet>
+
+      <ConfirmModal
+        isOpen={confirmDelete.isOpen}
+        onClose={() => setConfirmDelete({ isOpen: false, id: "", name: "" })}
+        onConfirm={() => handleDeleteEmployee(confirmDelete.id, confirmDelete.name)}
+        title="Fire Employee"
+        message={`Are you sure you want to fire and permanently remove ${confirmDelete.name}? This action cannot be undone and will delete their attendance and session logs.`}
+        confirmText="Yes, Fire Employee"
+        isDestructive={true}
+      />
+      
+      <DataImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onImport={handleImportData}
+        title="Import Employee Directory"
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import {
   ArrowLeft,
   UserCheck,
@@ -30,6 +31,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
   const [editDesignation, setEditDesignation] = useState("");
   const [editDepartment, setEditDepartment] = useState("");
   const [editSalary, setEditSalary] = useState<number>(0);
+  const [confirmStatus, setConfirmStatus] = useState(false);
 
   React.useEffect(() => {
     fetchEmployee();
@@ -119,7 +121,6 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
   };
 
   const handleToggleStatus = async () => {
-    if (!confirm(`Are you sure you want to ${employee.isActive ? 'deactivate' : 'activate'} this employee?`)) return;
     try {
       const newIsActive = !employee.isActive;
       const newStatus = newIsActive ? "ACTIVE" : "INACTIVE";
@@ -205,7 +206,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
               Edit
             </button>
             <button
-              onClick={handleToggleStatus}
+              onClick={() => setConfirmStatus(true)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${employee.isActive ? 'bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200'}`}
             >
               {employee.isActive ? 'Deactivate' : 'Activate'}
@@ -387,6 +388,18 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
           </button>
         </form>
       </BottomSheet>
+
+      {employee && (
+        <ConfirmModal
+          isOpen={confirmStatus}
+          onClose={() => setConfirmStatus(false)}
+          onConfirm={handleToggleStatus}
+          title={`${employee.isActive ? 'Deactivate' : 'Activate'} Employee`}
+          message={`Are you sure you want to ${employee.isActive ? 'deactivate' : 'activate'} ${employee.name}? ${employee.isActive ? 'They will no longer be able to log in or punch in.' : 'They will regain access to the system.'}`}
+          confirmText={employee.isActive ? "Yes, Deactivate" : "Yes, Activate"}
+          isDestructive={employee.isActive}
+        />
+      )}
     </div>
   );
 }
