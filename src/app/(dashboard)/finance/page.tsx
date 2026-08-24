@@ -16,9 +16,9 @@ export default function FinancePage() {
     totalPendingCollection: number;
     invoices: any[];
   }>({
-    totalContractedRevenue: 23720000,
-    totalCollectedRevenue: 2200000,
-    totalPendingCollection: 320000,
+    totalContractedRevenue: 0,
+    totalCollectedRevenue: 0,
+    totalPendingCollection: 0,
     invoices: [],
   });
 
@@ -50,45 +50,15 @@ export default function FinancePage() {
     setInvAmount("");
   };
 
-  const milestones = financeMetrics.invoices.length > 0
-    ? financeMetrics.invoices.map((inv) => ({
-        id: inv.id,
-        project: inv.project?.name || "ABC E-Commerce Storefront",
-        title: `Milestone Invoice ${inv.invoiceNumber}`,
-        amount: `₹${inv.grandTotal?.toLocaleString("en-IN") || "1,00,000"}`,
-        status: inv.status || "PAID",
-        dueDate: inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : "28 Jul 2026",
-        invoiceNumber: inv.invoiceNumber,
-      }))
-    : [
-        {
-          id: "MS-001",
-          project: "ABC E-Commerce Storefront",
-          title: "Milestone 1: Project Advance",
-          amount: "₹1,00,000",
-          status: "PAID",
-          dueDate: "01 Jul 2026",
-          invoiceNumber: "INV-2026-001",
-        },
-        {
-          id: "MS-002",
-          project: "ABC E-Commerce Storefront",
-          title: "Milestone 2: Design Signoff",
-          amount: "₹1,00,000",
-          status: "OVERDUE",
-          dueDate: "28 Jul 2026",
-          invoiceNumber: "INV-2026-002",
-        },
-        {
-          id: "MS-003",
-          project: "Apex SaaS Cloud Inventory",
-          title: "Milestone 1: Advance Signoff",
-          amount: "₹2,00,000",
-          status: "PENDING",
-          dueDate: "15 Aug 2026",
-          invoiceNumber: "INV-2026-003",
-        },
-      ];
+  const milestones = financeMetrics.invoices.map((inv) => ({
+    id: inv.id,
+    project: inv.project?.name || "Client Project",
+    title: `Milestone Invoice ${inv.invoiceNumber}`,
+    amount: `₹${inv.grandTotal?.toLocaleString("en-IN") || "0"}`,
+    status: inv.status || "PENDING",
+    dueDate: inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : "TBD",
+    invoiceNumber: inv.invoiceNumber,
+  }));
 
   return (
     <div className="space-y-8 pb-16">
