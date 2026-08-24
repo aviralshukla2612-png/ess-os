@@ -141,13 +141,6 @@ export default function EmployeesPage() {
         actions={
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsImportOpen(true)}
-              className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 font-semibold text-xs border border-slate-200 dark:border-slate-700 transition-all flex items-center gap-2"
-            >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Import CSV/XLS</span>
-            </button>
-            <button
               onClick={() => setIsAddOpen(true)}
               className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2"
             >
