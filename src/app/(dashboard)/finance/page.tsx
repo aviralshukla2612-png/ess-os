@@ -9,7 +9,14 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 export default function FinancePage() {
   const { showToast } = useToast();
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
-  const [invAmount, setInvAmount] = useState("");
+  const [formData, setFormData] = useState({
+    project: "",
+    title: "",
+    amount: "",
+    dueDate: "",
+    notes: ""
+  });
+
   const [financeMetrics, setFinanceMetrics] = useState<{
     totalContractedRevenue: number;
     totalCollectedRevenue: number;
@@ -45,9 +52,9 @@ export default function FinancePage() {
 
   const handleCreateInvoice = (e: React.FormEvent) => {
     e.preventDefault();
-    showToast(`✓ Invoice INV-2026-004 generated for ₹${invAmount || "1,00,000"}`, "success");
+    showToast(`✓ Invoice INV-2026-004 generated for ₹${formData.amount || "1,00,000"}`, "success");
     setIsInvoiceOpen(false);
-    setInvAmount("");
+    setFormData({ project: "", title: "", amount: "", dueDate: "", notes: "" });
   };
 
   const milestones = financeMetrics.invoices.map((inv) => ({
@@ -84,24 +91,87 @@ export default function FinancePage() {
         title="Create New Milestone Invoice"
         subtitle="Generate milestone payment invoice and link to client portal."
       >
-        <form onSubmit={handleCreateInvoice} className="space-y-4 text-xs">
+        <form onSubmit={handleCreateInvoice} className="space-y-5 text-xs mt-2">
+          
           <div>
-            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Invoice Amount (₹)</label>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Project</label>
+            <div className="relative">
+              <select
+                required
+                value={formData.project}
+                onChange={(e) => setFormData({...formData, project: e.target.value})}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 pr-10 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+              >
+                <option value="" disabled>Select Project...</option>
+                <option value="project_1">Acme Corp - Website Redesign</option>
+                <option value="project_2">GlobalTech - Mobile App</option>
+                <option value="project_3">Nexus - Dashboard Development</option>
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Milestone Title</label>
             <input
-              type="number"
+              type="text"
               required
-              value={invAmount}
-              onChange={(e) => setInvAmount(e.target.value)}
-              placeholder="100000"
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
+              value={formData.title}
+              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              placeholder="e.g. Design Sign-off & Handover"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all placeholder:text-slate-400"
             />
           </div>
-          <button
-            type="submit"
-            className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all mt-2"
-          >
-            Generate Invoice PDF & Send to Client
-          </button>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Invoice Amount (₹)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">₹</span>
+                <input
+                  type="number"
+                  required
+                  value={formData.amount}
+                  onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                  placeholder="100000"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 pl-7 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Due Date</label>
+              <input
+                type="date"
+                required
+                value={formData.dueDate}
+                onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all [color-scheme:light] dark:[color-scheme:dark]"
+              />
+            </div>
+          </div>
+
+          <div>
+              <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Notes / Terms (Optional)</label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                placeholder="Any additional notes for the client..."
+                rows={2}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all resize-none placeholder:text-slate-400"
+              />
+          </div>
+
+          <div className="pt-2">
+            <button
+              type="submit"
+              className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 group"
+            >
+              <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              Generate Invoice PDF & Send to Client
+            </button>
+          </div>
         </form>
       </BottomSheet>
 
