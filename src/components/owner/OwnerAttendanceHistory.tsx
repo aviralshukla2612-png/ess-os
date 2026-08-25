@@ -1,20 +1,19 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Clock, Search } from "lucide-react";
+import { Clock } from "lucide-react";
+import { CalendarDatePicker } from "@/components/ui/CalendarDatePicker";
 
 export function OwnerAttendanceHistory() {
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState("ALL");
-  const [filterType, setFilterType] = useState<"TODAY" | "MONTHLY" | "CUSTOM">("MONTHLY");
-  
-  const [customStartDate, setCustomStartDate] = useState(() => {
+  const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     d.setDate(1);
     return d.toISOString().split("T")[0];
   });
-  const [customEndDate, setCustomEndDate] = useState(() => {
+  const [endDate, setEndDate] = useState(() => {
     return new Date().toISOString().split("T")[0];
   });
 
@@ -44,25 +43,8 @@ export function OwnerAttendanceHistory() {
       try {
         let url = `/crmtesting/api/attendance/history?employeeId=${selectedEmployee}`;
         
-        const now = new Date();
-        let start = "";
-        let end = "";
-
-        if (filterType === "TODAY") {
-          start = now.toISOString().split("T")[0];
-          end = now.toISOString().split("T")[0];
-        } else if (filterType === "MONTHLY") {
-          const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-          const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-          start = firstDay.toISOString().split("T")[0];
-          end = lastDay.toISOString().split("T")[0];
-        } else if (filterType === "CUSTOM") {
-          start = customStartDate;
-          end = customEndDate;
-        }
-
-        if (start && end) {
-          url += `&startDate=${start}&endDate=${end}`;
+        if (startDate && endDate) {
+          url += `&startDate=${startDate}&endDate=${endDate}`;
         }
 
         const res = await fetch(url);
@@ -78,7 +60,7 @@ export function OwnerAttendanceHistory() {
     };
 
     fetchHistory();
-  }, [selectedEmployee, filterType, customStartDate, customEndDate]);
+  }, [selectedEmployee, startDate, endDate]);
 
   return (
     <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6 md:p-8 shadow-xl dark:shadow-2xl space-y-6">
@@ -104,34 +86,15 @@ export function OwnerAttendanceHistory() {
             ))}
           </select>
 
-          {/* Date Filter */}
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value as any)}
-            className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:border-indigo-500 w-full sm:w-auto"
-          >
-            <option value="TODAY">Today</option>
-            <option value="MONTHLY">This Month</option>
-            <option value="CUSTOM">Custom Date</option>
-          </select>
-
-          {filterType === "CUSTOM" && (
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1 w-full sm:w-auto">
-              <input
-                type="date"
-                value={customStartDate}
-                onChange={(e) => setCustomStartDate(e.target.value)}
-                className="bg-transparent text-xs text-slate-700 dark:text-slate-300 outline-none flex-1"
-              />
-              <span className="text-slate-400 text-xs">-</span>
-              <input
-                type="date"
-                value={customEndDate}
-                onChange={(e) => setCustomEndDate(e.target.value)}
-                className="bg-transparent text-xs text-slate-700 dark:text-slate-300 outline-none flex-1"
-              />
-            </div>
-          )}
+          {/* Date Picker */}
+          <CalendarDatePicker
+            startDate={startDate}
+            endDate={endDate}
+            onDateChange={(start, end) => {
+              setStartDate(start);
+              setEndDate(end);
+            }}
+          />
         </div>
       </div>
 

@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { OwnerBreakDashboard } from "@/components/owner/OwnerBreakDashboard";
 import { OwnerAttendanceHistory } from "@/components/owner/OwnerAttendanceHistory";
+import { CalendarDatePicker } from "@/components/ui/CalendarDatePicker";
 import {
   Clock,
   Play,
@@ -73,13 +74,12 @@ export default function AttendanceWorkClockPage() {
   const [inspectedEmployee, setInspectedEmployee] = useState("EMP-004");
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
 
-  const [filterType, setFilterType] = useState<"TODAY" | "MONTHLY" | "CUSTOM">("MONTHLY");
-  const [customStartDate, setCustomStartDate] = useState(() => {
+  const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     d.setDate(1);
     return d.toISOString().split("T")[0];
   });
-  const [customEndDate, setCustomEndDate] = useState(() => {
+  const [endDate, setEndDate] = useState(() => {
     return new Date().toISOString().split("T")[0];
   });
 
@@ -87,25 +87,8 @@ export default function AttendanceWorkClockPage() {
     try {
       let url = `/crmtesting/api/attendance/history?employeeId=${session?.user?.employeeId || ""}`;
       
-      const now = new Date();
-      let start = "";
-      let end = "";
-
-      if (filterType === "TODAY") {
-        start = now.toISOString().split("T")[0];
-        end = now.toISOString().split("T")[0];
-      } else if (filterType === "MONTHLY") {
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        start = firstDay.toISOString().split("T")[0];
-        end = lastDay.toISOString().split("T")[0];
-      } else if (filterType === "CUSTOM") {
-        start = customStartDate;
-        end = customEndDate;
-      }
-
-      if (start && end) {
-        url += `&startDate=${start}&endDate=${end}`;
+      if (startDate && endDate) {
+        url += `&startDate=${startDate}&endDate=${endDate}`;
       }
 
       const res = await fetch(url);
@@ -122,7 +105,7 @@ export default function AttendanceWorkClockPage() {
     if (session?.user?.employeeId) {
       fetchAttendanceLogs();
     }
-  }, [filterType, customStartDate, customEndDate, session?.user?.employeeId]);
+  }, [startDate, endDate, session?.user?.employeeId]);
 
   const REQUIRED_WORK_SECONDS = 8 * 3600;
   const progressPercent = Math.min(100, Math.round((workSeconds / REQUIRED_WORK_SECONDS) * 100));
@@ -480,33 +463,14 @@ export default function AttendanceWorkClockPage() {
           </div>
           
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value as any)}
-              className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:border-indigo-500"
-            >
-              <option value="TODAY">Today</option>
-              <option value="MONTHLY">This Month</option>
-              <option value="CUSTOM">Custom Date</option>
-            </select>
-
-            {filterType === "CUSTOM" && (
-              <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1">
-                <input
-                  type="date"
-                  value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="bg-transparent text-xs text-slate-700 dark:text-slate-300 outline-none"
-                />
-                <span className="text-slate-400 text-xs">-</span>
-                <input
-                  type="date"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="bg-transparent text-xs text-slate-700 dark:text-slate-300 outline-none"
-                />
-              </div>
-            )}
+            <CalendarDatePicker
+              startDate={startDate}
+              endDate={endDate}
+              onDateChange={(start, end) => {
+                setStartDate(start);
+                setEndDate(end);
+              }}
+            />
           </div>
         </div>
 
