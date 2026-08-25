@@ -13,7 +13,7 @@ export async function GET() {
         statusEvents: {
           where: { 
             endedAt: null, 
-            statusType: { in: ["BREAK", "Lunch", "Tea", "LUNCH", "TEA_BREAK"] } 
+            statusType: { in: ["WORKING", "BREAK", "Lunch", "Tea", "LUNCH", "TEA_BREAK"] } 
           },
           orderBy: { startedAt: "desc" },
           take: 1
@@ -32,7 +32,8 @@ export async function GET() {
 
     const teamData = employees.map((emp) => {
         // Use included relations instead of separate queries (Fixes N+1)
-        const activeBreak = emp.statusEvents?.[0] || null;
+        const activeBreak = emp.statusEvents?.find(e => e.statusType !== "WORKING") || null;
+        const workingEvent = emp.statusEvents?.find(e => e.statusType === "WORKING") || null;
         const activeWork = emp.workSessions?.[0] || null;
 
         // Determine status
@@ -50,11 +51,13 @@ export async function GET() {
           const nowMs = Date.now();
           const mins = Math.round((nowMs - startMs) / 60000);
           duration = `${mins}m`;
-        } else if (activeWork) {
+        } else if (activeWork || workingEvent) {
           status = "WORKING";
-          if (activeWork.project) project = activeWork.project.name;
-          if (activeWork.task) task = `Task: ${activeWork.task.title}`;
-          const startMs = new Date(activeWork.startedAt).getTime();
+          if (activeWork?.project) project = activeWork.project.name;
+          if (activeWork?.task) task = `Task: ${activeWork.task.title}`;
+          else if (workingEvent?.notes) task = workingEvent.notes;
+
+          const startMs = new Date((activeWork || workingEvent)!.startedAt).getTime();
           const nowMs = Date.now();
           const hrs = Math.floor((nowMs - startMs) / 3600000);
           const mins = Math.round(((nowMs - startMs) % 3600000) / 60000);
