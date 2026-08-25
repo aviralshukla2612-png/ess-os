@@ -16,7 +16,11 @@ export async function middleware(req: any) {
     return NextResponse.next();
   }
 
-  const token = await getToken({ req });
+  const useSecureCookies = process.env.NEXTAUTH_URL?.startsWith("https://") ?? false;
+  const cookiePrefix = useSecureCookies ? "__Secure-" : "";
+  const cookieName = `${cookiePrefix}ess-crm.session-token`;
+
+  const token = await getToken({ req, cookieName });
   console.log("MIDDLEWARE TOKEN ROLE:", token?.role, "FOR PATH:", pathname);
 
   if (!token) {
