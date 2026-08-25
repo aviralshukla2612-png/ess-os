@@ -3,32 +3,35 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+const useSecureCookies = process.env.NEXTAUTH_URL?.startsWith("https://") ?? false;
+const cookiePrefix = useSecureCookies ? "__Secure-" : "";
+
 export const authOptions: NextAuthOptions = {
   cookies: {
     sessionToken: {
-      name: `ess-crm.session-token`,
+      name: `${cookiePrefix}ess-crm.session-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure: useSecureCookies,
       },
     },
     callbackUrl: {
-      name: `ess-crm.callback-url`,
+      name: `${cookiePrefix}ess-crm.callback-url`,
       options: {
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure: useSecureCookies,
       },
     },
     csrfToken: {
-      name: `ess-crm.csrf-token`,
+      name: `${cookiePrefix}ess-crm.csrf-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure: useSecureCookies,
       },
     },
   },
