@@ -5,8 +5,8 @@ import { NextAuthProvider } from "@/components/providers/NextAuthProvider";
 import { AppShell } from "@/components/layout/AppShell";
 
 export const metadata = {
-  title: "MDZ OS — Master Business Operating System",
-  description: "Centralized Operating System for MDZ Company",
+  title: "ESS OS — Master Business Operating System",
+  description: "Centralized Operating System for ESS Company",
 };
 
 import { PrototypeStoreProvider } from "@/lib/prototypeStore";

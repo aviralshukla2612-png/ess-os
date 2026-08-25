@@ -15,7 +15,7 @@ if (-not (Test-Path -Path $DbPath)) {
 Write-Host "Creating backup..."
 # If sqlite3 is installed and in PATH, use online backup API
 # Otherwise, just copy the file since this is a basic backup script
-# docker exec mdz-os-app sqlite3 /app/prisma/dev.db ".backup /app/prisma/backup.db" could also be used
+# docker exec ess-os-app sqlite3 /app/prisma/dev.db ".backup /app/prisma/backup.db" could also be used
 try {
     sqlite3 $DbPath ".backup '$BackupFile'"
     if ($LASTEXITCODE -eq 0) {

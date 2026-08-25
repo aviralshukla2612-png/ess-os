@@ -1,7 +1,7 @@
-# MDZ OS — UI PRODUCT ARCHITECTURE PLAN
+# ESS OS — UI PRODUCT ARCHITECTURE PLAN
 
-**Product:** MDZ OS  
-**Organization:** MDZ Company  
+**Product:** ESS OS  
+**Organization:** ESS Company  
 **Document Type:** Master UI Product Architecture Plan & Information Architecture Specification  
 **Version:** 1.0 (Architecture Phase)  
 **Status:** Awaiting Approval  
@@ -10,7 +10,7 @@
 
 ## 1. PRODUCT UNDERSTANDING & CORE VISION
 
-MDZ OS is a unified business operating system designed for **MDZ Company**. It replaces disconnected CRMs, task trackers, HR spreadsheets, and invoicing tools with a single digital operational memory.
+ESS OS is a unified business operating system designed for **ESS Company**. It replaces disconnected CRMs, task trackers, HR spreadsheets, and invoicing tools with a single digital operational memory.
 
 ### Core Philosophy
 > **"Dashboards are role-based. Data is project/client-based."**
@@ -26,7 +26,7 @@ LEAD → SALES → CLIENT → PROJECT → TEAM → EXECUTION → DOCUMENTATION �
 
 ## 2. CORRECT ACTOR MODEL
 
-In accordance with the Architect Instruction, MDZ OS discards rigid global role switching (e.g., switching between "Developer", "Designer", "QA", "PM"). There are **Four Primary User Contexts**:
+In accordance with the Architect Instruction, ESS OS discards rigid global role switching (e.g., switching between "Developer", "Designer", "QA", "PM"). There are **Four Primary User Contexts**:
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -271,7 +271,7 @@ The Owner Command Center prioritizes **exceptions requiring management attention
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ MDZ COMMAND CENTER                                                  │
+│ ESS COMMAND CENTER                                                  │
 ├─────────────────────────────────────────────────────────────────────────┤
 │ METRICS: Pipeline: ₹14.8L | Collections: ₹3.2L | Outstanding: ₹1.4L      │
 ├─────────────────────────────────────────────────────────────────────────┤
@@ -332,7 +332,7 @@ The Owner Command Center prioritizes **exceptions requiring management attention
 ## 14. NAVIGATION ARCHITECTURE & SYSTEM SHELL
 
 ### Global Header Bar
-- Brand Identity: **MDZ OS**
+- Brand Identity: **ESS OS**
 - Global Search Trigger (`Cmd/Ctrl + K`)
 - Active Punch Status & Timer Widget
 - Real-Time Notification Bell & Drawer Trigger

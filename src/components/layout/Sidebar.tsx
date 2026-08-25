@@ -167,7 +167,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
         <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 text-xs space-y-1.5 backdrop-blur-xl shadow-xs dark:shadow-xl">
           <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100">
             <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-pulse" />
-            <span>MDZ Smart OS</span>
+            <span>ESS Smart OS</span>
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-normal">
             Project-Centered architecture with immutable audit history.

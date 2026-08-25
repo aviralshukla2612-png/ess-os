@@ -40,7 +40,7 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
   const fetchClientData = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/mdz-crm/api/clients/${params.id}`);
+      const res = await fetch(`/ess-crm/api/clients/${params.id}`);
       const json = await res.json();
       
       if (json.success && json.data) {
@@ -59,7 +59,7 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
           status: "ACTIVE",
           portalToken: `token-${c.id}`, // Placeholder until Portal token model is joined
           invoices: c.invoices || [],
-          notes: c.notes ? [{ id: "n1", author: "Rahul MDZ", text: c.notes, time: "Aug 1" }] : [],
+          notes: c.notes ? [{ id: "n1", author: "Rahul ESS", text: c.notes, time: "Aug 1" }] : [],
         };
         setClient(formattedClient);
         setLinkedProjects(c.projects || []);
@@ -76,7 +76,7 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
     e.preventDefault();
     if (!noteText.trim()) return;
     setClientNotes([
-      { id: Date.now().toString(), author: "Rahul MDZ", text: noteText, time: "Just now" },
+      { id: Date.now().toString(), author: "Rahul ESS", text: noteText, time: "Just now" },
       ...clientNotes,
     ]);
     showToast("✓ Note added to Client 360° log", "success");

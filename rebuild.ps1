@@ -1,5 +1,5 @@
 Write-Host "=========================================" -ForegroundColor Cyan
-Write-Host " MDZ OS - Clean Rebuild Without Cache" -ForegroundColor Cyan
+Write-Host " ESS OS - Clean Rebuild Without Cache" -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 
 # 1. Remove .next build directory & cache
@@ -18,4 +18,4 @@ Write-Host "=========================================" -ForegroundColor Green
 Write-Host " Clean Rebuild Complete! Zero Cache Used." -ForegroundColor Green
 Write-Host "=========================================" -ForegroundColor Green
 Write-Host "To start the production server, run:" -ForegroundColor White
-Write-Host "  npm run start -- -p 3020" -ForegroundColor Yellow
+Write-Host "  npm run start -- -p 3040" -ForegroundColor Yellow

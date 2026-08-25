@@ -173,7 +173,7 @@ export function GlobalSearchModal({ isOpen, onClose }: Props) {
 
         {/* Footer */}
         <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between px-4 font-mono">
-          <span>Search across MDZ OS Entities</span>
+          <span>Search across ESS OS Entities</span>
           <span>ESC to exit</span>
         </div>
       </div>

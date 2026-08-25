@@ -1,9 +1,9 @@
 import { test, expect, Page } from '@playwright/test';
 
 const authenticate = async (page: Page, email: string) => {
-  await page.goto('/mdz-crm/login');
-  await page.getByPlaceholder('dev.patel@mdzcompany.com').clear();
-  await page.getByPlaceholder('dev.patel@mdzcompany.com').pressSequentially(email, { delay: 10 });
+  await page.goto('/ess-crm/login');
+  await page.getByPlaceholder('dev.patel@esscompany.com').clear();
+  await page.getByPlaceholder('dev.patel@esscompany.com').pressSequentially(email, { delay: 10 });
   await page.getByPlaceholder('Enter your password').clear();
   await page.getByPlaceholder('Enter your password').pressSequentially('TestPassword123!', { delay: 10 });
   
@@ -14,7 +14,7 @@ const authenticate = async (page: Page, email: string) => {
   await page.click('button[type="submit"]');
   await callbackPromise;
 
-  const sessionRes = await page.request.get('/mdz-crm/api/auth/session');
+  const sessionRes = await page.request.get('/ess-crm/api/auth/session');
   expect(sessionRes.status()).toBe(200);
 };
 
@@ -24,9 +24,9 @@ test.describe('ATTENDANCE Workflow', () => {
   });
 
   test('Employee attendance flow (Working -> Break -> Resume -> Punch Out)', async ({ page }) => {
-    await page.goto('/mdz-crm/attendance');
+    await page.goto('/ess-crm/attendance');
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('text=MDZ Work Clock')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=ESS Work Clock')).toBeVisible({ timeout: 10000 });
 
     // 1. Initial State is WORKING (from useWorkClock context)
     await expect(page.locator('button', { hasText: 'Take Break' })).toBeVisible({ timeout: 10000 });
@@ -65,6 +65,6 @@ test.describe('ATTENDANCE Workflow', () => {
     }
 
     // Verify completed or submitted (UI might just return to the main clock if early out is submitted)
-    await expect(page.locator('text=MDZ Work Clock')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=ESS Work Clock')).toBeVisible({ timeout: 10000 });
   });
 });

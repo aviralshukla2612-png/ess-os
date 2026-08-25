@@ -10,12 +10,12 @@ export async function GET() {
     const results = [];
 
     // Setup Test User
-    let testUser = await prisma.user.findUnique({ where: { email: "test-emp@mdz.com" } });
+    let testUser = await prisma.user.findUnique({ where: { email: "test-emp@ess.com" } });
     if (!testUser) {
       testUser = await prisma.user.create({
         data: {
           name: "Test Employee",
-          email: "test-emp@mdz.com",
+          email: "test-emp@ess.com",
           passwordHash: "dummy",
           activeRole: "EMPLOYEE",
           isActive: true,

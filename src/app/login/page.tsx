@@ -39,7 +39,7 @@ export default function LoginPage() {
       if (res?.error) {
         setError(res.error);
       } else {
-        window.location.href = "/mdz-crm";
+        window.location.href = "/ess-crm";
       }
     } catch (err) {
       setError("An unexpected error occurred.");
@@ -53,9 +53,9 @@ export default function LoginPage() {
       {/* Header theme toggle */}
       <div className="flex items-center justify-between max-w-md mx-auto w-full pt-2">
         <div className="flex items-center gap-2 font-bold text-base text-slate-900 dark:text-slate-100">
-          <img src="/mdz-crm/mdz-logo.jpg" alt="MDZ Logo" className="w-8 h-8 rounded-lg object-contain bg-white dark:bg-white shadow-xs" />
+          <img src="/ess-crm/ess-logo.png" alt="ESS Logo" className="w-8 h-8 object-contain" />
           <span>
-            MDZ <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">OS</span>
+            ESS <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">OS</span>
           </span>
         </div>
 
@@ -70,7 +70,7 @@ export default function LoginPage() {
               Welcome back
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Sign in with your MDZ Company credentials to access your workspace.
+              Sign in with your ESS Company credentials to access your workspace.
             </p>
           </div>
 
@@ -205,7 +205,7 @@ export default function LoginPage() {
 
       {/* Footer */}
       <div className="text-center text-xs text-slate-400 pb-2 font-mono">
-        MDZ Company © 2026 • Enterprise Business OS
+        ESS Company © 2026 • Enterprise Business OS
       </div>
     </div>
   );

@@ -4,7 +4,7 @@
 - **Framework:** Next.js 14, React 18, TypeScript.
 - **Database Architecture:** Prisma ORM with SQLite.
 - **Authentication Architecture:** NextAuth.js with Prisma adapter and JWT sessions. Middleware enforces route protection and RBAC (OWNER, SALES, EMPLOYEE). Portal tokens used for isolated client access.
-- **Deployment Architecture:** Dockerized deployment with Nginx proxying. Application is served under `basePath: "/mdz-os"`.
+- **Deployment Architecture:** Dockerized deployment with Nginx proxying. Application is served under `basePath: "/ess-os"`.
 
 ## Existing Known UX Gaps
 - Hardcoded role-routing on login.

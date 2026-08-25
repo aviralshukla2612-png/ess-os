@@ -34,7 +34,7 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
   const fetchLead = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/mdz-crm/api/leads/${params.id}`);
+      const res = await fetch(`/ess-crm/api/leads/${params.id}`);
       const json = await res.json();
       if (json.success && json.data) {
         const l = json.data;
@@ -114,7 +114,7 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
 
   const handleConvertLead = async () => {
     try {
-      const res = await fetch(`/mdz-crm/api/leads/${lead.id}/convert`, { method: "POST" });
+      const res = await fetch(`/ess-crm/api/leads/${lead.id}/convert`, { method: "POST" });
       const json = await res.json();
       if (json.success) {
         showToast(`🎉 Converted to Client "${json.data.client.companyName}"`, "success");
@@ -130,7 +130,7 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
   const updateLeadStage = async (leadId: string, newStage: string) => {
     setLead((prev: any) => ({ ...prev, stage: newStage }));
     try {
-      const res = await fetch(`/mdz-crm/api/leads/${leadId}`, {
+      const res = await fetch(`/ess-crm/api/leads/${leadId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stage: newStage }),

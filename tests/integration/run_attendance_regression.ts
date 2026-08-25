@@ -1,6 +1,6 @@
 
 
-const BASE_URL = "http://localhost:3020/mdz-crm";
+const BASE_URL = "http://localhost:3040/ess-crm";
 
 async function login(email: string, password: string): Promise<string> {
   // Get CSRF token
@@ -42,8 +42,8 @@ async function run() {
   console.log("🚀 Starting Attendance Regression Test Suite...\n");
 
   try {
-    const employeeCookie = await login("dev.patel@mdzcompany.com", "password123");
-    const ownerCookie = await login("owner@mdzcompany.com", "password123");
+    const employeeCookie = await login("dev.patel@esscompany.com", "password123");
+    const ownerCookie = await login("owner@esscompany.com", "password123");
 
     const fetchAPI = async (path: string, method = "GET", body: any = null, cookie = employeeCookie) => {
       const res = await fetch(`${BASE_URL}${path}`, {

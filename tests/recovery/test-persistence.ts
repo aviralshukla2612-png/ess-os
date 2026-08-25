@@ -8,7 +8,7 @@ async function main() {
   if (arg === "create") {
     const user = await prisma.user.create({
       data: {
-        email: "persistence_test_2026@mdzcompany.com",
+        email: "persistence_test_2026@esscompany.com",
         name: "Persistence Test",
         passwordHash: "test1234",
         activeRole: "EMPLOYEE",
@@ -20,7 +20,7 @@ async function main() {
     console.log("Created user with ID:", user.id);
   } else if (arg === "verify") {
     const user = await prisma.user.findUnique({
-      where: { email: "persistence_test_2026@mdzcompany.com" }
+      where: { email: "persistence_test_2026@esscompany.com" }
     });
     if (user) {
       console.log("Verification successful. User found:", user.id);

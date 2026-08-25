@@ -25,14 +25,14 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # Stop the application container before restoring
-echo "Stopping mdz-os-app container to prevent data corruption during restore..."
-docker stop mdz-os-app || true
+echo "Stopping ess-os-app container to prevent data corruption during restore..."
+docker stop ess-os-app || true
 
 # Copy backup to live location
 cp "$BACKUP_FILE" "$DB_PATH"
 
 echo "Database restored successfully."
-echo "Starting mdz-os-app container..."
-docker start mdz-os-app
+echo "Starting ess-os-app container..."
+docker start ess-os-app
 
 echo "Restore complete!"

@@ -26,7 +26,7 @@ async function main() {
     activeProjects: c.projects.map((p) => p.id),
     completedProjects: [],
     invoices: c.invoices.map((i) => i.id),
-    notes: c.notes ? [{ id: "n1", author: "Rahul MDZ", text: c.notes, time: "Aug 1" }] : [],
+    notes: c.notes ? [{ id: "n1", author: "Rahul ESS", text: c.notes, time: "Aug 1" }] : [],
   }));
   console.log("Formatted:", formatted);
 }

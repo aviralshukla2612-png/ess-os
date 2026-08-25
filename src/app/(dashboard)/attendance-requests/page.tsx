@@ -19,7 +19,7 @@ export default function AttendanceRequestsPage() {
   const fetchPendingPunchOuts = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch("/mdz-crm/api/attendance/pending-punch-outs");
+      const res = await fetch("/ess-crm/api/attendance/pending-punch-outs");
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setPendingPunchOuts(json.data.filter((req: any) => req.punchOutRequestStatus === "PENDING"));
@@ -36,7 +36,7 @@ export default function AttendanceRequestsPage() {
   const handleApproveReject = async (attendanceId: string, action: "APPROVE" | "REJECT") => {
     setProcessingIds(prev => new Set(prev).add(attendanceId));
     try {
-      const res = await fetch("/mdz-crm/api/attendance/admin/approve-punch-out", {
+      const res = await fetch("/ess-crm/api/attendance/admin/approve-punch-out", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ attendanceId, action, adminId: "EMP-001" }), // Mock admin id

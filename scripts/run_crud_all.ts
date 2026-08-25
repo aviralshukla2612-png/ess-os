@@ -1,9 +1,9 @@
 async function runFullCrudSuite() {
   console.log("==================================================");
-  console.log("🔥 MDZ OS — MASTER CRUD REST API TEST EXECUTION");
+  console.log("🔥 ESS OS — MASTER CRUD REST API TEST EXECUTION");
   console.log("==================================================\n");
 
-  const baseUrl = "http://localhost:3020";
+  const baseUrl = "http://localhost:3040";
 
   // ==========================================
   // 1. LEADS CRUD
@@ -136,7 +136,7 @@ async function runFullCrudSuite() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       name: "Aarav CRUD Developer",
-      email: "aarav.crud@mdzcompany.com",
+      email: "aarav.crud@esscompany.com",
       designation: "Senior Frontend Engineer",
       department: "Engineering",
       salaryMonthly: 105000,

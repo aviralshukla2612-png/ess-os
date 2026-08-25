@@ -3,8 +3,8 @@ import { PrismaClient } from '@prisma/client';
 
 test.describe('Role-Based Access Control (RBAC) Boundaries', () => {
   const login = async (page: Page, email: string, password = 'TestPassword123!') => {
-    await page.goto('/mdz-crm/login');
-    await page.getByPlaceholder('dev.patel@mdzcompany.com').fill(email);
+    await page.goto('/ess-crm/login');
+    await page.getByPlaceholder('dev.patel@esscompany.com').fill(email);
     await page.getByPlaceholder('Enter your password').fill(password);
     await page.click('button[type="submit"]');
     await expect(page).not.toHaveURL(/.*login/);
@@ -14,11 +14,11 @@ test.describe('Role-Based Access Control (RBAC) Boundaries', () => {
     await login(page, 'sales@test.com');
     
     // Allowed
-    await page.goto('/mdz-crm/leads');
+    await page.goto('/ess-crm/leads');
     await expect(page.locator('text=Sales CRM & Leads')).toBeVisible();
 
     // Denied - Finance
-    await page.goto('/mdz-crm/finance');
+    await page.goto('/ess-crm/finance');
     // It should either redirect to dashboard or show an unauthorized message
     await expect(page).not.toHaveURL(/.*\/finance/);
   });
@@ -27,11 +27,11 @@ test.describe('Role-Based Access Control (RBAC) Boundaries', () => {
     await login(page, 'emp@test.com');
     
     // Allowed
-    await page.goto('/mdz-crm/attendance');
-    await expect(page.locator('text=MDZ Work Clock')).toBeVisible();
+    await page.goto('/ess-crm/attendance');
+    await expect(page.locator('text=ESS Work Clock')).toBeVisible();
 
     // Denied - Leads
-    await page.goto('/mdz-crm/leads');
+    await page.goto('/ess-crm/leads');
     await expect(page).not.toHaveURL(/.*\/leads/);
   });
 
@@ -40,7 +40,7 @@ test.describe('Role-Based Access Control (RBAC) Boundaries', () => {
     await login(page, 'emp@test.com');
     
     // Validate EMPLOYEE boundary (Access to Finance is denied)
-    await page.goto('/mdz-crm/finance');
+    await page.goto('/ess-crm/finance');
     await expect(page).not.toHaveURL(/.*\/finance/);
 
     // 2. Out-of-band DB Role Change
@@ -56,7 +56,7 @@ test.describe('Role-Based Access Control (RBAC) Boundaries', () => {
 
     // 3. Document Existing Session Behavior
     // We refresh the page with the stale session token
-    await page.goto('/mdz-crm/finance');
+    await page.goto('/ess-crm/finance');
     // If the system is DB authoritative, it should now allow access!
     // If the system relies purely on the JWT claim, it would still deny access.
     // The user's architecture specifies DB authoritative checks.

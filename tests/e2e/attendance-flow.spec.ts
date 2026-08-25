@@ -3,8 +3,8 @@ import { test, expect } from '@playwright/test';
 test.describe('Employee Attendance Flow', () => {
   test('Complete day workflow for EMPLOYEE', async ({ page }) => {
     // 1. Login as EMPLOYEE
-    await page.goto('/mdz-crm/login');
-    await page.getByPlaceholder('dev.patel@mdzcompany.com').fill('emp@test.com');
+    await page.goto('/ess-crm/login');
+    await page.getByPlaceholder('dev.patel@esscompany.com').fill('emp@test.com');
     await page.getByPlaceholder('Enter your password').fill('TestPassword123!');
     const callbackDone = page.waitForResponse(
       r => r.url().includes('/api/auth/callback/credentials') && r.request().method() === 'POST',
@@ -19,7 +19,7 @@ test.describe('Employee Attendance Flow', () => {
     await page.waitForURL(url => !url.toString().includes('login'), { timeout: 10000 });
 
     // 2. Navigate to Attendance
-    await page.goto('/mdz-crm/attendance');
+    await page.goto('/ess-crm/attendance');
     await expect(page.locator('text=Ready to start your day?')).toBeVisible({ timeout: 15000 });
 
     // 3. Punch In
@@ -55,6 +55,6 @@ test.describe('Employee Attendance Flow', () => {
     await page.reload();
     // In our UI, if early punch out requested, it might still show the day as active until approved, 
     // or it might show shift completed if it overrides. Let's just expect it not to crash and show something logical.
-    await expect(page.locator('text=MDZ Work Clock')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('text=ESS Work Clock')).toBeVisible({ timeout: 15000 });
   });
 });

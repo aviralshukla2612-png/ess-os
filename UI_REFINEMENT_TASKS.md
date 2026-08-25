@@ -1,4 +1,4 @@
-# MDZ OS — UI REFINEMENT MASTER TASKS (DUAL THEME & ZERO GOLD)
+# ESS OS — UI REFINEMENT MASTER TASKS (DUAL THEME & ZERO GOLD)
 
 ## Phase 0 — Application Audit & Setup
 - [x] Inspect existing codebase & theme architecture
@@ -21,7 +21,7 @@
 - [x] Refine Input & Select form controls with focus rings
 
 ## Phase 3 — Application Shell Transformation
-- [x] Refine Header with theme switcher & clean indigo MDZ OS branding (Header.tsx)
+- [x] Refine Header with theme switcher & clean indigo ESS OS branding (Header.tsx)
 - [x] Refine Sidebar with theme support & clean active states (Sidebar.tsx)
 - [x] Remove top `DEMO MULTI-ROLE SWITCHER` from default shell layout (or collapse into compact menu)
 
@@ -29,7 +29,7 @@
 - [x] Redesign Owner Header & Greeting ("Good morning, Rahul")
 - [x] Redesign Command Metrics (Pipeline, Collections, Overdue, Projects, Team Present)
 - [x] Redesign Needs Attention Exception Queue (Light & Dark mode support)
-- [x] Redesign Real-Time Team View & MDZ AI Assistant
+- [x] Redesign Real-Time Team View & ESS AI Assistant
 
 ## Phase 5 — Sales CRM Refinement
 - [x] Redesign Sales Dashboard Header & KPI Cards

@@ -1,7 +1,7 @@
 async function testApis() {
-  console.log("🚀 Running MDZ OS REST API Verification Test Suite...\n");
+  console.log("🚀 Running ESS OS REST API Verification Test Suite...\n");
 
-  const baseUrl = "http://localhost:3020";
+  const baseUrl = "http://localhost:3040";
 
 
   // 2. GET /api/leads (Unauthenticated)
@@ -15,7 +15,7 @@ async function testApis() {
     body: JSON.stringify({
       clientName: "Automated Test Prospect",
       contactPerson: "QA Bot",
-      email: "qa@mdzcompany.com",
+      email: "qa@esscompany.com",
       leadValue: 450000,
       stage: "NEW",
     }),

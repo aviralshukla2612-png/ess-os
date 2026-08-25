@@ -121,7 +121,7 @@ export default function SettingsPage() {
   const { data: session } = useSession();
 
   // Company settings
-  const [companyName, setCompanyName] = useState("MDZ Company");
+  const [companyName, setCompanyName] = useState("ESS Company");
   const [companySaved, setCompanySaved] = useState(false);
 
   const playbooks = [
@@ -145,7 +145,7 @@ export default function SettingsPage() {
     setEmailLoading(true);
 
     try {
-      const res = await fetch("/mdz-crm/api/auth/update-credentials", {
+      const res = await fetch("/ess-crm/api/auth/update-credentials", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -161,7 +161,7 @@ export default function SettingsPage() {
         showToast("✅ Email updated! Please log in again.", "success");
         setEmailForm({ currentPassword: "", newEmail: "" });
         // Sign out so user re-authenticates with new email
-        setTimeout(() => signOut({ callbackUrl: "/mdz-crm/login" }), 2500);
+        setTimeout(() => signOut({ callbackUrl: "/ess-crm/login" }), 2500);
       } else {
         setEmailStatus({ type: "error", msg: data.error || "Failed to update email." });
       }
@@ -193,7 +193,7 @@ export default function SettingsPage() {
     setPwLoading(true);
 
     try {
-      const res = await fetch("/mdz-crm/api/auth/update-credentials", {
+      const res = await fetch("/ess-crm/api/auth/update-credentials", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

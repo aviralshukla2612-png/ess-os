@@ -1,6 +1,6 @@
-# MDZ OS - Comprehensive System Workflow Documentation
+# ESS OS - Comprehensive System Workflow Documentation
 
-MDZ OS is a centralized, role-based Business Operating System designed for enterprise management. The system is strictly segmented into four primary workspaces based on user roles: **Owner (Admin)**, **Sales**, **Employee**, and **Client**. 
+ESS OS is a centralized, role-based Business Operating System designed for enterprise management. The system is strictly segmented into four primary workspaces based on user roles: **Owner (Admin)**, **Sales**, **Employee**, and **Client**. 
 
 Below is the end-to-end workflow of every major function within the platform.
 
@@ -91,7 +91,7 @@ Manages the revenue lifecycle tied directly to Project Milestones.
 ---
 
 ## 6. Admin 'Needs Attention' Queue Workflow (Exception Handling)
-Instead of forcing the founder/owner to hunt for problems, MDZ OS pushes critical operational roadblocks directly to the main dashboard.
+Instead of forcing the founder/owner to hunt for problems, ESS OS pushes critical operational roadblocks directly to the main dashboard.
 
 1. **Data Aggregation**: The system silently monitors all modules (Finance, Projects, Attendance).
 2. **Exception Triggers**:

@@ -1,7 +1,7 @@
-# MDZ OS — FUNCTIONAL PRODUCT PROTOTYPE AUDIT & DEFECT RECOVERY PLAN
+# ESS OS — FUNCTIONAL PRODUCT PROTOTYPE AUDIT & DEFECT RECOVERY PLAN
 
 ## Executive Summary
-This document serves as the master audit and execution log for turning MDZ OS from a visual screen prototype into a fully interconnected, interactive business operating system prototype.
+This document serves as the master audit and execution log for turning ESS OS from a visual screen prototype into a fully interconnected, interactive business operating system prototype.
 
 ---
 
@@ -14,7 +14,7 @@ This document serves as the master audit and execution log for turning MDZ OS fr
 
 ### 2. P0 Branding & Identity Overhaul
 - **Defect**: Generic purple tile with gold/crown icon (`👑`).
-- **Fix**: Remove crown/purple tiles entirely. Create clean, high-end SaaS wordmark `MDZ OS` with crisp typography and subtle monogram `E` for mobile headers.
+- **Fix**: Remove crown/purple tiles entirely. Create clean, high-end SaaS wordmark `ESS OS` with crisp typography and subtle monogram `E` for mobile headers.
 
 ### 3. P0 Theme Inconsistency & Hardcoded Light Cards in Dark Mode
 - **Defect**: `bg-white` hardcoded across `/clients`, `/projects`, `/sales`, `/leads`, `/finance`, `/help-queue`, `/attendance`, `/employees`, `/audit` causing bright white cards inside dark theme.
@@ -32,7 +32,7 @@ This document serves as the master audit and execution log for turning MDZ OS fr
 
 ## 360° Entity-First Product Architecture
 
-Every entity in MDZ OS must be inspectable and interconnected:
+Every entity in ESS OS must be inspectable and interconnected:
 
 1. **Leads (`/leads` & `/leads/[id]`)**:
    - **Cards/Rows**: Clicking lead opens `/leads/[id]` (Lead 360°).

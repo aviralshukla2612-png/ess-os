@@ -1,7 +1,7 @@
 #!/bin/bash
 for f in $(find /etc/nginx -type f -name "*.conf"); do
-  if grep -q "/mdz-os" "$f"; then
-    sed -i 's|/mdz-os|/mdz-crm|g' "$f"
+  if grep -q "/ess-os" "$f"; then
+    sed -i 's|/ess-os|/ess-crm|g' "$f"
     echo "Updated $f"
   fi
 done

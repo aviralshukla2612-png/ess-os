@@ -1,6 +1,6 @@
 const http = require('http');
 
-const BASE_URL = 'http://localhost/mdz-os';
+const BASE_URL = 'http://localhost/ess-os';
 
 async function request(path, options = {}) {
   const url = path.startsWith('http') ? path : `${BASE_URL}${path}`;
@@ -27,15 +27,15 @@ async function verifyRouting() {
   
   // Root should redirect to login or dashboard
   let res = await request('');
-  console.log('GET /mdz-os ->', res.status, res.headers.get('location'));
+  console.log('GET /ess-os ->', res.status, res.headers.get('location'));
   if (![307, 308].includes(res.status)) throw new Error('Expected redirect on root');
 
   res = await request('/login');
-  console.log('GET /mdz-os/login ->', res.status);
+  console.log('GET /ess-os/login ->', res.status);
   if (res.status !== 200) throw new Error('Expected 200 on login');
 
   res = await request('/api/health');
-  console.log('GET /mdz-os/api/health ->', res.status, res.text);
+  console.log('GET /ess-os/api/health ->', res.status, res.text);
   if (res.status !== 200) throw new Error('Expected 200 on health API');
   
   console.log('Routing OK\n');
@@ -61,7 +61,7 @@ async function verifyAuth() {
     },
     body: JSON.stringify({
       csrfToken: csrfToken,
-      email: 'owner@mdzcompany.com',
+      email: 'owner@esscompany.com',
       password: 'password123',
       redirect: false
     })
@@ -83,7 +83,7 @@ async function verifyAuth() {
   });
   console.log('Session API ->', res.status, res.text);
   const sessionData = JSON.parse(res.text);
-  if (sessionData?.user?.email !== 'owner@mdzcompany.com') {
+  if (sessionData?.user?.email !== 'owner@esscompany.com') {
     throw new Error('Invalid session returned');
   }
   

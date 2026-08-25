@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding MDZ OS database with realistic company data...");
+  console.log("🌱 Seeding ESS OS database with realistic company data...");
 
   // Clean existing records for fresh seed
   await prisma.activityEvent.deleteMany();
@@ -67,12 +67,12 @@ async function main() {
 
   // 2. Users
   const ownerUser = await prisma.user.upsert({
-    where: { email: "owner@mdzcompany.com" },
+    where: { email: "owner@esscompany.com" },
     update: {},
     create: {
-      email: "owner@mdzcompany.com",
+      email: "owner@esscompany.com",
       passwordHash: defaultPasswordHash,
-      name: "Rahul MDZ",
+      name: "Rahul ESS",
       designation: "Founder & CEO",
       department: "Management",
       activeRole: "OWNER",
@@ -81,10 +81,10 @@ async function main() {
   });
 
   const salesUser = await prisma.user.upsert({
-    where: { email: "karan.sales@mdzcompany.com" },
+    where: { email: "karan.sales@esscompany.com" },
     update: {},
     create: {
-      email: "karan.sales@mdzcompany.com",
+      email: "karan.sales@esscompany.com",
       passwordHash: defaultPasswordHash,
       name: "Karan Verma",
       designation: "Head of Sales",
@@ -95,10 +95,10 @@ async function main() {
   });
 
   const tmUser = await prisma.user.upsert({
-    where: { email: "meet.lead@mdzcompany.com" },
+    where: { email: "meet.lead@esscompany.com" },
     update: {},
     create: {
-      email: "meet.lead@mdzcompany.com",
+      email: "meet.lead@esscompany.com",
       passwordHash: defaultPasswordHash,
       name: "Meet Shah",
       designation: "Senior Tech Lead",
@@ -109,10 +109,10 @@ async function main() {
   });
 
   const devUser = await prisma.user.upsert({
-    where: { email: "dev.patel@mdzcompany.com" },
+    where: { email: "dev.patel@esscompany.com" },
     update: {},
     create: {
-      email: "dev.patel@mdzcompany.com",
+      email: "dev.patel@esscompany.com",
       passwordHash: defaultPasswordHash,
       name: "Dev Patel",
       designation: "Full-Stack Developer",
@@ -123,10 +123,10 @@ async function main() {
   });
 
   const designerUser = await prisma.user.upsert({
-    where: { email: "priya.ux@mdzcompany.com" },
+    where: { email: "priya.ux@esscompany.com" },
     update: {},
     create: {
-      email: "priya.ux@mdzcompany.com",
+      email: "priya.ux@esscompany.com",
       passwordHash: defaultPasswordHash,
       name: "Priya Desai",
       designation: "Lead UI/UX Designer",
@@ -137,10 +137,10 @@ async function main() {
   });
 
   const qaUser = await prisma.user.upsert({
-    where: { email: "jay.qa@mdzcompany.com" },
+    where: { email: "jay.qa@esscompany.com" },
     update: {},
     create: {
-      email: "jay.qa@mdzcompany.com",
+      email: "jay.qa@esscompany.com",
       passwordHash: defaultPasswordHash,
       name: "Jay Shah",
       designation: "QA Lead",
@@ -367,7 +367,7 @@ async function main() {
       priority: "HIGH",
       progressPercentage: 72,
       liveUrl: "https://staging.abcretailers.com",
-      stagingUrl: "https://abc-staging.mdzcompany.com",
+      stagingUrl: "https://abc-staging.esscompany.com",
       designUrl: "https://figma.com/file/abc-ecommerce-design",
       createdById: ownerUser.id,
     },

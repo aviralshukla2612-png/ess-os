@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     if (lower.includes("brief") || lower.includes("morning") || lower.includes("today")) {
       responseText = `Good morning Rahul.
 
-Here is your MDZ OS Executive Morning Brief for today:
+Here is your ESS OS Executive Morning Brief for today:
 1. 👥 **14 / 16 Employees Present** (2 on scheduled leave).
 2. 🚀 **17 Active Projects** (12 on track, 3 at risk, 2 delayed).
 3. 🔴 **Project ABC is 2 days delayed**: Backend testing is waiting on Razorpay production credentials from Rajesh Mehta (Client).
@@ -32,14 +32,14 @@ Here is your MDZ OS Executive Morning Brief for today:
   3. **Historical Team Adjustment**: Priya Desai completed UI/UX and was reassigned on July 20th; Dev Patel is handling full-stack integration.
 • **Recommended Owner Action**: Contact Rajesh Mehta to verify production webhook endpoints & follow up on overdue Milestone 2 invoice (₹1,00,000).`;
     } else if (lower.includes("payment") || lower.includes("money") || lower.includes("due") || lower.includes("invoice")) {
-      responseText = `Financial Summary from MDZ OS Engine:
+      responseText = `Financial Summary from ESS OS Engine:
 
 • **Total Pipeline Value**: ₹14,80,000 across 14 sales leads.
 • **Upcoming Collections (August)**: ₹3,20,000 across 4 milestones.
 • **Overdue Amount**: ₹85,000 (ABC Retailers Pvt Ltd - Milestone 2 Invoice INV-2026-002).
 • **Received This Month**: ₹1,00,000 (Milestone 1 Advance for Project ABC).`;
     } else {
-      responseText = `MDZ AI Analysis:
+      responseText = `ESS AI Analysis:
 
 Based on recorded system events:
 • All employee work sessions, stage checklists, and meeting decision logs are up to date.

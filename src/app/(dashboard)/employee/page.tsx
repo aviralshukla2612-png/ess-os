@@ -57,7 +57,7 @@ export default function EmployeeDeskPage() {
       {/* Mobile-Optimized Executive Page Header */}
       <PageHeader
         title="Good morning, Dev"
-        description="Here is your personal work stack across assigned MDZ projects today."
+        description="Here is your personal work stack across assigned ESS projects today."
         badge="FULL-STACK DEV"
         actions={
           <div className="flex items-center gap-2">

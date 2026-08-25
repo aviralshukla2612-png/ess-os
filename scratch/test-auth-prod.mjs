@@ -3,7 +3,7 @@
  * Does not use Playwright.
  */
 
-const BASE = 'http://localhost:8080/mdz-os';
+const BASE = 'http://localhost:8080/ess-os';
 
 function extractCookies(setCookieHeader) {
   if (!setCookieHeader) return [];

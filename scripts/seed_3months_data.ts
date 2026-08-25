@@ -1,7 +1,7 @@
 async function seedViaRestApi() {
   console.log("🚀 Starting 3-Month Data Ingestion via REST API Endpoints...\n");
 
-  const baseUrl = "http://localhost:3020";
+  const baseUrl = "http://localhost:3040";
 
   // 1. CREATE 10 EMPLOYEES VIA REST API
   console.log("--------------------------------------------------");
@@ -9,16 +9,16 @@ async function seedViaRestApi() {
   console.log("--------------------------------------------------");
 
   const employeeSeeds = [
-    { name: "Rahul MDZ", email: "owner@mdzcompany.com", role: "OWNER", designation: "Founder & CEO", department: "Executive Management", salaryMonthly: 250000, skills: ["Leadership", "Strategy", "Finance"] },
-    { name: "Karan Verma", email: "karan.sales@mdzcompany.com", role: "SALES", designation: "Head of Sales", department: "Business Development", salaryMonthly: 140000, skills: ["Negotiation", "CRM", "Enterprise Sales"] },
-    { name: "Meet Shah", email: "meet.lead@mdzcompany.com", role: "EMPLOYEE", designation: "Senior Tech Lead (TM)", department: "Engineering", salaryMonthly: 130000, skills: ["Architecture", "Next.js", "System Design"] },
-    { name: "Dev Patel", email: "dev.patel@mdzcompany.com", role: "EMPLOYEE", designation: "Full-Stack Developer", department: "Engineering", salaryMonthly: 90000, skills: ["Next.js", "Prisma", "Tailwind CSS"] },
-    { name: "Priya Desai", email: "priya.ux@mdzcompany.com", role: "EMPLOYEE", designation: "Lead UI/UX Designer", department: "Product Design", salaryMonthly: 95000, skills: ["Figma", "Design Systems", "User Research"] },
-    { name: "Jay Shah", email: "jay.qa@mdzcompany.com", role: "EMPLOYEE", designation: "QA Lead Engineer", department: "Quality Assurance", salaryMonthly: 80000, skills: ["Playwright", "Automation", "Regression Testing"] },
-    { name: "Ananya Roy", email: "ananya.dev@mdzcompany.com", role: "EMPLOYEE", designation: "Backend API Specialist", department: "Engineering", salaryMonthly: 88000, skills: ["Node.js", "PostgreSQL", "GraphQL"] },
-    { name: "Rohan Varma", email: "rohan.mobile@mdzcompany.com", role: "EMPLOYEE", designation: "Mobile App Engineer", department: "Engineering", salaryMonthly: 85000, skills: ["React Native", "iOS", "Android"] },
-    { name: "Siddharth Joshi", email: "sid.sales@mdzcompany.com", role: "EMPLOYEE", designation: "Sales Executive", department: "Business Development", salaryMonthly: 70000, skills: ["Lead Prospecting", "Followups"] },
-    { name: "Neha Kulkarni", email: "neha.pm@mdzcompany.com", role: "EMPLOYEE", designation: "Project Operations Lead", department: "Project Operations", salaryMonthly: 110000, skills: ["Agile", "Scrum", "Client Coordination"] },
+    { name: "Rahul ESS", email: "owner@esscompany.com", role: "OWNER", designation: "Founder & CEO", department: "Executive Management", salaryMonthly: 250000, skills: ["Leadership", "Strategy", "Finance"] },
+    { name: "Karan Verma", email: "karan.sales@esscompany.com", role: "SALES", designation: "Head of Sales", department: "Business Development", salaryMonthly: 140000, skills: ["Negotiation", "CRM", "Enterprise Sales"] },
+    { name: "Meet Shah", email: "meet.lead@esscompany.com", role: "EMPLOYEE", designation: "Senior Tech Lead (TM)", department: "Engineering", salaryMonthly: 130000, skills: ["Architecture", "Next.js", "System Design"] },
+    { name: "Dev Patel", email: "dev.patel@esscompany.com", role: "EMPLOYEE", designation: "Full-Stack Developer", department: "Engineering", salaryMonthly: 90000, skills: ["Next.js", "Prisma", "Tailwind CSS"] },
+    { name: "Priya Desai", email: "priya.ux@esscompany.com", role: "EMPLOYEE", designation: "Lead UI/UX Designer", department: "Product Design", salaryMonthly: 95000, skills: ["Figma", "Design Systems", "User Research"] },
+    { name: "Jay Shah", email: "jay.qa@esscompany.com", role: "EMPLOYEE", designation: "QA Lead Engineer", department: "Quality Assurance", salaryMonthly: 80000, skills: ["Playwright", "Automation", "Regression Testing"] },
+    { name: "Ananya Roy", email: "ananya.dev@esscompany.com", role: "EMPLOYEE", designation: "Backend API Specialist", department: "Engineering", salaryMonthly: 88000, skills: ["Node.js", "PostgreSQL", "GraphQL"] },
+    { name: "Rohan Varma", email: "rohan.mobile@esscompany.com", role: "EMPLOYEE", designation: "Mobile App Engineer", department: "Engineering", salaryMonthly: 85000, skills: ["React Native", "iOS", "Android"] },
+    { name: "Siddharth Joshi", email: "sid.sales@esscompany.com", role: "EMPLOYEE", designation: "Sales Executive", department: "Business Development", salaryMonthly: 70000, skills: ["Lead Prospecting", "Followups"] },
+    { name: "Neha Kulkarni", email: "neha.pm@esscompany.com", role: "EMPLOYEE", designation: "Project Operations Lead", department: "Project Operations", salaryMonthly: 110000, skills: ["Agile", "Scrum", "Client Coordination"] },
   ];
 
   for (let i = 0; i < employeeSeeds.length; i++) {

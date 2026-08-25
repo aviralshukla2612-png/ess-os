@@ -1,4 +1,4 @@
-# MDZ OS Production Configuration & Deployment Guide
+# ESS OS Production Configuration & Deployment Guide
 
 ## Prerequisites
 - Docker & Docker Compose
@@ -8,18 +8,18 @@
 ## Environment Configuration
 Copy `.env.example` to `.env` and fill in the values:
 - `NEXTAUTH_SECRET`: Generate using `openssl rand -base64 32`. Keep secret.
-- `NEXTAUTH_URL`: e.g. `https://your-domain.com/mdz-os`
+- `NEXTAUTH_URL`: e.g. `https://your-domain.com/ess-os`
 - `NODE_ENV`: Set to `production`
 - `DATABASE_URL`: Typically `file:./prod.db` for SQLite or external DB URL.
 
 **WARNING: Never commit `.env` containing production credentials.**
 
 ## Deployment Architecture
-MDZ OS is containerized and served behind an Nginx reverse proxy using the `basePath: "/mdz-os"`. 
+ESS OS is containerized and served behind an Nginx reverse proxy using the `basePath: "/ess-os"`. 
 - **Docker Startup**: Run `docker-compose up -d --build` to launch the application.
 - **Production Build**: Run `npm run build` locally or let the Dockerfile handle it. The standalone output minimizes the image size.
-- **Nginx Configuration**: Proxy requests from `/mdz-os` to the Docker container (port 3020 by default).
-- **Health Endpoint**: Monitor `/mdz-os/api/health` (returns `{"status":"ok","database":"ok"}`) for liveness probes.
+- **Nginx Configuration**: Proxy requests from `/ess-os` to the Docker container (port 3040 by default).
+- **Health Endpoint**: Monitor `/ess-os/api/health` (returns `{"status":"ok","database":"ok"}`) for liveness probes.
 
 ## Database Persistence & Backup
 SQLite databases must persist outside the container.

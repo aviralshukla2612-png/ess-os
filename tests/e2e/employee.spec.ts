@@ -1,9 +1,9 @@
 import { test, expect, Page } from '@playwright/test';
 
 const authenticateAsEmployee = async (page: Page) => {
-  await page.goto('/mdz-crm/login');
-  await page.getByPlaceholder('dev.patel@mdzcompany.com').clear();
-  await page.getByPlaceholder('dev.patel@mdzcompany.com').pressSequentially('emp@test.com', { delay: 10 });
+  await page.goto('/ess-crm/login');
+  await page.getByPlaceholder('dev.patel@esscompany.com').clear();
+  await page.getByPlaceholder('dev.patel@esscompany.com').pressSequentially('emp@test.com', { delay: 10 });
   await page.getByPlaceholder('Enter your password').clear();
   await page.getByPlaceholder('Enter your password').pressSequentially('TestPassword123!', { delay: 10 });
   
@@ -14,7 +14,7 @@ const authenticateAsEmployee = async (page: Page) => {
   await page.click('button[type="submit"]');
   await callbackDone;
 
-  const sessionRes = await page.request.get('/mdz-crm/api/auth/session');
+  const sessionRes = await page.request.get('/ess-crm/api/auth/session');
   const session = await sessionRes.json();
   expect(session?.user?.role).toBe('EMPLOYEE');
 };
@@ -25,8 +25,8 @@ test.describe('EMPLOYEE E2E Access', () => {
   });
 
   const allowedRoutes = [
-    { url: '/mdz-crm/attendance', text: 'MDZ Work Clock' },
-    { url: '/mdz-crm/projects', text: 'Projects' } 
+    { url: '/ess-crm/attendance', text: 'ESS Work Clock' },
+    { url: '/ess-crm/projects', text: 'Projects' } 
   ];
 
   for (const route of allowedRoutes) {
@@ -39,11 +39,11 @@ test.describe('EMPLOYEE E2E Access', () => {
   }
 
   const forbiddenRoutes = [
-    '/mdz-crm/owner',
-    '/mdz-crm/finance',
-    '/mdz-crm/employees',
-    '/mdz-crm/audit',
-    '/mdz-crm/leads'
+    '/ess-crm/owner',
+    '/ess-crm/finance',
+    '/ess-crm/employees',
+    '/ess-crm/audit',
+    '/ess-crm/leads'
   ];
 
   for (const route of forbiddenRoutes) {

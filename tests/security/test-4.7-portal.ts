@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import crypto from "crypto";
 
 const prisma = new PrismaClient();
-const BASE_URL = "http://localhost:3025/mdz-crm";
+const BASE_URL = "http://localhost:3025/ess-crm";
 
 // Test data
 const MOCK_CLIENT_A = {
@@ -23,7 +23,7 @@ async function createPortalFixtures() {
   // Create an admin user to satisfy relationships
   const user = await prisma.user.create({
     data: {
-      email: "portal-admin-4.7@mdzcompany.com",
+      email: "portal-admin-4.7@esscompany.com",
       passwordHash: "hash",
       name: "Portal Admin",
       designation: "Admin",
@@ -95,7 +95,7 @@ async function cleanupPortalFixtures() {
   await prisma.clientPortalToken.deleteMany({ where: { project: { projectNumber: { startsWith: "PRJ-4.7" } } } });
   await prisma.project.deleteMany({ where: { projectNumber: { startsWith: "PRJ-4.7" } } });
   await prisma.client.deleteMany({ where: { clientNumber: { startsWith: "CLI-4.7" } } });
-  await prisma.user.deleteMany({ where: { email: "portal-admin-4.7@mdzcompany.com" } });
+  await prisma.user.deleteMany({ where: { email: "portal-admin-4.7@esscompany.com" } });
 }
 
 function assert(condition: boolean, testName: string, detail: string = "") {

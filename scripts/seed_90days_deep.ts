@@ -1,23 +1,23 @@
 async function seed90DaysDeep() {
   console.log("==================================================");
-  console.log("🚀 MDZ OS — 90-DAY DEEP REST API DATA INGESTION");
+  console.log("🚀 ESS OS — 90-DAY DEEP REST API DATA INGESTION");
   console.log("==================================================\n");
 
-  const baseUrl = "http://localhost:3020";
+  const baseUrl = "http://localhost:3040";
 
   // 1. INGEST 10 EMPLOYEES VIA REST API
   console.log("1. 👥 Ingesting 10 Corporate Employee Accounts via POST /api/employees...");
   const employeeSeeds = [
-    { name: "Rahul MDZ", email: "owner_deep@mdzcompany.com", role: "OWNER", designation: "Founder & CEO", department: "Executive Management", salaryMonthly: 250000 },
-    { name: "Karan Verma", email: "karan_sales_deep@mdzcompany.com", role: "SALES", designation: "Head of Sales", department: "Business Development", salaryMonthly: 140000 },
-    { name: "Meet Shah", email: "meet_lead_deep@mdzcompany.com", role: "EMPLOYEE", designation: "Senior Tech Lead (TM)", department: "Engineering", salaryMonthly: 130000 },
-    { name: "Dev Patel", email: "dev_patel_deep@mdzcompany.com", role: "EMPLOYEE", designation: "Full-Stack Developer", department: "Engineering", salaryMonthly: 90000 },
-    { name: "Priya Desai", email: "priya_ux_deep@mdzcompany.com", role: "EMPLOYEE", designation: "Lead UI/UX Designer", department: "Product Design", salaryMonthly: 95000 },
-    { name: "Jay Shah", email: "jay_qa_deep@mdzcompany.com", role: "EMPLOYEE", designation: "QA Lead Engineer", department: "Quality Assurance", salaryMonthly: 80000 },
-    { name: "Ananya Roy", email: "ananya_dev_deep@mdzcompany.com", role: "EMPLOYEE", designation: "Backend API Specialist", department: "Engineering", salaryMonthly: 88000 },
-    { name: "Rohan Varma", email: "rohan_mobile_deep@mdzcompany.com", role: "EMPLOYEE", designation: "Mobile App Engineer", department: "Engineering", salaryMonthly: 85000 },
-    { name: "Siddharth Joshi", email: "sid_sales_deep@mdzcompany.com", role: "EMPLOYEE", designation: "Sales Executive", department: "Business Development", salaryMonthly: 70000 },
-    { name: "Neha Kulkarni", email: "neha_pm_deep@mdzcompany.com", role: "EMPLOYEE", designation: "Project Operations Lead", department: "Project Operations", salaryMonthly: 110000 },
+    { name: "Rahul ESS", email: "owner_deep@esscompany.com", role: "OWNER", designation: "Founder & CEO", department: "Executive Management", salaryMonthly: 250000 },
+    { name: "Karan Verma", email: "karan_sales_deep@esscompany.com", role: "SALES", designation: "Head of Sales", department: "Business Development", salaryMonthly: 140000 },
+    { name: "Meet Shah", email: "meet_lead_deep@esscompany.com", role: "EMPLOYEE", designation: "Senior Tech Lead (TM)", department: "Engineering", salaryMonthly: 130000 },
+    { name: "Dev Patel", email: "dev_patel_deep@esscompany.com", role: "EMPLOYEE", designation: "Full-Stack Developer", department: "Engineering", salaryMonthly: 90000 },
+    { name: "Priya Desai", email: "priya_ux_deep@esscompany.com", role: "EMPLOYEE", designation: "Lead UI/UX Designer", department: "Product Design", salaryMonthly: 95000 },
+    { name: "Jay Shah", email: "jay_qa_deep@esscompany.com", role: "EMPLOYEE", designation: "QA Lead Engineer", department: "Quality Assurance", salaryMonthly: 80000 },
+    { name: "Ananya Roy", email: "ananya_dev_deep@esscompany.com", role: "EMPLOYEE", designation: "Backend API Specialist", department: "Engineering", salaryMonthly: 88000 },
+    { name: "Rohan Varma", email: "rohan_mobile_deep@esscompany.com", role: "EMPLOYEE", designation: "Mobile App Engineer", department: "Engineering", salaryMonthly: 85000 },
+    { name: "Siddharth Joshi", email: "sid_sales_deep@esscompany.com", role: "EMPLOYEE", designation: "Sales Executive", department: "Business Development", salaryMonthly: 70000 },
+    { name: "Neha Kulkarni", email: "neha_pm_deep@esscompany.com", role: "EMPLOYEE", designation: "Project Operations Lead", department: "Project Operations", salaryMonthly: 110000 },
   ];
 
   for (let i = 0; i < employeeSeeds.length; i++) {

@@ -40,4 +40,4 @@ jobs:
         run: npm run build
 
       - name: Docker Build Verification
-        run: docker build -t mdz-os-test .
+        run: docker build -t ess-os-test .

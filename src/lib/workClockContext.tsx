@@ -127,7 +127,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     const pollStatus = async () => {
       try {
         const employeeId = session?.user?.employeeId || "EMP-004";
-        const res = await fetch(`/mdz-crm/api/attendance/status?employeeId=${employeeId}&t=${Date.now()}`, { cache: "no-store" });
+        const res = await fetch(`/ess-crm/api/attendance/status?employeeId=${employeeId}&t=${Date.now()}`, { cache: "no-store" });
         const json = await res.json();
         if (json.success && json.data) {
           const dbStatus = json.data.punchOutRequestStatus;
@@ -196,7 +196,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
   // Load from localStorage on mount (hydration safe)
   useEffect(() => {
     const employeeId = session?.user?.employeeId || "EMP-004";
-    const saved = localStorage.getItem(`mdz_work_clock_state_${employeeId}`);
+    const saved = localStorage.getItem(`ess_work_clock_state_${employeeId}`);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -240,7 +240,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
       timeline,
     };
     const employeeId = session?.user?.employeeId || "EMP-004";
-    localStorage.setItem(`mdz_work_clock_state_${employeeId}`, JSON.stringify(stateToSave));
+    localStorage.setItem(`ess_work_clock_state_${employeeId}`, JSON.stringify(stateToSave));
   }, [
     isLoaded,
     status,
@@ -336,7 +336,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     // Send to database for Admin visibility
     try {
       const employeeId = session?.user?.employeeId || "EMP-004";
-      await fetch("/mdz-crm/api/attendance/breaks", {
+      await fetch("/ess-crm/api/attendance/breaks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -368,7 +368,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     // Send to database for Admin visibility
     try {
       const employeeId = session?.user?.employeeId || "EMP-004";
-      await fetch("/mdz-crm/api/attendance/breaks", {
+      await fetch("/ess-crm/api/attendance/breaks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -412,7 +412,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
 
   const confirmPunchOutAnyway = async () => {
     try {
-      const res = await fetch("/mdz-crm/api/attendance/punch-out", { method: "POST" });
+      const res = await fetch("/ess-crm/api/attendance/punch-out", { method: "POST" });
       const json = await res.json();
       
       if (json.success) {

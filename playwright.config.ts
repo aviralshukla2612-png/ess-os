@@ -8,7 +8,7 @@ export default defineConfig({
   workers: 1, // Use 1 worker to avoid SQLite database lock issues
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost/mdz-os', // hitting Nginx directly
+    baseURL: 'http://localhost/ess-os', // hitting Nginx directly
     trace: 'on-first-retry',
   },
   projects: [
