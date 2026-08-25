@@ -154,31 +154,39 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
             showToast("⚠️ Your punch-out request was REJECTED by admin. You must continue working.", "error");
             setStatus("WORKING");
             setPunchOutTime(null);
-          } else if (generalStatus !== statusRef.current) {
-            // Do not overwrite ON_BREAK with WORKING, as ON_BREAK is a client-side sub-state of WORKING
-            if (statusRef.current === "ON_BREAK" && generalStatus === "WORKING") {
-              // Preserve ON_BREAK
-            } else {
-              // Force sync if the backend says something different than what we have locally
-              // This is extremely important for when users switch accounts!
-              setStatus(generalStatus);
-              if (generalStatus === "NOT_PUNCHED_IN") {
-                // Soft reset for clean slate on switch
-                setWorkSeconds(0);
-                setTimeline([]);
-              } else if (generalStatus === "DAY_COMPLETE" && json.data.punchOut && !punchOutTime) {
-                const serverTime = new Date(json.data.punchOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                setPunchOutTime(serverTime);
-                setTimeline((prev) => [
-                  ...prev,
-                  {
-                    id: `evt-${Date.now()}`,
-                    time: serverTime,
-                    type: "PUNCH_OUT",
-                    title: "Punch Out",
-                    subtitle: `Day Complete at ${serverTime}`,
-                  },
-                ]);
+          } else {
+            // ALWAYS sync exactly with the backend's calculated seconds to prevent local drift or logout desyncs!
+            if (json.data.workSeconds !== undefined) {
+              setWorkSeconds(json.data.workSeconds);
+            }
+            if (json.data.breakSeconds !== undefined) {
+              setBreakSeconds(json.data.breakSeconds);
+            }
+
+            if (generalStatus !== statusRef.current) {
+              // Do not overwrite ON_BREAK with WORKING locally unless they just logged in
+              if (statusRef.current === "ON_BREAK" && generalStatus === "WORKING" && isLoaded) {
+                // Preserve ON_BREAK
+              } else {
+                setStatus(generalStatus);
+                if (generalStatus === "NOT_PUNCHED_IN") {
+                  setWorkSeconds(0);
+                  setBreakSeconds(0);
+                  setTimeline([]);
+                } else if (generalStatus === "DAY_COMPLETE" && json.data.punchOut && !punchOutTime) {
+                  const serverTime = new Date(json.data.punchOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                  setPunchOutTime(serverTime);
+                  setTimeline((prev) => [
+                    ...prev,
+                    {
+                      id: `evt-${Date.now()}`,
+                      time: serverTime,
+                      type: "PUNCH_OUT",
+                      title: "Punch Out",
+                      subtitle: `Day Complete at ${serverTime}`,
+                    },
+                  ]);
+                }
               }
             }
           }

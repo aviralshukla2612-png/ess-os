@@ -54,12 +54,39 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, data: { status: "NOT_PUNCHED_IN" } });
     }
 
+    // Calculate exact work and break seconds for today
+    let serverWorkSeconds = 0;
+    let serverBreakSeconds = 0;
+
+    const events = await prisma.employeeStatusEvent.findMany({
+      where: {
+        employeeId: employee.id,
+        startedAt: { gte: startOfDay, lte: endOfDay }
+      }
+    });
+
+    const nowMs = Date.now();
+    events.forEach(ev => {
+      const start = new Date(ev.startedAt).getTime();
+      const end = ev.endedAt ? new Date(ev.endedAt).getTime() : nowMs;
+      const durationSecs = Math.floor((end - start) / 1000);
+
+      if (ev.statusType === "WORKING") {
+        serverWorkSeconds += durationSecs;
+      } else {
+        serverBreakSeconds += durationSecs;
+      }
+    });
+
     return NextResponse.json({ 
       success: true, 
       data: {
-        status: attendance.punchOut ? "DAY_COMPLETE" : "WORKING",
+        status: attendance.punchOut ? "DAY_COMPLETE" : (events.find(e => !e.endedAt)?.statusType === "WORKING" ? "WORKING" : "ON_BREAK"),
         punchOutRequestStatus: attendance.punchOutRequestStatus, // PENDING, APPROVED, REJECTED, or null
         punchOut: attendance.punchOut,
+        punchIn: attendance.punchIn,
+        workSeconds: serverWorkSeconds,
+        breakSeconds: serverBreakSeconds,
       } 
     });
 
