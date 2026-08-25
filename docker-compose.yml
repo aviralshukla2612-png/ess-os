@@ -15,7 +15,6 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3040
-      - NEXTAUTH_URL=http://200.97.161.91/ess-crm
       - NEXTAUTH_SECRET=super_secret_ess_os_key_2026_!@#
       - DATABASE_URL=file:/app/prisma/data/production.db
     restart: unless-stopped
