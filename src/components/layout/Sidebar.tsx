@@ -129,7 +129,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
             {navItems.map((item) => {
               const isActive =
                 pathname === item.href ||
-                (item.href !== "/" && item.href !== "/owner" && pathname.startsWith(item.href));
+                (item.href !== "/" && item.href !== "/owner" && pathname.startsWith(item.href + "/"));
 
               return (
                 <Link
