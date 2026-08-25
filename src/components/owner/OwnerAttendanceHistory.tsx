@@ -184,10 +184,10 @@ export function OwnerAttendanceHistory() {
                       {formatDate(record.date)}
                     </td>
                     <td className="p-3 text-slate-600 dark:text-slate-300 font-mono">
-                      {formatTime(record.punchInTime)}
+                      {formatTime(record.punchIn)}
                     </td>
                     <td className="p-3 text-slate-600 dark:text-slate-300 font-mono">
-                      {formatTime(record.punchOutTime)}
+                      {formatTime(record.punchOut)}
                     </td>
                     <td className="p-3">
                       <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${
@@ -199,7 +199,7 @@ export function OwnerAttendanceHistory() {
                       </span>
                     </td>
                     <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                      {formatMins(record.totalWorkMinutes)}
+                      {formatMins(record.totalMinutes)}
                     </td>
                   </tr>
                 );
