@@ -9,9 +9,9 @@ services:
     ports:
       - "3040:3040"
     volumes:
-      # Mount a dedicated directory for production SQLite database isolation
-      # Make sure the host ./production-data directory exists
       - ./production-data:/app/prisma/data
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - PORT=3040
