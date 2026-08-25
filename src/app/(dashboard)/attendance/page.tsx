@@ -105,7 +105,7 @@ export default function AttendanceWorkClockPage() {
       const res = await fetch("/crmtesting/api/attendance/punch-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId: session?.user?.employeeId || "EMP-004" }),
+        body: JSON.stringify({ employeeId: session?.user?.employeeId }),
       });
       const data = await res.json();
       
@@ -128,7 +128,7 @@ export default function AttendanceWorkClockPage() {
       const res = await fetch("/crmtesting/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId: session?.user?.employeeId || "EMP-004", actionType: "BREAK", notes: `${selectedBreakType} break` }),
+        body: JSON.stringify({ employeeId: session?.user?.employeeId, actionType: "BREAK", notes: `${selectedBreakType} break` }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -169,7 +169,7 @@ export default function AttendanceWorkClockPage() {
       const response = await fetch("/crmtesting/api/attendance/punch-out-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId: session?.user?.employeeId || "EMP-004", reason: punchOutReason }),
+        body: JSON.stringify({ employeeId: session?.user?.employeeId, reason: punchOutReason }),
       });
       const data = await response.json();
       

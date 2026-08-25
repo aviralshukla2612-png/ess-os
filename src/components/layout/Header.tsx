@@ -79,7 +79,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
       const res = await fetch("/crmtesting/api/attendance/punch-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId: currentUser.employeeId || "EMP-004" }),
+        body: JSON.stringify({ employeeId: currentUser.employeeId }),
       });
       const data = await res.json();
       
@@ -105,7 +105,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
         await fetch("/crmtesting/api/attendance/punch-out-request", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ employeeId: currentUser.employeeId || "EMP-004", reason: "" }), // Assume 8+ hours
+          body: JSON.stringify({ employeeId: currentUser.employeeId, reason: "" }), // Assume 8+ hours
         });
       } catch (e) {}
       showToast("✓ Punched Out for today. Day complete!", "success");
@@ -123,7 +123,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
       const response = await fetch("/crmtesting/api/attendance/punch-out-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId: currentUser.employeeId || "EMP-004", reason: punchOutReason }),
+        body: JSON.stringify({ employeeId: currentUser.employeeId, reason: punchOutReason }),
       });
       const data = await response.json();
       

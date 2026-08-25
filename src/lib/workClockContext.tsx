@@ -126,7 +126,8 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
 
     const pollStatus = async () => {
       try {
-        const employeeId = session?.user?.employeeId || "EMP-004";
+        const employeeId = session?.user?.employeeId;
+        if (!employeeId) return; // Don't poll if no employee profile
         const res = await fetch(`/crmtesting/api/attendance/status?employeeId=${employeeId}&t=${Date.now()}`, { cache: "no-store" });
         const json = await res.json();
         if (json.success && json.data) {
@@ -203,7 +204,8 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
 
   // Load from localStorage on mount (hydration safe)
   useEffect(() => {
-    const employeeId = session?.user?.employeeId || "EMP-004";
+    const employeeId = session?.user?.employeeId;
+    if (!employeeId) return;
     const saved = localStorage.getItem(`ess_work_clock_state_${employeeId}`);
     if (saved) {
       try {
@@ -247,7 +249,8 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
       usedTeaSeconds,
       timeline,
     };
-    const employeeId = session?.user?.employeeId || "EMP-004";
+    const employeeId = session?.user?.employeeId;
+    if (!employeeId) return;
     localStorage.setItem(`ess_work_clock_state_${employeeId}`, JSON.stringify(stateToSave));
   }, [
     isLoaded,
@@ -343,7 +346,8 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
 
     // Send to database for Admin visibility
     try {
-      const employeeId = session?.user?.employeeId || "EMP-004";
+      const employeeId = session?.user?.employeeId;
+      if (!employeeId) return;
       await fetch("/crmtesting/api/attendance/breaks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -375,7 +379,8 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
 
     // Send to database for Admin visibility
     try {
-      const employeeId = session?.user?.employeeId || "EMP-004";
+      const employeeId = session?.user?.employeeId;
+      if (!employeeId) return;
       await fetch("/crmtesting/api/attendance/breaks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -184,6 +184,28 @@ async function main() {
   }
 
   // Employee Profiles
+  const empOwner = await prisma.employee.upsert({
+    where: { userId: ownerUser.id },
+    update: {},
+    create: {
+      userId: ownerUser.id,
+      employeeIdCode: "EMP-OWNER",
+      salaryMonthly: 500000,
+      skillsJson: JSON.stringify(["Management", "Strategy", "Operations"]),
+    },
+  });
+
+  const empSales = await prisma.employee.upsert({
+    where: { userId: salesUser.id },
+    update: {},
+    create: {
+      userId: salesUser.id,
+      employeeIdCode: "EMP-SALES",
+      salaryMonthly: 150000,
+      skillsJson: JSON.stringify(["Sales", "Negotiation", "CRM"]),
+    },
+  });
+
   const empMeet = await prisma.employee.upsert({
     where: { userId: tmUser.id },
     update: {},
