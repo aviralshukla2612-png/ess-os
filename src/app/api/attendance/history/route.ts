@@ -33,11 +33,23 @@ export async function GET(req: NextRequest) {
         lte: end,
       };
     }
+    
+    const whereClause: any = {};
+    if (dateFilter && Object.keys(dateFilter).length > 0) {
+      whereClause.date = dateFilter;
+    }
+    if (employeeId !== "ALL") {
+      whereClause.employeeId = employeeId;
+    }
 
     const attendanceRecords = await prisma.attendance.findMany({
-      where: {
-        employeeId: employeeId,
-        date: Object.keys(dateFilter).length > 0 ? dateFilter : undefined,
+      where: whereClause,
+      include: {
+        employee: {
+          include: {
+            user: { select: { name: true } }
+          }
+        }
       },
       orderBy: {
         date: 'desc'

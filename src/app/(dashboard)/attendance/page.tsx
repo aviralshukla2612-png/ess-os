@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { OwnerBreakDashboard } from "@/components/owner/OwnerBreakDashboard";
+import { OwnerAttendanceHistory } from "@/components/owner/OwnerAttendanceHistory";
 import {
   Clock,
   Play,
@@ -231,6 +232,7 @@ export default function AttendanceWorkClockPage() {
           icon={<Clock className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />}
         />
         <OwnerBreakDashboard />
+        <OwnerAttendanceHistory />
       </div>
     );
   }
