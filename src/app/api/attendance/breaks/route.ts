@@ -37,16 +37,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, data: event });
 
     } else if (action === "END") {
-      // Find the most recent open event and close it
-      const openEvent = await prisma.employeeStatusEvent.findFirst({
-        where: { employeeId, endedAt: null },
-        orderBy: { startedAt: 'desc' }
+      // Close ALL open events to clean up any duplicates
+      const openEventsCount = await prisma.employeeStatusEvent.count({
+        where: { employeeId, endedAt: null }
       });
 
-      if (openEvent) {
+      if (openEventsCount > 0) {
         const [updated, newWorkEvent] = await prisma.$transaction([
-          prisma.employeeStatusEvent.update({
-            where: { id: openEvent.id },
+          prisma.employeeStatusEvent.updateMany({
+            where: { employeeId, endedAt: null },
             data: { endedAt: new Date() }
           }),
           prisma.employeeStatusEvent.create({

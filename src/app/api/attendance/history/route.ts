@@ -79,10 +79,22 @@ export async function GET(req: NextRequest) {
         breakMinutes += Math.floor(diffMs / 60000);
       });
 
+      let totalElapsedMinutes = record.totalMinutes || 0;
+      if (!record.punchOut && record.punchIn) {
+        // If not punched out yet, total time is from punch-in until now
+        const punchInTime = new Date(record.punchIn).getTime();
+        totalElapsedMinutes = Math.floor((now.getTime() - punchInTime) / 60000);
+      } else if (record.punchOut && record.punchIn) {
+        // If punched out, total time is from punch-in until punch-out
+        const punchInTime = new Date(record.punchIn).getTime();
+        const punchOutTime = new Date(record.punchOut).getTime();
+        totalElapsedMinutes = Math.floor((punchOutTime - punchInTime) / 60000);
+      }
+
       return {
         ...record,
         breakMinutes,
-        totalMinutes: (record.totalMinutes || 0) + breakMinutes // Total time including breaks
+        totalMinutes: totalElapsedMinutes
       };
     }));
 
