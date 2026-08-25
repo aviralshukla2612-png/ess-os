@@ -134,10 +134,10 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   const fetchAllData = async () => {
     try {
       const [leadsRes, clientsRes, projectsRes, employeesRes] = await Promise.all([
-        fetch("/ess-crm/api/leads").catch(() => null),
-        fetch("/ess-crm/api/clients").catch(() => null),
-        fetch("/ess-crm/api/projects").catch(() => null),
-        fetch("/ess-crm/api/employees").catch(() => null),
+        fetch("/crmtesting/api/leads").catch(() => null),
+        fetch("/crmtesting/api/clients").catch(() => null),
+        fetch("/crmtesting/api/projects").catch(() => null),
+        fetch("/crmtesting/api/employees").catch(() => null),
       ]);
 
       if (leadsRes) {
@@ -168,7 +168,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   }, []);
 
   const addLead = (leadData: Partial<LeadEntity>) => {
-    fetch("/ess-crm/api/leads", {
+    fetch("/crmtesting/api/leads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(leadData),
@@ -182,7 +182,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   };
 
   const updateLeadStage = (id: string, stage: LeadEntity["stage"]) => {
-    fetch(`/ess-crm/api/leads/${id}`, {
+    fetch(`/crmtesting/api/leads/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ stage }),
@@ -196,7 +196,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   };
 
   const convertLeadToClient = (leadId: string) => {
-    fetch(`/ess-crm/api/leads/${leadId}/convert`, {
+    fetch(`/crmtesting/api/leads/${leadId}/convert`, {
       method: "POST",
     })
       .then((r) => r.json())
@@ -213,7 +213,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   };
 
   const addClient = (clientData: Partial<ClientEntity>) => {
-    fetch("/ess-crm/api/clients", {
+    fetch("/crmtesting/api/clients", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(clientData),
@@ -227,7 +227,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   };
 
   const addLeadNote = (leadId: string, noteText: string) => {
-    fetch(`/ess-crm/api/leads/${leadId}`, {
+    fetch(`/crmtesting/api/leads/${leadId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ noteText }),
@@ -241,7 +241,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   };
 
   const addLeadFollowup = (leadId: string, date: string, note: string) => {
-    fetch(`/ess-crm/api/leads/${leadId}`, {
+    fetch(`/crmtesting/api/leads/${leadId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ followupDate: date, followupNote: note }),
@@ -255,7 +255,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   };
 
   const importClientsBatch = (imported: Array<{ companyName: string; contactPerson: string; email: string; phone: string }>) => {
-    fetch("/ess-crm/api/clients/import", {
+    fetch("/crmtesting/api/clients/import", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ imported }),

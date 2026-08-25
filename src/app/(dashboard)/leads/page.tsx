@@ -29,7 +29,7 @@ export default function LeadsPage() {
 
   const fetchLeads = async () => {
     try {
-      const res = await fetch("/ess-crm/api/leads");
+      const res = await fetch("/crmtesting/api/leads");
       const json = await res.json();
       if (json.success) {
         setLeads(json.data);
@@ -42,7 +42,7 @@ export default function LeadsPage() {
   const updateLeadStageApi = async (leadId: string, newStage: string) => {
     setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, stage: newStage } : l)));
     try {
-      const res = await fetch(`/ess-crm/api/leads/${leadId}`, {
+      const res = await fetch(`/crmtesting/api/leads/${leadId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stage: newStage }),
@@ -63,7 +63,7 @@ export default function LeadsPage() {
   const deleteLeadApi = async (leadId: string) => {
     setLeads((prev) => prev.filter((l) => l.id !== leadId));
     try {
-      const res = await fetch(`/ess-crm/api/leads/${leadId}`, { method: "DELETE" });
+      const res = await fetch(`/crmtesting/api/leads/${leadId}`, { method: "DELETE" });
       const json = await res.json();
       if (!json.success) {
         showToast("Failed to delete lead", "error");
@@ -79,7 +79,7 @@ export default function LeadsPage() {
 
   const convertLeadToClientApi = async (leadId: string) => {
     try {
-      const res = await fetch(`/ess-crm/api/leads/${leadId}/convert`, { method: "POST" });
+      const res = await fetch(`/crmtesting/api/leads/${leadId}/convert`, { method: "POST" });
       const json = await res.json();
       if (json.success) {
         showToast(`🎉 Converted to Client "${json.data.client.companyName}"`, "success");
@@ -96,7 +96,7 @@ export default function LeadsPage() {
     e.preventDefault();
     const createApi = async () => {
       try {
-        const res = await fetch("/ess-crm/api/leads", {
+        const res = await fetch("/crmtesting/api/leads", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -148,7 +148,7 @@ export default function LeadsPage() {
         
         if (!client) continue;
 
-        const res = await fetch("/ess-crm/api/leads", {
+        const res = await fetch("/crmtesting/api/leads", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

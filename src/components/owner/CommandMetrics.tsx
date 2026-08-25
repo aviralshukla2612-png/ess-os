@@ -16,10 +16,10 @@ export function CommandMetrics() {
   const fetchMetrics = async () => {
     try {
       const [finRes, leadRes, prjRes, attRes] = await Promise.all([
-        fetch("/ess-crm/api/finance").then((r) => r.json()).catch(() => null),
-        fetch("/ess-crm/api/leads").then((r) => r.json()).catch(() => null),
-        fetch("/ess-crm/api/projects").then((r) => r.json()).catch(() => null),
-        fetch("/ess-crm/api/attendance/team-status").then((r) => r.json()).catch(() => null),
+        fetch("/crmtesting/api/finance").then((r) => r.json()).catch(() => null),
+        fetch("/crmtesting/api/leads").then((r) => r.json()).catch(() => null),
+        fetch("/crmtesting/api/projects").then((r) => r.json()).catch(() => null),
+        fetch("/crmtesting/api/attendance/team-status").then((r) => r.json()).catch(() => null),
       ]);
 
       if (finRes?.success && finRes.data) {

@@ -41,7 +41,7 @@ export default function EmployeesPage() {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/ess-crm/api/employees");
+      const res = await fetch("/crmtesting/api/employees");
       const json = await res.json();
       if (json.success) {
         setEmployees(json.data);
@@ -56,7 +56,7 @@ export default function EmployeesPage() {
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/ess-crm/api/employees", {
+      const res = await fetch("/crmtesting/api/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: empName, email, password, designation, role }),
@@ -85,7 +85,7 @@ export default function EmployeesPage() {
 
   const handleDeleteEmployee = async (id: string, name: string) => {
     try {
-      const res = await fetch(`/ess-crm/api/employees/${id}`, { method: "DELETE" });
+      const res = await fetch(`/crmtesting/api/employees/${id}`, { method: "DELETE" });
       const json = await res.json();
       if (json.success) {
         showToast(`✓ Employee ${name} deleted successfully`, "success");
@@ -109,7 +109,7 @@ export default function EmployeesPage() {
         
         if (!rowName || !rowEmail) continue;
 
-        const res = await fetch("/ess-crm/api/employees", {
+        const res = await fetch("/crmtesting/api/employees", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 

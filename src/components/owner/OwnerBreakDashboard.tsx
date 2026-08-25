@@ -10,7 +10,7 @@ export function OwnerBreakDashboard() {
   useEffect(() => {
     const fetchBreaks = async () => {
       try {
-        const res = await fetch("/ess-crm/api/attendance/breaks/today");
+        const res = await fetch("/crmtesting/api/attendance/breaks/today");
         const json = await res.json();
         if (json.success && json.data) {
           setBreaks(json.data);

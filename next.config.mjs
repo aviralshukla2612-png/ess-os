@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
-  basePath: "/ess-crm",
+  basePath: "/crmtesting",
 };
 
 export default nextConfig;

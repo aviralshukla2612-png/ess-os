@@ -35,7 +35,7 @@ export default function FinancePage() {
 
   const fetchFinanceData = async () => {
     try {
-      const res = await fetch("/ess-crm/api/finance");
+      const res = await fetch("/crmtesting/api/finance");
       const json = await res.json();
       if (json.success && json.data) {
         setFinanceMetrics({

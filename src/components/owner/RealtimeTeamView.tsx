@@ -10,7 +10,7 @@ export function RealtimeTeamView() {
   useEffect(() => {
     const fetchTeamStatus = async () => {
       try {
-        const res = await fetch("/ess-crm/api/attendance/team-status");
+        const res = await fetch("/crmtesting/api/attendance/team-status");
         const json = await res.json();
         if (json.success && json.data) {
           setTeamMembers(json.data);

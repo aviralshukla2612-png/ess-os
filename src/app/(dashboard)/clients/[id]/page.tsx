@@ -40,7 +40,7 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
   const fetchClientData = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/ess-crm/api/clients/${params.id}`);
+      const res = await fetch(`/crmtesting/api/clients/${params.id}`);
       const json = await res.json();
       
       if (json.success && json.data) {

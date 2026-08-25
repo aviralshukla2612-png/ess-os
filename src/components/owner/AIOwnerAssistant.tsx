@@ -21,7 +21,7 @@ export function AIOwnerAssistant() {
     setResponse(null);
 
     try {
-      const res = await fetch("/ess-crm/api/ai/query", {
+      const res = await fetch("/crmtesting/api/ai/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: userQuery }),

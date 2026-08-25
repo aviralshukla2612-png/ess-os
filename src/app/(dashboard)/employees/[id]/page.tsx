@@ -40,7 +40,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
   const fetchEmployee = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/ess-crm/api/employees/${params.id}`);
+      const res = await fetch(`/crmtesting/api/employees/${params.id}`);
       const json = await res.json();
       if (json.success && json.data) {
         const e = json.data;
@@ -97,7 +97,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
   const handleUpdateEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/ess-crm/api/employees/${params.id}`, {
+      const res = await fetch(`/crmtesting/api/employees/${params.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -124,7 +124,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
     try {
       const newIsActive = !employee.isActive;
       const newStatus = newIsActive ? "ACTIVE" : "INACTIVE";
-      const res = await fetch(`/ess-crm/api/employees/${params.id}`, {
+      const res = await fetch(`/crmtesting/api/employees/${params.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
