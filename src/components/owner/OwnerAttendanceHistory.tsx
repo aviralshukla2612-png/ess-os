@@ -107,19 +107,20 @@ export function OwnerAttendanceHistory() {
               <th className="p-3 font-semibold">Punch In</th>
               <th className="p-3 font-semibold">Punch Out</th>
               <th className="p-3 font-semibold">Status</th>
+              <th className="p-3 font-semibold">Break Time</th>
               <th className="p-3 font-semibold rounded-r-xl">Total Time</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {loading ? (
               <tr>
-                <td colSpan={6} className="p-6 text-center text-slate-500 font-medium animate-pulse">
+                <td colSpan={7} className="p-6 text-center text-slate-500 font-medium animate-pulse">
                   Loading records...
                 </td>
               </tr>
             ) : attendanceRecords.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-6 text-center text-slate-500 dark:text-slate-400 font-medium">
+                <td colSpan={7} className="p-6 text-center text-slate-500 dark:text-slate-400 font-medium">
                   No attendance records found for this criteria.
                 </td>
               </tr>
@@ -160,6 +161,9 @@ export function OwnerAttendanceHistory() {
                       }`}>
                         {record.status || "UNKNOWN"}
                       </span>
+                    </td>
+                    <td className="p-3 font-mono font-medium text-slate-600 dark:text-slate-400">
+                      {formatMins(record.breakMinutes || 0)}
                     </td>
                     <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">
                       {formatMins(record.totalMinutes)}

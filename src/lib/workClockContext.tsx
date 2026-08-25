@@ -411,14 +411,15 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     ]);
   };
 
-  const REQUIRED_WORK_SECONDS = 8 * 3600; // 8 hours
+  const REQUIRED_WORK_SECONDS = 9 * 3600; // 9 hours
 
   const punchOut = () => {
-    if (workSeconds >= REQUIRED_WORK_SECONDS) {
+    const totalActiveSeconds = workSeconds + breakSeconds;
+    if (totalActiveSeconds >= REQUIRED_WORK_SECONDS) {
       confirmPunchOutAnyway();
       return { success: true, requiresConfirmation: false, remainingSeconds: 0 };
     } else {
-      const remainingSeconds = REQUIRED_WORK_SECONDS - workSeconds;
+      const remainingSeconds = REQUIRED_WORK_SECONDS - totalActiveSeconds;
       return { success: false, requiresConfirmation: true, remainingSeconds };
     }
   };

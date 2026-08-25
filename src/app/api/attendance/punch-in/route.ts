@@ -11,6 +11,16 @@ export async function POST(req: Request) {
   }
 
   try {
+    const userAgent = req.headers.get("user-agent") || "";
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent);
+    
+    if (isMobile) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Punch In restricted: You must use a laptop or desktop computer to punch in." 
+      }, { status: 403 });
+    }
+
     const employeeId = authRes.employeeId;
 
     // Check if the employee already punched in today

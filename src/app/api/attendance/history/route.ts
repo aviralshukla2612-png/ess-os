@@ -56,7 +56,37 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    return NextResponse.json({ success: true, data: attendanceRecords });
+    const enrichedRecords = await Promise.all(attendanceRecords.map(async (record) => {
+      // Calculate break time for this specific day
+      const startOfDay = new Date(record.date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(record.date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const breakEvents = await prisma.employeeStatusEvent.findMany({
+        where: {
+          employeeId: record.employeeId,
+          startedAt: { gte: startOfDay, lte: endOfDay },
+          statusType: { not: "WORKING" }
+        }
+      });
+
+      let breakMinutes = 0;
+      const now = new Date();
+      breakEvents.forEach(b => {
+        const end = b.endedAt || (record.punchOut || now);
+        const diffMs = end.getTime() - b.startedAt.getTime();
+        breakMinutes += Math.floor(diffMs / 60000);
+      });
+
+      return {
+        ...record,
+        breakMinutes,
+        totalMinutes: (record.totalMinutes || 0) + breakMinutes // Total time including breaks
+      };
+    }));
+
+    return NextResponse.json({ success: true, data: enrichedRecords });
 
   } catch (error) {
     console.error("Fetch attendance history error:", error);

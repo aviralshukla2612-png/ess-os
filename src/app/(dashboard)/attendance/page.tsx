@@ -107,57 +107,92 @@ export default function AttendanceWorkClockPage() {
     }
   }, [startDate, endDate, session?.user?.employeeId]);
 
-  const REQUIRED_WORK_SECONDS = 8 * 3600;
-  const progressPercent = Math.min(100, Math.round((workSeconds / REQUIRED_WORK_SECONDS) * 100));
-  const remainingWorkSeconds = Math.max(0, REQUIRED_WORK_SECONDS - workSeconds);
+  const REQUIRED_WORK_SECONDS = 9 * 3600;
+  const totalActiveSeconds = workSeconds + breakSeconds;
+  const progressPercent = Math.min(100, Math.round((totalActiveSeconds / REQUIRED_WORK_SECONDS) * 100));
+  const remainingWorkSeconds = Math.max(0, REQUIRED_WORK_SECONDS - totalActiveSeconds);
+
+function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371e3; // metres
+  const p1 = lat1 * Math.PI/180;
+  const p2 = lat2 * Math.PI/180;
+  const dp = (lat2-lat1) * Math.PI/180;
+  const dl = (lon2-lon1) * Math.PI/180;
+
+  const a = Math.sin(dp/2) * Math.sin(dp/2) +
+            Math.cos(p1) * Math.cos(p2) *
+            Math.sin(dl/2) * Math.sin(dl/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  return R * c;
+}
 
   const handlePunchInClick = async () => {
-    if (simulatedGeofenceError) {
-      showToast("Punch In unavailable: You are outside the permitted office geofence (1.8 km).", "error");
+    // Client-side device check
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) {
+      showToast("Punch In unavailable: You must punch in from a laptop or desktop computer.", "error");
       return;
     }
+
     if (simulatedDeviceError) {
       showToast("Punch In unavailable: Morning Punch In must be initiated from your registered office laptop.", "error");
       return;
     }
-    try {
-      const res = await fetch("/crmtesting/api/attendance/punch-in", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId: session?.user?.employeeId }),
-      });
-      const data = await res.json();
-      
-      if (!res.ok || !data.success) {
-        showToast(data.error || "Failed to punch in.", "error");
-        return;
-      }
-      
-      punchIn();
-      showToast("✓ Punched In successfully at " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), "success");
-    } catch (e) {
-      showToast("Network error while punching in.", "error");
+
+    if (!navigator.geolocation) {
+      showToast("Geolocation is not supported by your browser.", "error");
+      return;
     }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        // IMPORTANT: Replace these with your actual office coordinates!
+        const OFFICE_LAT = 23.0225; // Default placeholder
+        const OFFICE_LNG = 72.5714; 
+        
+        const distance = getDistanceInMeters(
+          position.coords.latitude, 
+          position.coords.longitude, 
+          OFFICE_LAT, 
+          OFFICE_LNG
+        );
+
+        if (distance > 10) {
+          showToast(`Punch In unavailable: You are outside the office geofence (${Math.round(distance)}m away). Allowed radius is 10m.`, "error");
+          return;
+        }
+
+        try {
+          const res = await fetch("/crmtesting/api/attendance/punch-in", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ employeeId: session?.user?.employeeId }),
+          });
+          const data = await res.json();
+          
+          if (!res.ok || !data.success) {
+            showToast(data.error || "Failed to punch in.", "error");
+            return;
+          }
+          
+          punchIn();
+          showToast("✓ Punched In successfully at " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), "success");
+        } catch (e) {
+          showToast("Network error while punching in.", "error");
+        }
+      },
+      (error) => {
+        showToast("Location access denied. Please allow location access to punch in.", "error");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   };
 
   const handleConfirmBreak = async () => {
     startBreak(selectedBreakType, customBreakReason);
     setIsBreakSheetOpen(false);
-    try {
-      const res = await fetch("/crmtesting/api/attendance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeId: session?.user?.employeeId, actionType: "BREAK", notes: `${selectedBreakType} break` }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        showToast(data.error || "Failed to start break.", "error");
-        return;
-      }
-      showToast(`✓ Break started: ${selectedBreakType}`, "info");
-    } catch (e) {
-      showToast("Network error while starting break.", "error");
-    }
+    showToast(`✓ Break started: ${selectedBreakType}`, "info");
   };
 
   const handleChangeWorkSubmit = (e: React.FormEvent) => {
@@ -330,15 +365,15 @@ export default function AttendanceWorkClockPage() {
             </div>
 
             <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 font-mono">
-              Punched In at {punchInTime || "09:00 AM"} • Required: 8h 00m
+              Punched In at {punchInTime || "09:00 AM"} • Required: 9h 00m
             </div>
           </div>
 
           {/* Progress Bar */}
           <div className="space-y-2 text-xs text-left max-w-lg mx-auto">
             <div className="flex justify-between font-bold">
-              <span className="text-slate-600 dark:text-slate-400">8-Hour Work Goal</span>
-              <span className="font-mono text-indigo-600 dark:text-indigo-400">{formatHM(workSeconds)} / 8h ({progressPercent}%)</span>
+              <span className="text-slate-600 dark:text-slate-400">9-Hour Work Goal</span>
+              <span className="font-mono text-indigo-600 dark:text-indigo-400">{formatHM(totalActiveSeconds)} / 9h ({progressPercent}%)</span>
             </div>
             <div className="w-full h-3 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden border border-slate-200/80 dark:border-slate-800">
               <div
@@ -482,6 +517,7 @@ export default function AttendanceWorkClockPage() {
                 <th className="p-3 font-semibold">Punch In</th>
                 <th className="p-3 font-semibold">Punch Out</th>
                 <th className="p-3 font-semibold">Status</th>
+                <th className="p-3 font-semibold">Break Time</th>
                 <th className="p-3 font-semibold rounded-r-xl">Total Time</th>
               </tr>
             </thead>
@@ -526,6 +562,9 @@ export default function AttendanceWorkClockPage() {
                         }`}>
                           {record.status || "UNKNOWN"}
                         </span>
+                      </td>
+                      <td className="p-3 font-mono font-medium text-slate-600 dark:text-slate-400">
+                        {formatMins(record.breakMinutes || 0)}
                       </td>
                       <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">
                         {formatMins(record.totalMinutes)}
@@ -599,7 +638,7 @@ export default function AttendanceWorkClockPage() {
         isOpen={isPunchOutConfirmOpen}
         onClose={() => setIsPunchOutConfirmOpen(false)}
         title="Early Punch Out Request"
-        subtitle="You are leaving before completing 8 hours. Please provide a reason for admin approval."
+        subtitle="You are leaving before completing 9 hours. Please provide a reason for admin approval."
       >
         <form onSubmit={handleConfirmPunchOutAnyway} className="space-y-4">
           <div className="space-y-1.5">

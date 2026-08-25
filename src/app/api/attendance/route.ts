@@ -75,7 +75,7 @@ export async function POST(req: Request) {
             date: logDate,
             punchIn: logDate,
             status: "PRESENT",
-            totalMinutes: 480,
+            totalMinutes: 540,
           },
         }),
         prisma.employeeStatusEvent.create({
@@ -94,10 +94,10 @@ export async function POST(req: Request) {
         data: {
           employeeId: emp.id,
           date: logDate,
-          punchIn: new Date(logDate.getTime() - 28800000),
+          punchIn: new Date(logDate.getTime() - 32400000), // 9 hours
           punchOut: logDate,
           status: "PRESENT",
-          totalMinutes: 480,
+          totalMinutes: 540,
         },
       });
 
