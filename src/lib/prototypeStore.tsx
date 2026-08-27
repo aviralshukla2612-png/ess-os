@@ -132,7 +132,7 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
 
   const fetchAllData = async () => {
     try {
-      const role = session?.user?.activeRole;
+      const role = session?.user?.role;
       if (!role) return; // Wait until session is loaded
 
       const canViewLeads = role === "OWNER" || role === "SALES";
