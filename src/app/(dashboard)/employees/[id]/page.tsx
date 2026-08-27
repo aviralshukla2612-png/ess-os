@@ -44,6 +44,15 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
       const json = await res.json();
       if (json.success && json.data) {
         const e = json.data;
+        const today = new Date();
+        const isToday = (dateStr: string) => {
+          const d = new Date(dateStr);
+          return d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+        };
+        const todayAtt = e.attendances?.filter((a: any) => isToday(a.date)) || [];
+        const isPunchedIn = todayAtt.some((a: any) => a.punchIn && !a.punchOut);
+        const isShiftCompleted = todayAtt.some((a: any) => a.punchIn && a.punchOut);
+
         setEmployee({
           ...e,
           employeeId: e.employeeIdCode,
@@ -53,9 +62,10 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
           designation: e.user.designation,
           department: e.user.department,
           phone: "+91 98980 000" + (e.employeeIdCode?.length > 3 ? e.employeeIdCode.slice(-2) : "01"),
-          punchedIn: e.attendances?.some((a: any) => a.punchIn && !a.punchOut),
-          punchInTime: e.attendances?.[0]?.punchIn ? new Date(e.attendances[0].punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "09:00 AM",
-          todayWorkSeconds: (e.attendances?.[0]?.totalMinutes || 120) * 60,
+          punchedIn: isPunchedIn,
+          shiftCompleted: isShiftCompleted,
+          punchInTime: todayAtt[0]?.punchIn ? new Date(todayAtt[0].punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "09:00 AM",
+          todayWorkSeconds: (todayAtt[0]?.totalMinutes || 0) * 60,
           currentProject: e.workSessions?.[0]?.project?.name || "General Workspace",
           currentTask: e.workSessions?.[0]?.notes || "Focusing on active tasks",
           assignedProjects: ["PRJ-2026-001"],
@@ -193,6 +203,10 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
               <span className="px-3.5 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-bold flex items-center gap-1.5 shadow-xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                 <span>● Working · Punched In at {employee.punchInTime}</span>
+              </span>
+            ) : employee.shiftCompleted ? (
+              <span className="px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-bold shadow-xs">
+                Shift Completed Today
               </span>
             ) : (
               <span className="px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold">
