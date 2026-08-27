@@ -94,6 +94,19 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
 
   const navItems = getNavItems();
 
+  // Find the most specific active item to prevent multiple highlights (e.g. /attendance and /attendance/leave)
+  const activeItem = navItems.reduce((best, item) => {
+    if (
+      pathname === item.href ||
+      (item.href !== "/" && item.href !== "/owner" && pathname.startsWith(item.href + "/"))
+    ) {
+      if (!best || item.href.length > best.href.length) {
+        return item;
+      }
+    }
+    return best;
+  }, null as NavItem | null);
+
   return (
     <>
       {/* Mobile Backdrop */}
@@ -130,9 +143,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           {/* Navigation Items with Active Indicator Bar */}
           <nav className="space-y-1.5">
             {navItems.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                (item.href !== "/" && item.href !== "/owner" && pathname.startsWith(item.href + "/"));
+              const isActive = activeItem?.href === item.href;
 
               return (
                 <Link
