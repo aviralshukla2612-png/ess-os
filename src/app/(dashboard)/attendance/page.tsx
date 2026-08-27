@@ -281,7 +281,7 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
               >
                 <option value="ALL">All Employees</option>
                 {employees.map((emp) => (
-                  <option key={emp.employeeId} value={emp.employeeId}>
+                  <option key={emp.employeeId} value={emp.id}>
                     {emp.name} ({emp.designation})
                   </option>
                 ))}
