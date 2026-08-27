@@ -12,7 +12,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const employeeId = searchParams.get("employeeId");
 
-    let leaves = [];
+    let leaves: any[] = [];
     let employeeBalances = null;
 
     if (employeeId) {
