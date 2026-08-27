@@ -31,16 +31,7 @@ export async function GET() {
       }
     });
 
-    // Deduplicate to show only the latest break per employee for today's live tracking view
-    const uniqueBreaksMap = new Map();
-    for (const b of todaysBreaks) {
-      if (!uniqueBreaksMap.has(b.employeeId)) {
-        uniqueBreaksMap.set(b.employeeId, b);
-      }
-    }
-    const uniqueBreaks = Array.from(uniqueBreaksMap.values());
-
-    return NextResponse.json({ success: true, data: uniqueBreaks });
+    return NextResponse.json({ success: true, data: todaysBreaks });
   } catch (error) {
     console.error("Fetch Today Breaks Error:", error);
     return NextResponse.json({ success: false, error: "Failed to fetch today's breaks" }, { status: 500 });

@@ -89,12 +89,21 @@ export async function POST(req: Request) {
         },
       });
 
+      // Fetch prevailing company leave policy from an existing employee
+      const referenceEmployee = await tx.employee.findFirst({
+        orderBy: { createdAt: 'asc' },
+        select: { sickLeaveTotal: true, casualLeaveTotal: true, paidLeaveTotal: true }
+      });
+
       const newEmployee = await tx.employee.create({
         data: {
           userId: newUser.id,
           employeeIdCode: code,
           salaryMonthly: body.salaryMonthly || 0,
           skillsJson: JSON.stringify(body.skills || []),
+          sickLeaveTotal: referenceEmployee?.sickLeaveTotal ?? 10,
+          casualLeaveTotal: referenceEmployee?.casualLeaveTotal ?? 15,
+          paidLeaveTotal: referenceEmployee?.paidLeaveTotal ?? 15,
         },
       });
 

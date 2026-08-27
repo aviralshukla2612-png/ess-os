@@ -14,10 +14,23 @@ export async function POST(req: Request) {
   try {
     const serverNow = new Date();
 
+    const employee = await prisma.employee.findFirst({
+      where: {
+        OR: [
+          { id: employeeId },
+          { employeeIdCode: employeeId }
+        ]
+      }
+    });
+
+    if (!employee) {
+      return NextResponse.json({ success: false, error: "Employee profile not found" }, { status: 404 });
+    }
+
     // 1. Find the active attendance for today
     const activeAttendance = await prisma.attendance.findFirst({
       where: {
-        employeeId,
+        employeeId: employee.id,
         punchOut: null,
       },
       orderBy: { punchIn: "desc" }
@@ -31,7 +44,7 @@ export async function POST(req: Request) {
     // An EmployeeStatusEvent represents a break if statusType != 'WORKING'
     const breakEvents = await prisma.employeeStatusEvent.findMany({
       where: {
-        employeeId,
+        employeeId: employee.id,
         startedAt: { gte: activeAttendance.punchIn },
         statusType: { not: "WORKING" }
       }
@@ -62,7 +75,7 @@ export async function POST(req: Request) {
       }),
       // Close any open status events (e.g. WORKING or stray breaks)
       prisma.employeeStatusEvent.updateMany({
-        where: { employeeId, endedAt: null },
+        where: { employeeId: employee.id, endedAt: null },
         data: { endedAt: serverNow }
       })
     ]);

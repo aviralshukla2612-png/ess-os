@@ -41,6 +41,7 @@ model User {
   createdTasks        Task[]              @relation("TaskCreator")
   assignedTasks       Task[]              @relation("TaskAssignee")
   userRoles           UserRole[]
+  approvedLeaves      LeaveRequest[]      @relation("LeaveApprover")
 }
 
 model Role {
@@ -393,12 +394,19 @@ model Employee {
   salaryMonthly      Float                 @default(0)
   reportingManagerId String?
   skillsJson         String?               @default("[]")
+  sickLeaveTotal     Int                   @default(10)
+  sickLeaveUsed      Float                 @default(0)
+  casualLeaveTotal   Int                   @default(15)
+  casualLeaveUsed    Float                 @default(0)
+  paidLeaveTotal     Int                   @default(15)
+  paidLeaveUsed      Float                 @default(0)
   createdAt          DateTime              @default(now())
   attendances        Attendance[]
   user               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   statusEvents       EmployeeStatusEvent[]
   memberships        ProjectMembership[]
   workSessions       WorkSession[]
+  leaveRequests      LeaveRequest[]
 }
 
 model Attendance {
@@ -528,4 +536,26 @@ model Notification {
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
   recipient   User     @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+}
+
+model LeaveRequest {
+  id              String   @id @default(uuid())
+  employeeId      String
+  leaveType       String   // SICK, CASUAL, PAID
+  startDate       DateTime
+  endDate         DateTime
+  days            Float    @default(1)
+  reason          String
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  approvedById    String?
+  approvedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  approvedBy      User?    @relation("LeaveApprover", fields: [approvedById], references: [id])
+
+  @@index([employeeId])
+  @@index([status])
 }

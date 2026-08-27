@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
+import { useSession } from "next-auth/react";
+
 export interface ActivityItem {
   id: string;
   timestamp: string;
@@ -117,14 +119,11 @@ const PrototypeStoreContext = createContext<PrototypeStoreType | undefined>(unde
 
 export function PrototypeStoreProvider({ children }: { children: React.ReactNode }) {
   const [leads, setLeads] = useState<LeadEntity[]>([]);
-
   const [clients, setClients] = useState<ClientEntity[]>([]);
-
   const [employees, setEmployees] = useState<EmployeeEntity[]>([]);
-
   const [projects, setProjects] = useState<ProjectEntity[]>([]);
-
   const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const { data: session } = useSession();
 
   const getLeadById = (id: string) => leads.find((l) => l.id === id || l.leadNumber === id);
   const getClientById = (id: string) => clients.find((c) => c.id === id || c.clientCode === id);
@@ -133,11 +132,18 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
 
   const fetchAllData = async () => {
     try {
+      const role = session?.user?.activeRole;
+      if (!role) return; // Wait until session is loaded
+
+      const canViewLeads = role === "OWNER" || role === "SALES";
+      const canViewClients = role === "OWNER" || role === "SALES"; // Assume SALES can view clients too, or restrict to OWNER
+      const canViewEmployees = role === "OWNER";
+
       const [leadsRes, clientsRes, projectsRes, employeesRes] = await Promise.all([
-        fetch("/crmtesting/api/leads").catch(() => null),
-        fetch("/crmtesting/api/clients").catch(() => null),
-        fetch("/crmtesting/api/projects").catch(() => null),
-        fetch("/crmtesting/api/employees").catch(() => null),
+        canViewLeads ? fetch("/crmtesting/api/leads").catch(() => null) : Promise.resolve(null),
+        canViewClients ? fetch("/crmtesting/api/clients").catch(() => null) : Promise.resolve(null),
+        fetch("/crmtesting/api/projects").catch(() => null), // Everyone can view their projects
+        canViewEmployees ? fetch("/crmtesting/api/employees").catch(() => null) : Promise.resolve(null),
       ]);
 
       if (leadsRes) {
@@ -162,10 +168,12 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
   };
 
   useEffect(() => {
-    fetchAllData();
-    const interval = setInterval(fetchAllData, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    if (session?.user) {
+      fetchAllData();
+      const interval = setInterval(fetchAllData, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [session?.user]);
 
   const addLead = (leadData: Partial<LeadEntity>) => {
     fetch("/crmtesting/api/leads", {

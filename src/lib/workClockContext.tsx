@@ -28,8 +28,10 @@ interface WorkClockContextType {
   currentTask: string;
   usedLunchSeconds: number;
   usedTeaSeconds: number;
+  usedCallSeconds: number;
   lunchAllowanceSeconds: number;
   teaAllowanceSeconds: number;
+  callAllowanceSeconds: number;
   locationVerified: boolean;
   deviceVerified: boolean;
   simulatedGeofenceError: boolean;
@@ -51,56 +53,26 @@ interface WorkClockContextType {
 
 const WorkClockContext = createContext<WorkClockContextType | undefined>(undefined);
 
-const INITIAL_TIMELINE: TimelineEvent[] = [
-  {
-    id: "evt-1",
-    time: "10:01 AM",
-    type: "PUNCH_IN",
-    title: "Punch In",
-    subtitle: "Office Laptop (EMP-LT-004) • Location Verified (42m)",
-  },
-  {
-    id: "evt-2",
-    time: "10:05 AM – 11:22 AM",
-    type: "WORK",
-    title: "ABC E-Commerce Storefront",
-    subtitle: "Razorpay Sandbox Payload Testing",
-    duration: "1h 17m",
-  },
-  {
-    id: "evt-3",
-    time: "11:22 AM – 11:32 AM",
-    type: "BREAK",
-    title: "Tea Break",
-    subtitle: "10m allowance used",
-    duration: "10m",
-  },
-  {
-    id: "evt-4",
-    time: "11:32 AM – 01:10 PM",
-    type: "WORK",
-    title: "ABC E-Commerce Storefront",
-    subtitle: "Checkout Gateway API Implementation",
-    duration: "1h 38m",
-  },
-];
+const INITIAL_TIMELINE: TimelineEvent[] = [];
 
 export function WorkClockProvider({ children }: { children: React.ReactNode }) {
-  const [status, setStatus] = useState<ClockState>("WORKING");
-  const [workSeconds, setWorkSeconds] = useState<number>(8200); // ~2h 16m
+  const [status, setStatus] = useState<ClockState>("NOT_PUNCHED_IN");
+  const [workSeconds, setWorkSeconds] = useState<number>(0); 
   const [breakSeconds, setBreakSeconds] = useState<number>(0);
   const [breakType, setBreakType] = useState<string>("Lunch");
   const [breakReason, setBreakReason] = useState<string>("");
-  const [punchInTime, setPunchInTime] = useState<string | null>("10:01 AM");
+  const [punchInTime, setPunchInTime] = useState<string | null>(null);
   const [punchOutTime, setPunchOutTime] = useState<string | null>(null);
 
-  const [currentProject, setCurrentProject] = useState<string>("ABC E-Commerce Storefront");
-  const [currentTask, setCurrentTask] = useState<string>("Razorpay HMAC Webhook Signature Verification");
+  const [currentProject, setCurrentProject] = useState<string>("General Workspace");
+  const [currentTask, setCurrentTask] = useState<string>("Focusing on active tasks");
 
   const [usedLunchSeconds, setUsedLunchSeconds] = useState<number>(0);
-  const [usedTeaSeconds, setUsedTeaSeconds] = useState<number>(600); // 10m tea used
+  const [usedTeaSeconds, setUsedTeaSeconds] = useState<number>(0); 
+  const [usedCallSeconds, setUsedCallSeconds] = useState<number>(0);
   const lunchAllowanceSeconds = 45 * 60; // 45m
   const teaAllowanceSeconds = 10 * 60; // 10m
+  const callAllowanceSeconds = 120 * 60; // 2h
 
   const [locationVerified, setLocationVerified] = useState<boolean>(true);
   const [deviceVerified, setDeviceVerified] = useState<boolean>(true);
@@ -164,11 +136,14 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
               setBreakSeconds(json.data.breakSeconds);
             }
 
-            if (generalStatus !== statusRef.current) {
+            console.log("[WORK CLOCK] pollStatus:", { generalStatus, currentStatus: status, isLoaded });
+            if (generalStatus !== status) {
               // Do not overwrite ON_BREAK with WORKING locally unless they just logged in
-              if (statusRef.current === "ON_BREAK" && generalStatus === "WORKING" && isLoaded) {
+              if (status === "ON_BREAK" && generalStatus === "WORKING" && isLoaded) {
+                console.log("[WORK CLOCK] Preserving ON_BREAK");
                 // Preserve ON_BREAK
               } else {
+                console.log("[WORK CLOCK] Setting status to:", generalStatus);
                 setStatus(generalStatus);
                 if (generalStatus === "NOT_PUNCHED_IN") {
                   setWorkSeconds(0);
@@ -206,7 +181,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const employeeId = session?.user?.employeeId;
     if (!employeeId) return;
-    const saved = localStorage.getItem(`ess_work_clock_state_${employeeId}`);
+    const saved = localStorage.getItem(`ess_work_clock_state_v2_${employeeId}`);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -221,13 +196,14 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
         if (parsed.currentTask) setCurrentTask(parsed.currentTask);
         if (parsed.usedLunchSeconds !== undefined) setUsedLunchSeconds(parsed.usedLunchSeconds);
         if (parsed.usedTeaSeconds !== undefined) setUsedTeaSeconds(parsed.usedTeaSeconds);
+        if (parsed.usedCallSeconds !== undefined) setUsedCallSeconds(parsed.usedCallSeconds);
         if (parsed.timeline) setTimeline(parsed.timeline);
       } catch (e) {
         console.error("Failed to parse work clock state", e);
       }
     } else {
       // Reset if no saved state for this user
-      if (status !== "WORKING") setStatus("WORKING");
+      if (status !== "NOT_PUNCHED_IN") setStatus("NOT_PUNCHED_IN");
     }
     setIsLoaded(true);
   }, [session?.user?.employeeId]);
@@ -247,11 +223,12 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
       currentTask,
       usedLunchSeconds,
       usedTeaSeconds,
+      usedCallSeconds,
       timeline,
     };
     const employeeId = session?.user?.employeeId;
     if (!employeeId) return;
-    localStorage.setItem(`ess_work_clock_state_${employeeId}`, JSON.stringify(stateToSave));
+    localStorage.setItem(`ess_work_clock_state_v2_${employeeId}`, JSON.stringify(stateToSave));
   }, [
     isLoaded,
     status,
@@ -265,6 +242,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     currentTask,
     usedLunchSeconds,
     usedTeaSeconds,
+    usedCallSeconds,
     timeline,
     session?.user?.employeeId,
   ]);
@@ -283,6 +261,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
           const next = prev + 1;
           if (breakType === "Lunch") setUsedLunchSeconds((l) => l + 1);
           if (breakType === "Tea") setUsedTeaSeconds((t) => t + 1);
+          if (breakType === "Client Call") setUsedCallSeconds((c) => c + 1);
           return next;
         });
       }, 1000);
@@ -321,7 +300,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
         time: formatted,
         type: "PUNCH_IN",
         title: "Punch In",
-        subtitle: "Office Laptop (EMP-LT-004) • Location Verified",
+        subtitle: "Approved Device • Location Verified",
       },
     ]);
   };
@@ -411,7 +390,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     ]);
   };
 
-  const REQUIRED_WORK_SECONDS = 9 * 3600; // 9 hours
+  const REQUIRED_WORK_SECONDS = parseInt(process.env.NEXT_PUBLIC_REQUIRED_WORK_HOURS || "9") * 3600;
 
   const punchOut = () => {
     const totalActiveSeconds = workSeconds + breakSeconds;
@@ -477,8 +456,10 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
         currentTask,
         usedLunchSeconds,
         usedTeaSeconds,
+        usedCallSeconds,
         lunchAllowanceSeconds,
         teaAllowanceSeconds,
+        callAllowanceSeconds,
         locationVerified,
         deviceVerified,
         simulatedGeofenceError,

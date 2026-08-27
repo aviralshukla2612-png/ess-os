@@ -50,6 +50,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           { title: "Team", href: "/employees", icon: <UserCheck className="w-4 h-4" /> },
           { title: "Attendance", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
           { title: "Punch Out Requests", href: "/attendance-requests", icon: <Clock className="w-4 h-4" /> },
+          { title: "Leave Applications", href: "/leave-requests", icon: <UserCheck className="w-4 h-4" /> },
 
           { title: "Finance", href: "/finance", icon: <IndianRupee className="w-4 h-4" /> },
           { title: "Activity", href: "/audit", icon: <ShieldAlert className="w-4 h-4" /> },
@@ -60,6 +61,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
         return [
           { title: "Sales Overview", href: "/sales", icon: <LayoutDashboard className="w-4 h-4" /> },
           { title: "My Work Sessions", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
+          { title: "Leave Applications", href: "/attendance/leave", icon: <UserCheck className="w-4 h-4" /> },
           { title: "Lead Pipeline", href: "/leads", icon: <Target className="w-4 h-4" /> },
           { title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
           { title: "Follow-ups Today", href: "/sales/followups", icon: <PhoneCall className="w-4 h-4" /> },
@@ -72,6 +74,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           { title: "My Desk", href: "/employee", icon: <LayoutDashboard className="w-4 h-4" /> },
           { title: "My Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" /> },
           { title: "My Work Sessions", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
+          { title: "Leave Applications", href: "/attendance/leave", icon: <UserCheck className="w-4 h-4" /> },
           { title: "Documentation", href: "/docs", icon: <BookOpen className="w-4 h-4" /> },
           { title: "Settings", href: "/settings", icon: <Settings className="w-4 h-4" /> },
         ];

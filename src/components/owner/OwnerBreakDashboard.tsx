@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Coffee, Clock, CheckCircle2 } from "lucide-react";
 
-export function OwnerBreakDashboard() {
+export function OwnerBreakDashboard({ inspectedEmployee }: { inspectedEmployee?: string }) {
   const [breaks, setBreaks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,7 +41,7 @@ export function OwnerBreakDashboard() {
 
       {loading ? (
         <div className="p-8 text-center text-slate-500 animate-pulse">Loading break data...</div>
-      ) : breaks.length === 0 ? (
+      ) : breaks.filter(b => !inspectedEmployee || inspectedEmployee === "ALL" || b.employeeId === inspectedEmployee).length === 0 ? (
         <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-8 shadow-xl text-center text-slate-500">
           <Clock className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">No Breaks Yet</h3>
@@ -49,7 +49,7 @@ export function OwnerBreakDashboard() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {breaks.map((b) => {
+          {breaks.filter(b => !inspectedEmployee || inspectedEmployee === "ALL" || b.employeeId === inspectedEmployee).map((b) => {
             const name = b.employee?.user?.name || "Unknown Employee";
             const type = b.statusType || "Break";
             const reason = b.notes || "No reason provided";

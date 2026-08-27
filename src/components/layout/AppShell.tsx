@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { GlobalSearchModal } from "@/components/layout/GlobalSearchModal";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
@@ -54,23 +53,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Body Layout: Desktop Fixed Sidebar + Main Scrollable Workspace */}
-      <div className="flex flex-1 h-[calc(100vh-3.5rem)] relative">
+      <div className="flex flex-1 overflow-hidden relative w-full">
         <Sidebar
           role={currentRole}
           isMobileOpen={false}
           onCloseMobile={() => setIsMobileMenuOpen(false)}
         />
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 md:pb-8">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-8">
           {children}
         </main>
       </div>
 
-      {/* Mobile App Bottom Navigation Bar */}
-      <MobileBottomNav
-        role={currentRole}
-        onOpenMoreMenu={() => setIsMobileMenuOpen(true)}
-      />
     </div>
   );
 }

@@ -21,8 +21,13 @@ export async function POST(req: Request) {
     endOfDay.setHours(23, 59, 59, 999);
 
     // Look up real employee UUID
-    const employee = await prisma.employee.findUnique({
-      where: { id: employeeId }
+    const employee = await prisma.employee.findFirst({
+      where: {
+        OR: [
+          { id: employeeId },
+          { employeeIdCode: employeeId }
+        ]
+      }
     });
 
     if (!employee) {

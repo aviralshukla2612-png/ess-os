@@ -4,44 +4,27 @@ import React, { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
 import { CalendarDatePicker } from "@/components/ui/CalendarDatePicker";
 
-export function OwnerAttendanceHistory() {
+export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspectedEmployee?: string }) {
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [selectedEmployee, setSelectedEmployee] = useState("ALL");
-  const [startDate, setStartDate] = useState(() => {
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  useEffect(() => {
     const d = new Date();
     d.setDate(1);
-    return d.toISOString().split("T")[0];
-  });
-  const [endDate, setEndDate] = useState(() => {
-    return new Date().toISOString().split("T")[0];
-  });
+    setStartDate(d.toISOString().split("T")[0]);
+    setEndDate(new Date().toISOString().split("T")[0]);
+  }, []);
 
   const [loading, setLoading] = useState(true);
 
-  // Fetch employee list once
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const res = await fetch("/crmtesting/api/employees");
-        const json = await res.json();
-        if (json.success && Array.isArray(json.data)) {
-          // data contains { id, name, employeeId, ... }
-          setEmployees(json.data);
-        }
-      } catch (e) {
-        console.error("Failed to fetch employees", e);
-      }
-    };
-    fetchEmployees();
-  }, []);
 
   // Fetch history when filters change
   useEffect(() => {
     const fetchHistory = async () => {
       setLoading(true);
       try {
-        let url = `/crmtesting/api/attendance/history?employeeId=${selectedEmployee}`;
+        let url = `/crmtesting/api/attendance/history?employeeId=${inspectedEmployee}`;
         
         if (startDate && endDate) {
           url += `&startDate=${startDate}&endDate=${endDate}`;
@@ -60,7 +43,7 @@ export function OwnerAttendanceHistory() {
     };
 
     fetchHistory();
-  }, [selectedEmployee, startDate, endDate]);
+  }, [inspectedEmployee, startDate, endDate]);
 
   return (
     <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6 md:p-8 shadow-xl dark:shadow-2xl space-y-6">
@@ -74,17 +57,6 @@ export function OwnerAttendanceHistory() {
         </div>
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
-          {/* Employee Filter */}
-          <select
-            value={selectedEmployee}
-            onChange={(e) => setSelectedEmployee(e.target.value)}
-            className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:border-indigo-500 w-full sm:w-auto"
-          >
-            <option value="ALL">All Employees</option>
-            {employees.map(emp => (
-              <option key={emp.id} value={emp.id}>{emp.name}</option>
-            ))}
-          </select>
 
           {/* Date Picker */}
           <CalendarDatePicker

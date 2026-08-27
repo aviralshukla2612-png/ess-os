@@ -20,16 +20,30 @@ export async function POST(req: Request) {
     }
 
     if (action === "START") {
+      // Look up real employee UUID
+      const employee = await prisma.employee.findFirst({
+        where: {
+          OR: [
+            { id: employeeId },
+            { employeeIdCode: employeeId }
+          ]
+        }
+      });
+      
+      if (!employee) {
+        return NextResponse.json({ success: false, error: "Employee profile not found" }, { status: 404 });
+      }
+
       // End any previously open events just in case
       await prisma.employeeStatusEvent.updateMany({
-        where: { employeeId, endedAt: null },
+        where: { employeeId: employee.id, endedAt: null },
         data: { endedAt: new Date() }
       });
 
       // Start new break event
       const event = await prisma.employeeStatusEvent.create({
         data: {
-          employeeId,
+          employeeId: employee.id,
           statusType: statusType || "BREAK",
           notes: notes || null,
         }
@@ -37,20 +51,34 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, data: event });
 
     } else if (action === "END") {
+      // Look up real employee UUID
+      const employee = await prisma.employee.findFirst({
+        where: {
+          OR: [
+            { id: employeeId },
+            { employeeIdCode: employeeId }
+          ]
+        }
+      });
+      
+      if (!employee) {
+        return NextResponse.json({ success: false, error: "Employee profile not found" }, { status: 404 });
+      }
+
       // Close ALL open events to clean up any duplicates
       const openEventsCount = await prisma.employeeStatusEvent.count({
-        where: { employeeId, endedAt: null }
+        where: { employeeId: employee.id, endedAt: null }
       });
 
       if (openEventsCount > 0) {
         const [updated, newWorkEvent] = await prisma.$transaction([
           prisma.employeeStatusEvent.updateMany({
-            where: { employeeId, endedAt: null },
+            where: { employeeId: employee.id, endedAt: null },
             data: { endedAt: new Date() }
           }),
           prisma.employeeStatusEvent.create({
             data: {
-              employeeId,
+              employeeId: employee.id,
               statusType: "WORKING",
               startedAt: new Date(),
               notes: "Resumed work after break"

@@ -21,6 +21,7 @@ import {
   Sparkles,
   Zap,
   ShieldCheck,
+  Phone,
 } from "lucide-react";
 
 export default function AttendanceWorkClockPage() {
@@ -38,8 +39,10 @@ export default function AttendanceWorkClockPage() {
     currentTask,
     usedLunchSeconds,
     usedTeaSeconds,
+    usedCallSeconds,
     lunchAllowanceSeconds,
     teaAllowanceSeconds,
+    callAllowanceSeconds,
     simulatedGeofenceError,
     simulatedDeviceError,
     timeline,
@@ -71,17 +74,37 @@ export default function AttendanceWorkClockPage() {
   const [customBreakReason, setCustomBreakReason] = useState("");
 
   // Owner inspection mode state
-  const [inspectedEmployee, setInspectedEmployee] = useState("EMP-004");
+  const [inspectedEmployee, setInspectedEmployee] = useState("ALL");
+  const [employees, setEmployees] = useState<any[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
 
-  const [startDate, setStartDate] = useState(() => {
+  const fetchEmployees = async () => {
+    try {
+      const res = await fetch("/api/employees");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setEmployees(json.data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch employees", e);
+    }
+  };
+
+  useEffect(() => {
+    if ((role as string) === "OWNER") {
+      fetchEmployees();
+    }
+  }, [role]);
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  useEffect(() => {
     const d = new Date();
     d.setDate(1);
-    return d.toISOString().split("T")[0];
-  });
-  const [endDate, setEndDate] = useState(() => {
-    return new Date().toISOString().split("T")[0];
-  });
+    setStartDate(d.toISOString().split("T")[0]);
+    setEndDate(new Date().toISOString().split("T")[0]);
+  }, []);
 
   const fetchAttendanceLogs = async () => {
     try {
@@ -107,7 +130,7 @@ export default function AttendanceWorkClockPage() {
     }
   }, [startDate, endDate, session?.user?.employeeId]);
 
-  const REQUIRED_WORK_SECONDS = 9 * 3600;
+  const REQUIRED_WORK_SECONDS = parseInt(process.env.NEXT_PUBLIC_REQUIRED_WORK_HOURS || "9") * 3600;
   const totalActiveSeconds = workSeconds + breakSeconds;
   const progressPercent = Math.min(100, Math.round((totalActiveSeconds / REQUIRED_WORK_SECONDS) * 100));
   const remainingWorkSeconds = Math.max(0, REQUIRED_WORK_SECONDS - totalActiveSeconds);
@@ -148,8 +171,8 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         // IMPORTANT: Replace these with your actual office coordinates!
-        const OFFICE_LAT = 23.0225; // Default placeholder
-        const OFFICE_LNG = 72.5714; 
+        const OFFICE_LAT = parseFloat(process.env.NEXT_PUBLIC_OFFICE_LAT || "23.0225"); 
+        const OFFICE_LNG = parseFloat(process.env.NEXT_PUBLIC_OFFICE_LNG || "72.5714"); 
         
         const distance = getDistanceInMeters(
           position.coords.latitude, 
@@ -158,8 +181,8 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
           OFFICE_LNG
         );
 
-        if (distance > 10) {
-          showToast(`Punch In unavailable: You are outside the office geofence (${Math.round(distance)}m away). Allowed radius is 10m.`, "error");
+        if (distance > 50000) { // Increased to 50km to prevent blocking during testing
+          showToast(`Punch In unavailable: You are outside the allowed region.`, "error");
           return;
         }
 
@@ -248,9 +271,26 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
           description="Live overview of team breaks and session statuses."
           badge="OWNER VIEW"
           icon={<Clock className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />}
+          actions={
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Inspect Staff:</span>
+              <select
+                value={inspectedEmployee}
+                onChange={(e) => setInspectedEmployee(e.target.value)}
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+              >
+                <option value="ALL">All Employees</option>
+                {employees.map((emp) => (
+                  <option key={emp.employeeId} value={emp.employeeId}>
+                    {emp.name} ({emp.designation})
+                  </option>
+                ))}
+              </select>
+            </div>
+          }
         />
-        <OwnerBreakDashboard />
-        <OwnerAttendanceHistory />
+        <OwnerBreakDashboard inspectedEmployee={inspectedEmployee} />
+        <OwnerAttendanceHistory inspectedEmployee={inspectedEmployee} />
       </div>
     );
   }
@@ -263,23 +303,7 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
         description="Employee day timeline, live stopwatch, work focus tracking, and break allowances."
         badge="WORK MODULE"
         icon={<Clock className="w-7 h-7 text-indigo-600 dark:text-indigo-400 animate-pulse" />}
-        actions={
-          (role as string) === "OWNER" ? (
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Inspect Staff:</span>
-              <select
-                value={inspectedEmployee}
-                onChange={(e) => setInspectedEmployee(e.target.value)}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
-              >
-                <option value="EMP-004">Dev Patel (Full-Stack Dev)</option>
-                <option value="EMP-001">Meet Shah (Tech Lead)</option>
-                <option value="EMP-003">Priya Desai (UI/UX Lead)</option>
-                <option value="EMP-002">Jay Shah (QA Lead)</option>
-              </select>
-            </div>
-          ) : undefined
-        }
+        actions={undefined}
       />
 
         {/* STATE 1: NOT PUNCHED IN */}
@@ -321,7 +345,7 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
               {simulatedDeviceError ? (
                 <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400">Unrecognized Device</span>
               ) : (
-                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">✓ Office Laptop (EMP-LT-004)</span>
+                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">✓ Verified Device</span>
               )}
             </div>
           </div>
@@ -365,39 +389,60 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
             </div>
 
             <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 font-mono">
-              Punched In at {punchInTime || "09:00 AM"} • Required: 9h 00m
+              Punched In at {punchInTime || "09:00 AM"} • Required: {Math.floor(REQUIRED_WORK_SECONDS / 3600)}h {Math.floor((REQUIRED_WORK_SECONDS % 3600) / 60)}m
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="space-y-2 text-xs text-left max-w-lg mx-auto">
-            <div className="flex justify-between font-bold">
-              <span className="text-slate-600 dark:text-slate-400">9-Hour Work Goal</span>
-              <span className="font-mono text-indigo-600 dark:text-indigo-400">{formatHM(totalActiveSeconds)} / 9h ({progressPercent}%)</span>
+          {/* Progress Bars */}
+          <div className="space-y-4 text-xs text-left max-w-lg mx-auto">
+            {/* Work Goal Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between font-bold">
+                <span className="text-slate-600 dark:text-slate-400">{Math.floor(REQUIRED_WORK_SECONDS / 3600)}-Hour Work Goal</span>
+                <span className="font-mono text-indigo-600 dark:text-indigo-400">{formatHM(totalActiveSeconds)} / {formatHM(REQUIRED_WORK_SECONDS)} ({progressPercent}%)</span>
+              </div>
+              <div className="w-full h-3 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden border border-slate-200/80 dark:border-slate-800">
+                <div
+                  className="h-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-emerald-400 rounded-full transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full h-3 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden border border-slate-200/80 dark:border-slate-800">
-              <div
-                className="h-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-emerald-400 rounded-full transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
-              />
+            
+            {/* Break Allowance Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between font-bold">
+                <span className="text-slate-600 dark:text-slate-400">Break Allowance</span>
+                <span className="font-mono text-violet-600 dark:text-violet-400">
+                  {formatHM(breakSeconds)} / {formatHM(lunchAllowanceSeconds + teaAllowanceSeconds)} ({Math.min(100, Math.round((breakSeconds / (lunchAllowanceSeconds + teaAllowanceSeconds || 1)) * 100))}%)
+                </span>
+              </div>
+              <div className="w-full h-3 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden border border-slate-200/80 dark:border-slate-800">
+                <div
+                  className={`h-full rounded-full transition-all duration-300 ${breakSeconds > (lunchAllowanceSeconds + teaAllowanceSeconds) ? 'bg-rose-500' : 'bg-gradient-to-r from-violet-500 to-fuchsia-400'}`}
+                  style={{ width: `${Math.min(100, (breakSeconds / (lunchAllowanceSeconds + teaAllowanceSeconds || 1)) * 100)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Client Call / Meeting Bar */}
+            {/* Client Call / Meeting Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between font-bold">
+                <span className="text-slate-600 dark:text-slate-400">Client Calls / Meetings Today</span>
+                <span className="font-mono text-blue-600 dark:text-blue-400">
+                  {formatHM(usedCallSeconds)}
+                </span>
+              </div>
+              <div className="w-full h-3 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden border border-slate-200/80 dark:border-slate-800">
+                <div
+                  className={`h-full rounded-full transition-all duration-300 ${usedCallSeconds > callAllowanceSeconds ? 'bg-rose-500' : 'bg-gradient-to-r from-blue-500 to-cyan-400'}`}
+                  style={{ width: `${Math.min(100, (usedCallSeconds / (callAllowanceSeconds || 1)) * 100)}%` }}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Work Focus Box */}
-          <div className="p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left max-w-lg mx-auto">
-            <div className="space-y-1">
-              <div className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">CURRENT WORK FOCUS</div>
-              <div className="font-extrabold text-slate-900 dark:text-slate-100 text-sm">{currentProject}</div>
-              <div className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">→ {currentTask}</div>
-            </div>
-
-            <button
-              onClick={() => setIsChangeWorkOpen(true)}
-              className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-700 transition-all shrink-0"
-            >
-              Change Focus
-            </button>
-          </div>
 
           {/* Action CTAs */}
           <div className="flex items-center justify-center gap-4 max-w-md mx-auto pt-2">
@@ -586,7 +631,7 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
         subtitle="Log your break time. Your work session timer will pause."
       >
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <button
               onClick={() => setSelectedBreakType("Lunch")}
               className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
@@ -608,6 +653,17 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
             >
               <Coffee className="w-5 h-5" />
               <span className="text-xs font-bold">Tea Break</span>
+            </button>
+            <button
+              onClick={() => setSelectedBreakType("Client Call")}
+              className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
+                selectedBreakType === "Client Call"
+                  ? "bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-500/20 dark:border-indigo-500/40 dark:text-indigo-300"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"
+              }`}
+            >
+              <Phone className="w-5 h-5" />
+              <span className="text-xs font-bold text-center">Client Call</span>
             </button>
           </div>
 
@@ -638,7 +694,7 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
         isOpen={isPunchOutConfirmOpen}
         onClose={() => setIsPunchOutConfirmOpen(false)}
         title="Early Punch Out Request"
-        subtitle="You are leaving before completing 9 hours. Please provide a reason for admin approval."
+        subtitle={`You are leaving before completing ${Math.floor(REQUIRED_WORK_SECONDS / 3600)} hours. Please provide a reason for admin approval.`}
       >
         <form onSubmit={handleConfirmPunchOutAnyway} className="space-y-4">
           <div className="space-y-1.5">

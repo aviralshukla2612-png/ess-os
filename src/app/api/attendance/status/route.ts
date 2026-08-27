@@ -8,6 +8,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const employeeIdCode = req.nextUrl.searchParams.get("employeeId");
+    
+    console.log("authRes.employeeId:", authRes.employeeId, "query:", employeeIdCode, "authRes:", authRes);
 
     if (!employeeIdCode) {
       return NextResponse.json({ success: false, error: "Missing employeeId" }, { status: 400 });
@@ -78,10 +80,13 @@ export async function GET(req: NextRequest) {
       }
     });
 
+    const finalStatus = attendance.punchOut ? "DAY_COMPLETE" : (events.find(e => !e.endedAt)?.statusType === "WORKING" ? "WORKING" : "ON_BREAK");
+    console.log("Returning status to client:", finalStatus);
+
     return NextResponse.json({ 
       success: true, 
       data: {
-        status: attendance.punchOut ? "DAY_COMPLETE" : (events.find(e => !e.endedAt)?.statusType === "WORKING" ? "WORKING" : "ON_BREAK"),
+        status: finalStatus,
         punchOutRequestStatus: attendance.punchOutRequestStatus, // PENDING, APPROVED, REJECTED, or null
         punchOut: attendance.punchOut,
         punchIn: attendance.punchIn,
