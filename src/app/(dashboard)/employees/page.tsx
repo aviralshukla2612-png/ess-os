@@ -189,6 +189,10 @@ export default function EmployeesPage() {
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
                     <span>WORKING</span>
                   </span>
+                ) : emp.shiftCompleted ? (
+                  <span className="text-[10px] font-mono font-bold px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20">
+                    COMPLETED
+                  </span>
                 ) : (
                   <span className="text-[10px] font-mono font-bold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
                     OFFLINE

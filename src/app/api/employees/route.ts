@@ -19,7 +19,17 @@ export async function GET() {
       },
     });
 
-    const formatted = employees.map((e) => ({
+    const formatted = employees.map((e) => {
+      const today = new Date();
+      const isToday = (dateStr: string | Date) => {
+        const d = new Date(dateStr);
+        return d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+      };
+      const todayAtt = e.attendances.filter(a => isToday(a.date));
+      const isPunchedIn = todayAtt.some((a) => a.punchIn && !a.punchOut);
+      const isShiftCompleted = todayAtt.some((a) => a.punchIn && a.punchOut);
+
+      return {
       id: e.id,
       employeeId: e.employeeIdCode,
       name: e.user.name,
@@ -28,8 +38,9 @@ export async function GET() {
       designation: e.user.designation,
       department: e.user.department,
       phone: "+91 98980 000" + (e.employeeIdCode.length > 3 ? e.employeeIdCode.slice(-2) : "01"),
-      punchedIn: e.attendances.some((a) => a.punchIn && !a.punchOut),
-      punchInTime: e.attendances[0]?.punchIn ? new Date(e.attendances[0].punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "09:00 AM",
+      punchedIn: isPunchedIn,
+      shiftCompleted: isShiftCompleted,
+      punchInTime: todayAtt[0]?.punchIn ? new Date(todayAtt[0].punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "09:00 AM",
       todayWorkSeconds: (e.attendances[0]?.totalMinutes || 120) * 60,
       currentProject: e.workSessions[0]?.project?.name || "General Workspace",
       currentTask: e.workSessions[0]?.notes || "Focusing on active tasks",
@@ -48,7 +59,8 @@ export async function GET() {
         status: a.status,
         workHours: `${Math.floor((a.totalMinutes || 0) / 60)}h ${(a.totalMinutes || 0) % 60}m`,
       })),
-    }));
+    };
+    });
 
     return NextResponse.json({ success: true, data: formatted });
   } catch (error) {
