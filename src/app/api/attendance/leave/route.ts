@@ -32,7 +32,7 @@ export async function GET(req: Request) {
           paidLeaveTotal: true, paidLeaveUsed: true,
         }
       });
-    } else if (session.user.role === "OWNER" || session.user.role === "ADMIN") {
+    } else if (session.user.role === "OWNER") {
       // Get all for owner
       leaves = await prisma.leaveRequest.findMany({
         orderBy: { createdAt: 'desc' },

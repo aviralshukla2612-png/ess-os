@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
 
 export async function GET() {
-  const authRes = await requireRole(["OWNER", "ADMIN"]);
+  const authRes = await requireRole(["OWNER"]);
   if (authRes instanceof NextResponse) return authRes;
 
   try {
@@ -21,7 +21,7 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  const authRes = await requireRole(["OWNER", "ADMIN"]);
+  const authRes = await requireRole(["OWNER"]);
   if (authRes instanceof NextResponse) return authRes;
 
   try {
@@ -55,7 +55,7 @@ export async function PATCH(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const authRes = await requireRole(["OWNER", "ADMIN"]);
+  const authRes = await requireRole(["OWNER"]);
   if (authRes instanceof NextResponse) return authRes;
 
   try {

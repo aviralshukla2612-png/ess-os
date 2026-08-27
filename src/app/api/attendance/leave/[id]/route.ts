@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth-options";
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id || (session.user.role !== "OWNER" && session.user.role !== "ADMIN")) {
+    if (!session?.user?.id || session.user.role !== "OWNER") {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
