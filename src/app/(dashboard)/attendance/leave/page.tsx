@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { UserCheck, Calendar, Clock, Plus, RefreshCw, XCircle, CheckCircle } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import { CalendarDatePicker } from "@/components/ui/CalendarDatePicker";
 import { useSession } from "next-auth/react";
 
 export default function EmployeeLeavePage() {
@@ -92,7 +93,7 @@ export default function EmployeeLeavePage() {
 
       {/* Balances Section */}
       {balances && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <BalanceCard 
             title="Sick Leave" 
             used={balances.sickLeaveUsed} 
@@ -104,12 +105,6 @@ export default function EmployeeLeavePage() {
             used={balances.casualLeaveUsed} 
             total={balances.casualLeaveTotal} 
             colorClass="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20" 
-          />
-          <BalanceCard 
-            title="Paid Leave (PTO)" 
-            used={balances.paidLeaveUsed} 
-            total={balances.paidLeaveTotal} 
-            colorClass="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20" 
           />
         </div>
       )}
@@ -131,29 +126,26 @@ export default function EmployeeLeavePage() {
                 >
                   <option value="SICK">Sick Leave</option>
                   <option value="CASUAL">Casual Leave</option>
-                  <option value="PAID">Paid Leave</option>
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Start Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">End Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Leave Period</label>
+                <div className="w-full">
+                  <CalendarDatePicker
+                    startDate={startDate}
+                    endDate={endDate}
+                    onDateChange={(start, end) => {
+                      setStartDate(start);
+                      setEndDate(end);
+                      if (start && end) {
+                        const s = new Date(start);
+                        const e = new Date(end);
+                        const diffTime = Math.abs(e.getTime() - s.getTime());
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                        setDays(diffDays.toString());
+                      }
+                    }}
                   />
                 </div>
               </div>
