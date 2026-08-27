@@ -7,9 +7,15 @@ export async function GET() {
   if (authRes instanceof NextResponse) return authRes;
 
   try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const employees = await prisma.employee.findMany({
       include: {
         user: true,
+        attendances: {
+          where: { date: { gte: today } }
+        },
         statusEvents: {
           where: { 
             endedAt: null, 
@@ -26,9 +32,6 @@ export async function GET() {
         }
       },
     });
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
     const teamData = employees.map((emp) => {
         // Use included relations instead of separate queries (Fixes N+1)
@@ -63,11 +66,20 @@ export async function GET() {
           const mins = Math.round(((nowMs - startMs) % 3600000) / 60000);
           duration = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
         } else {
-          // If neither, maybe not punched in or offline
-          status = "OFFLINE";
-          statusColor = "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700";
-          task = "Not currently working";
-          duration = "-";
+          // Check if they completed a shift today
+          const completedShiftToday = emp.attendances?.some(a => a.punchOut);
+          
+          if (completedShiftToday) {
+            status = "COMPLETED";
+            statusColor = "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800";
+            task = "Shift completed for today";
+            duration = "-";
+          } else {
+            status = "OFFLINE";
+            statusColor = "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700";
+            task = "Not currently working";
+            duration = "-";
+          }
         }
 
         return {
