@@ -22,7 +22,112 @@ import {
   Zap,
   ShieldCheck,
   Phone,
+  ChevronDown,
+  Check,
+  Users,
 } from "lucide-react";
+
+const CustomStaffDropdown = ({ employees, value, onChange }: any) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedEmp = value === "ALL" ? null : employees.find((e: any) => e.id === value);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-3 bg-white/90 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm group min-w-[200px]"
+      >
+        <div className="flex items-center gap-2.5 flex-1">
+          {selectedEmp ? (
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-md shadow-indigo-500/20">
+              {selectedEmp.name[0]}
+            </div>
+          ) : (
+            <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center">
+              <Users className="w-4 h-4" />
+            </div>
+          )}
+          <div className="text-left flex-1">
+            <div className="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              {selectedEmp ? selectedEmp.name : "All Employees"}
+            </div>
+            <div className="text-[10px] font-medium text-slate-500">
+              {selectedEmp ? selectedEmp.designation : "Entire Team"}
+            </div>
+          </div>
+        </div>
+        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${isOpen ? "rotate-180 text-indigo-500" : ""}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+          <div className="max-h-[320px] overflow-y-auto p-2 space-y-0.5 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+            <button
+              onClick={() => { onChange("ALL"); setIsOpen(false); }}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all ${
+                value === "ALL" ? "bg-indigo-50/80 dark:bg-indigo-500/10" : "hover:bg-slate-50 dark:hover:bg-slate-800/60"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${value === "ALL" ? "bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"}`}>
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className={`text-xs font-bold ${value === "ALL" ? "text-indigo-600 dark:text-indigo-400" : "text-slate-900 dark:text-slate-100"}`}>
+                    All Employees
+                  </div>
+                  <div className="text-[10px] text-slate-500">View entire team</div>
+                </div>
+              </div>
+              {value === "ALL" && <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
+            </button>
+            
+            <div className="h-px bg-slate-100 dark:bg-slate-800/60 my-2 mx-3" />
+
+            {employees.map((emp: any) => (
+              <button
+                key={emp.id}
+                onClick={() => { onChange(emp.id); setIsOpen(false); }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all ${
+                  value === emp.id ? "bg-indigo-50/80 dark:bg-indigo-500/10" : "hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-extrabold text-xs ${
+                    value === emp.id 
+                      ? "bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-500/20" 
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                  }`}>
+                    {emp.name[0]}
+                  </div>
+                  <div>
+                    <div className={`text-xs font-bold ${value === emp.id ? "text-indigo-600 dark:text-indigo-400" : "text-slate-900 dark:text-slate-100"}`}>
+                      {emp.name}
+                    </div>
+                    <div className="text-[10px] text-slate-500">{emp.designation}</div>
+                  </div>
+                </div>
+                {value === emp.id && <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function AttendanceWorkClockPage() {
   const { data: session } = useSession();
@@ -273,19 +378,12 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
           icon={<Clock className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />}
           actions={
             <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Inspect Staff:</span>
-              <select
-                value={inspectedEmployee}
-                onChange={(e) => setInspectedEmployee(e.target.value)}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
-              >
-                <option value="ALL">All Employees</option>
-                {employees.map((emp) => (
-                  <option key={emp.employeeId} value={emp.id}>
-                    {emp.name} ({emp.designation})
-                  </option>
-                ))}
-              </select>
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Inspect Staff:</span>
+              <CustomStaffDropdown 
+                employees={employees} 
+                value={inspectedEmployee} 
+                onChange={setInspectedEmployee} 
+              />
             </div>
           }
         />
