@@ -80,7 +80,7 @@ export default function AttendanceWorkClockPage() {
 
   const fetchEmployees = async () => {
     try {
-      const res = await fetch("/api/employees");
+      const res = await fetch("/crmtesting/api/employees");
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setEmployees(json.data);
