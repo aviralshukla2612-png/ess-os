@@ -80,7 +80,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             {/* Input: Email or Employee ID */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -91,6 +91,8 @@ export default function LoginPage() {
                 <input
                   type="text"
                   required
+                  autoComplete="off"
+                  name="user-email-field"
                   value={emailOrId}
                   onChange={(e) => setEmailOrId(e.target.value)}
                   placeholder="Enter your email"
@@ -118,6 +120,8 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   required
+                  autoComplete="new-password"
+                  name="user-password-field"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
