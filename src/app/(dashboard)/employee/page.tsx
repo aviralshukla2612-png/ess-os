@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import {
@@ -18,6 +19,16 @@ import {
 } from "lucide-react";
 
 export default function EmployeeDeskPage() {
+  const { data: session } = useSession();
+  const userName = session?.user?.name ? session.user.name.split(" ")[0] : "Employee";
+  
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
   const [tasks, setTasks] = useState<any[]>([]);
 
   const [notes, setNotes] = useState<any[]>([]);
@@ -56,9 +67,9 @@ export default function EmployeeDeskPage() {
     <div className="space-y-6 pb-12">
       {/* Mobile-Optimized Executive Page Header */}
       <PageHeader
-        title="Good morning, Dev"
+        title={`${getGreeting()}, ${userName}`}
         description="Here is your personal work stack across assigned ESS projects today."
-        badge="FULL-STACK DEV"
+        badge={session?.user?.designation || "EMPLOYEE"}
         actions={
           <div className="flex items-center gap-2">
             <button
