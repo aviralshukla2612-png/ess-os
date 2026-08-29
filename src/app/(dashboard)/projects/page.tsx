@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { FolderKanban, Plus, ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
+import { FolderKanban, Plus, ArrowRight, Sparkles, CheckCircle2, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 
@@ -16,6 +17,7 @@ export default function ProjectsDirectoryPage() {
   const [clientName, setClientName] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
   const [employees, setEmployees] = useState<any[]>([]);
+  const { data: session } = useSession();
 
   useEffect(() => {
     fetchProjects();
@@ -46,6 +48,23 @@ export default function ProjectsDirectoryPage() {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    if (!window.confirm("Are you sure you want to permanently delete this project? This action cannot be undone.")) return;
+    try {
+      const res = await fetch(`/crmtesting/api/projects/${id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (json.success) {
+        showToast("Project deleted successfully", "success");
+        fetchProjects(); // Refresh the list
+      } else {
+        showToast(json.error || "Failed to delete project", "error");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("An unexpected error occurred", "error");
     }
   };
 
@@ -178,6 +197,17 @@ export default function ProjectsDirectoryPage() {
                   >
                     {p.health || "ON_TRACK"}
                   </span>
+                  {(session?.user as any)?.activeRole === "OWNER" && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleDeleteProject(p.id);
+                      }}
+                      className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
 
