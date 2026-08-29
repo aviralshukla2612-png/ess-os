@@ -7,12 +7,14 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 export default function ProjectsDirectoryPage() {
   const { showToast } = useToast();
   const [projectsList, setProjectsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const [projectName, setProjectName] = useState("");
   const [clientName, setClientName] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
@@ -51,10 +53,10 @@ export default function ProjectsDirectoryPage() {
     }
   };
 
-  const handleDeleteProject = async (id: string) => {
-    if (!window.confirm("Are you sure you want to permanently delete this project? This action cannot be undone.")) return;
+  const executeDelete = async () => {
+    if (!projectToDelete) return;
     try {
-      const res = await fetch(`/crmtesting/api/projects/${id}`, { method: "DELETE" });
+      const res = await fetch(`/crmtesting/api/projects/${projectToDelete}`, { method: "DELETE" });
       const json = await res.json();
       if (json.success) {
         showToast("Project deleted successfully", "success");
@@ -65,6 +67,8 @@ export default function ProjectsDirectoryPage() {
     } catch (e) {
       console.error(e);
       showToast("An unexpected error occurred", "error");
+    } finally {
+      setProjectToDelete(null);
     }
   };
 
@@ -201,7 +205,7 @@ export default function ProjectsDirectoryPage() {
                     <button
                       onClick={(e) => {
                         e.preventDefault();
-                        handleDeleteProject(p.id);
+                        setProjectToDelete(p.id);
                       }}
                       className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 transition-colors"
                     >
@@ -234,6 +238,16 @@ export default function ProjectsDirectoryPage() {
           ))}
         </div>
       )}
+      
+      <ConfirmModal
+        isOpen={!!projectToDelete}
+        onClose={() => setProjectToDelete(null)}
+        onConfirm={executeDelete}
+        title="Delete Project Workspace"
+        message="Are you completely sure you want to permanently delete this project? This action will destroy all related tasks, documents, and payment histories. This cannot be undone."
+        confirmText="Yes, delete project"
+        isDestructive={true}
+      />
     </div>
   );
 }

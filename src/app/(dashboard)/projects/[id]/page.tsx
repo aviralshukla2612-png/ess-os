@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import {
   ArrowLeft,
   FolderKanban,
@@ -32,6 +33,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   React.useEffect(() => {
     fetchProject();
@@ -106,8 +108,8 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
     setIsTaskSheetOpen(false);
   };
 
-  const handleDeleteProject = async () => {
-    if (!window.confirm("Are you sure you want to permanently delete this project? This action cannot be undone.")) return;
+  const executeDeleteProject = async () => {
+    setIsDeleteModalOpen(false);
     
     try {
       setIsDeleting(true);
@@ -188,7 +190,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
           <div className="flex items-center gap-2 shrink-0">
             {(session?.user as any)?.role === "OWNER" && (
               <button
-                onClick={handleDeleteProject}
+                onClick={() => setIsDeleteModalOpen(true)}
                 disabled={isDeleting}
                 className="px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-semibold text-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
               >
@@ -441,6 +443,16 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
           </button>
         </form>
       </BottomSheet>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={executeDeleteProject}
+        title="Delete Project Workspace"
+        message="Are you completely sure you want to permanently delete this project? This action will destroy all related tasks, documents, and payment histories. This cannot be undone."
+        confirmText="Yes, delete project"
+        isDestructive={true}
+      />
     </div>
   );
 }
