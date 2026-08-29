@@ -128,12 +128,17 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
             setStatus("WORKING");
             setPunchOutTime(null);
           } else {
-            // ALWAYS sync exactly with the backend's calculated seconds to prevent local drift or logout desyncs!
+            // Sync with backend only if there is significant drift (> 10 seconds)
+            // to prevent UI jitter/glitches caused by network latency on the 5-second poll.
             if (json.data.workSeconds !== undefined) {
-              setWorkSeconds(json.data.workSeconds);
+              setWorkSeconds((prev) => 
+                Math.abs(prev - json.data.workSeconds) > 10 ? json.data.workSeconds : prev
+              );
             }
             if (json.data.breakSeconds !== undefined) {
-              setBreakSeconds(json.data.breakSeconds);
+              setBreakSeconds((prev) => 
+                Math.abs(prev - json.data.breakSeconds) > 10 ? json.data.breakSeconds : prev
+              );
             }
 
             console.log("[WORK CLOCK] pollStatus:", { generalStatus, currentStatus: status, isLoaded });
