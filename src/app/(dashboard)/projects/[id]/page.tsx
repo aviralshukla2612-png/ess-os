@@ -20,12 +20,18 @@ import {
   User,
   Plus,
   History,
+  Trash2,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function ProjectWorkspacePage({ params }: { params: { id: string } }) {
+  const { data: session } = useSession();
+  const router = useRouter();
   const { showToast } = useToast();
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   React.useEffect(() => {
     fetchProject();
@@ -100,6 +106,29 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
     setIsTaskSheetOpen(false);
   };
 
+  const handleDeleteProject = async () => {
+    if (!window.confirm("Are you sure you want to permanently delete this project? This action cannot be undone.")) return;
+    
+    try {
+      setIsDeleting(true);
+      const res = await fetch(`/crmtesting/api/projects/${params.id}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast("Project deleted successfully", "success");
+        router.push("/projects");
+      } else {
+        showToast(json.error || "Failed to delete project", "error");
+        setIsDeleting(false);
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("An unexpected error occurred", "error");
+      setIsDeleting(false);
+    }
+  };
+
   if (loading) return <div className="p-12 text-center text-slate-400 animate-pulse">Loading Workspace...</div>;
   if (!project) return <div className="p-12 text-center text-rose-400">Project Not Found or Access Denied</div>;
 
@@ -157,6 +186,16 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {session?.user?.activeRole === "OWNER" && (
+              <button
+                onClick={handleDeleteProject}
+                disabled={isDeleting}
+                className="px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-semibold text-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>{isDeleting ? "Deleting..." : "Delete Project"}</span>
+              </button>
+            )}
             <Link
               href="/portal/demo-token-abc"
               className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-xs transition-colors flex items-center gap-1.5"
