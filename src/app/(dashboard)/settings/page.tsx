@@ -132,6 +132,8 @@ export default function SettingsPage() {
     { name: "AI Workflow Automation Playbook", stages: 4, code: "AI_AUTO" },
   ];
 
+  const [lunchLoading, setLunchLoading] = useState(false);
+
   const forceMassLunchBreak = async (e: React.FormEvent) => {
     e.preventDefault();
     setLunchLoading(true);
