@@ -64,7 +64,7 @@ export function NotificationListener() {
   if (!activeNotification) return null;
 
   // Determine type. Right now we only have PROJECT_ASSIGNMENT.
-  const isProject = activeNotification.title.toLowerCase().includes("project");
+  const isProject = activeNotification?.title?.toLowerCase()?.includes("project");
   const type = isProject ? "PROJECT_ASSIGNMENT" : "LUNCH";
 
   return (
