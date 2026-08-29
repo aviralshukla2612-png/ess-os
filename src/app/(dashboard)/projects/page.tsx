@@ -128,7 +128,7 @@ export default function ProjectsDirectoryPage() {
               <option value="">-- Leave Unassigned --</option>
               {employees.map((emp) => (
                 <option key={emp.id} value={emp.id}>
-                  {emp.user?.name || "Employee"} ({emp.user?.email})
+                  {emp.name || "Employee"} ({emp.email})
                 </option>
               ))}
             </select>
