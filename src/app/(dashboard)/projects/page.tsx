@@ -197,7 +197,7 @@ export default function ProjectsDirectoryPage() {
                   >
                     {p.health || "ON_TRACK"}
                   </span>
-                  {(session?.user as any)?.activeRole === "OWNER" && (
+                  {(session?.user as any)?.role === "OWNER" && (
                     <button
                       onClick={(e) => {
                         e.preventDefault();
