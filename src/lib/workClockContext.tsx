@@ -141,6 +141,11 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
               );
             }
 
+            if (json.data.punchIn && !punchInTime) {
+              setPunchInTime(new Date(json.data.punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+            }
+
+
             console.log("[WORK CLOCK] pollStatus:", { generalStatus, currentStatus: status, isLoaded });
             if (generalStatus !== status) {
               // Do not overwrite ON_BREAK with WORKING locally unless they just logged in

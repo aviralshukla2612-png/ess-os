@@ -64,19 +64,30 @@ export async function GET(req: NextRequest) {
       where: {
         employeeId: employee.id,
         startedAt: { gte: startOfDay, lte: endOfDay }
-      }
+      },
+      orderBy: { startedAt: 'asc' }
     });
 
     const nowMs = Date.now();
+    let lastWorkingEnd = 0;
+    let lastBreakEnd = 0;
+
     events.forEach(ev => {
       const start = new Date(ev.startedAt).getTime();
       const end = ev.endedAt ? new Date(ev.endedAt).getTime() : nowMs;
-      const durationSecs = Math.floor((end - start) / 1000);
 
       if (ev.statusType === "WORKING") {
-        serverWorkSeconds += durationSecs;
+        const effectiveStart = Math.max(start, lastWorkingEnd);
+        if (end > effectiveStart) {
+          serverWorkSeconds += Math.floor((end - effectiveStart) / 1000);
+          lastWorkingEnd = end;
+        }
       } else {
-        serverBreakSeconds += durationSecs;
+        const effectiveStart = Math.max(start, lastBreakEnd);
+        if (end > effectiveStart) {
+          serverBreakSeconds += Math.floor((end - effectiveStart) / 1000);
+          lastBreakEnd = end;
+        }
       }
     });
 
