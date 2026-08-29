@@ -69,7 +69,7 @@ export default function EmployeeDeskPage() {
       <PageHeader
         title={`${getGreeting()}, ${userName}`}
         description="Here is your personal work stack across assigned ESS projects today."
-        badge={session?.user?.designation || "EMPLOYEE"}
+        badge={session?.user?.role || "EMPLOYEE"}
         actions={
           <div className="flex items-center gap-2">
             <button
