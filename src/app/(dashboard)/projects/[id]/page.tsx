@@ -186,7 +186,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {session?.user?.activeRole === "OWNER" && (
+            {(session?.user as any)?.activeRole === "OWNER" && (
               <button
                 onClick={handleDeleteProject}
                 disabled={isDeleting}
@@ -250,7 +250,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
           </div>
 
           <div className="space-y-4">
-            {session?.user?.activeRole !== "EMPLOYEE" && (
+            {(session?.user as any)?.activeRole !== "EMPLOYEE" && (
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3 text-xs">
                 <h3 className="font-bold text-slate-900 dark:text-slate-100">Financial Contract Summary</h3>
                 <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
