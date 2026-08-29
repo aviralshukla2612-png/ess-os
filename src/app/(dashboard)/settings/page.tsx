@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/Toast";
@@ -18,6 +18,7 @@ import {
   RefreshCw,
   CheckCircle2,
   AlertCircle,
+  Clock,
 } from "lucide-react";
 
 // ─── Inline Input Component ───────────────────────────────────────────────────
@@ -130,6 +131,40 @@ export default function SettingsPage() {
     { name: "Mobile Application Playbook", stages: 5, code: "MOBILE_APP" },
     { name: "AI Workflow Automation Playbook", stages: 4, code: "AI_AUTO" },
   ];
+
+  const [lunchEnabled, setLunchEnabled] = useState(false);
+  const [lunchTime, setLunchTime] = useState("13:00");
+  const [lunchLoading, setLunchLoading] = useState(false);
+  const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (session?.user?.role === "OWNER" && !isSettingsLoaded) {
+      fetch("/crmtesting/api/settings")
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data) {
+            setLunchEnabled(data.data.automaticLunchEnabled === "true");
+            if (data.data.automaticLunchTime) setLunchTime(data.data.automaticLunchTime);
+          }
+          setIsSettingsLoaded(true);
+        })
+        .catch(console.error);
+    }
+  }, [session, isSettingsLoaded]);
+
+  const saveLunchSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLunchLoading(true);
+    try {
+      await fetch("/crmtesting/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: "automaticLunchEnabled", value: lunchEnabled.toString() }) });
+      await fetch("/crmtesting/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: "automaticLunchTime", value: lunchTime }) });
+      showToast("✓ Lunch settings saved successfully", "success");
+    } catch {
+      showToast("Failed to save settings", "error");
+    } finally {
+      setLunchLoading(false);
+    }
+  };
 
   // ── Change Email ──
   const [emailForm, setEmailForm] = useState({
@@ -481,6 +516,55 @@ export default function SettingsPage() {
               </div>
             ))}
           </div>
+        </div>
+        
+        {/* Workforce Automation */}
+        <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6 md:p-8 shadow-xl dark:shadow-2xl space-y-6 md:col-span-2">
+          <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 pb-4">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              Workforce Automation
+            </h2>
+            <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20">
+              TIME TRACKING
+            </span>
+          </div>
+
+          <form onSubmit={saveLunchSettings} className="space-y-4 text-xs">
+            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl">
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">Automatic Lunch Break Prompt</h3>
+                <p className="text-slate-500 dark:text-slate-400 mt-1">Automatically prompt employees to take a lunch break at the specified time.</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" checked={lunchEnabled} onChange={(e) => setLunchEnabled(e.target.checked)} />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+
+            {lunchEnabled && (
+              <div>
+                <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">
+                  Trigger Time (HH:MM):
+                </label>
+                <input
+                  type="time"
+                  value={lunchTime}
+                  onChange={(e) => setLunchTime(e.target.value)}
+                  className="w-full max-w-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all font-medium"
+                />
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={lunchLoading}
+              className="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2 mt-2 disabled:opacity-50"
+            >
+              {lunchLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              <span>Save Automation Settings</span>
+            </button>
+          </form>
         </div>
         </div>
       )}

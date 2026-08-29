@@ -559,3 +559,10 @@ model LeaveRequest {
   @@index([employeeId])
   @@index([status])
 }
+
+
+model SystemSetting {
+  id    String @id @default("singleton")
+  key   String @unique
+  value String
+}

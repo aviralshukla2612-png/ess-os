@@ -37,6 +37,8 @@ interface WorkClockContextType {
   simulatedGeofenceError: boolean;
   simulatedDeviceError: boolean;
   timeline: TimelineEvent[];
+  forceBreakPopup: boolean;
+  setForceBreakPopup: (val: boolean) => void;
   // Actions
   punchIn: () => void;
   startBreak: (type: string, reason?: string) => void;
@@ -80,6 +82,11 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
   const [simulatedDeviceError, setSimulatedDeviceError] = useState<boolean>(false);
 
   const [timeline, setTimeline] = useState<TimelineEvent[]>(INITIAL_TIMELINE);
+
+  const [automaticLunchEnabled, setAutomaticLunchEnabled] = useState(false);
+  const [automaticLunchTime, setAutomaticLunchTime] = useState("");
+  const [forceBreakPopup, setForceBreakPopup] = useState(false);
+  const [lunchPromptShownToday, setLunchPromptShownToday] = useState(false);
 
   const [isLoaded, setIsLoaded] = useState(false);
   const lastPunchOutStatusRef = React.useRef<string | null>(null);
@@ -189,6 +196,17 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
 
   // Load from localStorage on mount (hydration safe)
   useEffect(() => {
+    // Fetch global system settings once on load
+    fetch("/crmtesting/api/settings")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          setAutomaticLunchEnabled(data.data.automaticLunchEnabled === "true");
+          setAutomaticLunchTime(data.data.automaticLunchTime || "");
+        }
+      })
+      .catch(console.error);
+
     const employeeId = session?.user?.employeeId;
     if (!employeeId) return;
     const saved = localStorage.getItem(`ess_work_clock_state_v2_${employeeId}`);
@@ -208,6 +226,12 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
         if (parsed.usedTeaSeconds !== undefined) setUsedTeaSeconds(parsed.usedTeaSeconds);
         if (parsed.usedCallSeconds !== undefined) setUsedCallSeconds(parsed.usedCallSeconds);
         if (parsed.timeline) setTimeline(parsed.timeline);
+        
+        if (parsed.lunchPromptDate === new Date().toISOString().split('T')[0]) {
+          if (parsed.lunchPromptShownToday !== undefined) setLunchPromptShownToday(parsed.lunchPromptShownToday);
+        } else {
+          setLunchPromptShownToday(false);
+        }
       } catch (e) {
         console.error("Failed to parse work clock state", e);
       }
@@ -235,6 +259,8 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
       usedTeaSeconds,
       usedCallSeconds,
       timeline,
+      lunchPromptShownToday,
+      lunchPromptDate: new Date().toISOString().split('T')[0],
     };
     const employeeId = session?.user?.employeeId;
     if (!employeeId) return;
@@ -264,6 +290,15 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     if (status === "WORKING") {
       interval = setInterval(() => {
         setWorkSeconds((prev) => prev + 1);
+
+        if (automaticLunchEnabled && automaticLunchTime && !lunchPromptShownToday) {
+          const now = new Date();
+          const currentHHMM = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+          if (currentHHMM === automaticLunchTime) {
+            setForceBreakPopup(true);
+            setLunchPromptShownToday(true);
+          }
+        }
       }, 1000);
     } else if (status === "ON_BREAK") {
       interval = setInterval(() => {
@@ -475,6 +510,8 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
         simulatedGeofenceError,
         simulatedDeviceError,
         timeline,
+        forceBreakPopup,
+        setForceBreakPopup,
         punchIn,
         startBreak,
         resumeWork,
