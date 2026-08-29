@@ -151,8 +151,6 @@ export default function AttendanceWorkClockPage() {
     simulatedGeofenceError,
     simulatedDeviceError,
     timeline,
-    forceBreakPopup,
-    setForceBreakPopup,
     punchIn,
     startBreak,
     resumeWork,
@@ -170,14 +168,6 @@ export default function AttendanceWorkClockPage() {
   const [isBreakSheetOpen, setIsBreakSheetOpen] = useState(false);
   const [isChangeWorkOpen, setIsChangeWorkOpen] = useState(false);
   const [isPunchOutConfirmOpen, setIsPunchOutConfirmOpen] = useState(false);
-
-  useEffect(() => {
-    if (forceBreakPopup) {
-      setIsBreakSheetOpen(true);
-      setSelectedBreakType("Lunch");
-      setForceBreakPopup(false);
-    }
-  }, [forceBreakPopup, setForceBreakPopup]);
 
   // Form states for change work
   const [selectedProject, setSelectedProject] = useState(currentProject);
