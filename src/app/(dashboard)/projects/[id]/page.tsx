@@ -44,19 +44,29 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
           clientName: p.client?.companyName || "Unknown Client",
           status: p.status,
           health: p.priority === "HIGH" ? "AT_RISK" : "ON_TRACK",
-          progress: p.progressPercentage,
-          contractValue: p.contractValue,
+          progress: p.progressPercentage || 0,
+          contractValue: p.contractValue || 0,
           paidValue: p.paymentMilestones?.reduce((s: number, m: any) => s + m.paidAmount, 0) || 0,
+          overdueValue: p.paymentMilestones?.filter((m: any) => m.status === 'OVERDUE').reduce((s: number, m: any) => s + m.amount, 0) || 0,
           deadline: p.targetDeadline ? new Date(p.targetDeadline).toLocaleDateString() : "No Deadline",
+          tmName: p.memberships?.find((m: any) => m.roleInProject === "TM")?.employee?.user?.name || "Unassigned",
           teamMembers: p.memberships?.map((m: any) => ({
             id: m.id,
             name: m.employee?.user?.name || "Unknown",
             role: m.roleInProject,
             active: m.isActive,
+            assignedDate: m.assignedAt ? new Date(m.assignedAt).toLocaleDateString() : "Unknown",
+          })) || [],
+          removalHistory: p.memberships?.filter((m: any) => !m.isActive).map((m: any) => ({
+            id: m.id,
+            name: m.employee?.user?.name || "Unknown",
+            role: m.roleInProject,
+            removedDate: m.removedAt ? new Date(m.removedAt).toLocaleDateString() : "Unknown",
+            reason: m.removalReason || "Reassigned"
           })) || [],
           tasks: p.tasks || [],
           livingDocs: p.documents || [],
-          scopeItems: [], // Fallback since Prisma model doesn't have it natively
+          scopeItems: p.scopeText ? p.scopeText.split("\n") : [],
           changeRequests: p.changeRequests || [],
         });
       }
@@ -205,15 +215,15 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
               <h3 className="font-bold text-slate-900 dark:text-slate-100">Financial Contract Summary</h3>
               <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                 <span className="text-slate-500 dark:text-slate-400">Total Value:</span>
-                <strong className="font-mono text-slate-900 dark:text-slate-100">₹{project.contractValue.toLocaleString("en-IN")}</strong>
+                <strong className="font-mono text-slate-900 dark:text-slate-100">₹{(project.contractValue || 0).toLocaleString("en-IN")}</strong>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800 text-emerald-600 dark:text-emerald-400">
-                <span>Milestone 1 Paid:</span>
-                <strong className="font-mono">₹{project.paidValue.toLocaleString("en-IN")}</strong>
+                <span>Total Paid:</span>
+                <strong className="font-mono">₹{(project.paidValue || 0).toLocaleString("en-IN")}</strong>
               </div>
               <div className="flex justify-between py-1 text-rose-600 dark:text-rose-400 font-bold">
-                <span>Milestone 2 Overdue:</span>
-                <strong className="font-mono">₹{project.overdueValue.toLocaleString("en-IN")}</strong>
+                <span>Total Overdue:</span>
+                <strong className="font-mono">₹{(project.overdueValue || 0).toLocaleString("en-IN")}</strong>
               </div>
             </div>
 
@@ -238,29 +248,9 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
       {/* Tab 2: Workflow Playbook */}
       {activeTab === "workflow" && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
-          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Weighted Playbook Stages</h3>
-          <div className="space-y-3 text-xs">
-            <div className="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 space-y-1">
-              <div className="flex justify-between font-bold text-emerald-900 dark:text-emerald-300">
-                <span>1. Requirements & Scope Approval (Weight 10%)</span>
-                <span className="font-mono">100% DONE</span>
-              </div>
-              <p className="text-slate-600 dark:text-slate-400">All scope items signed off by Rajesh Mehta (CEO).</p>
-            </div>
-            <div className="p-4 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 space-y-1">
-              <div className="flex justify-between font-bold text-emerald-900 dark:text-emerald-300">
-                <span>2. UI/UX Design System (Weight 20%)</span>
-                <span className="font-mono">100% DONE</span>
-              </div>
-              <p className="text-slate-600 dark:text-slate-400">Figma wireframes & component tokens approved by Priya Desai.</p>
-            </div>
-            <div className="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 space-y-1">
-              <div className="flex justify-between font-bold text-amber-900 dark:text-amber-300">
-                <span>3. Full-Stack Development (Weight 40%)</span>
-                <span className="font-mono">68% IN PROGRESS</span>
-              </div>
-              <p className="text-slate-700 dark:text-slate-300 font-medium">Currently testing Razorpay webhook HMAC signatures.</p>
-            </div>
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Workflow Playbook</h3>
+          <div className="space-y-3 text-xs text-slate-500 dark:text-slate-400 text-center py-8">
+            No playbook stages defined yet.
           </div>
         </div>
       )}
@@ -396,9 +386,10 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
               onChange={(e) => setTaskAssignee(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-slate-100 outline-none"
             >
-              <option value="Dev Patel">Dev Patel (Full-Stack Dev)</option>
-              <option value="Meet Shah">Meet Shah (Tech Lead)</option>
-              <option value="Priya Desai">Priya Desai (UI/UX Lead)</option>
+              <option value="">-- Unassigned --</option>
+              {project.teamMembers?.map((m: any) => (
+                <option key={m.id} value={m.name}>{m.name} ({m.role})</option>
+              ))}
             </select>
           </div>
           <button
