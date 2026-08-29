@@ -14,10 +14,25 @@ export default function ProjectsDirectoryPage() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [clientName, setClientName] = useState("");
+  const [assigneeId, setAssigneeId] = useState("");
+  const [employees, setEmployees] = useState<any[]>([]);
 
   useEffect(() => {
     fetchProjects();
+    fetchEmployees();
   }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      const res = await fetch("/crmtesting/api/employees");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setEmployees(json.data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -40,7 +55,7 @@ export default function ProjectsDirectoryPage() {
       const res = await fetch("/crmtesting/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: projectName, contractValue: 450000 }),
+        body: JSON.stringify({ name: projectName, contractValue: 450000, assigneeId }),
       });
       const json = await res.json();
       if (json.success) {
@@ -53,6 +68,7 @@ export default function ProjectsDirectoryPage() {
     setIsAddOpen(false);
     setProjectName("");
     setClientName("");
+    setAssigneeId("");
   };
 
   return (
@@ -101,6 +117,21 @@ export default function ProjectsDirectoryPage() {
               placeholder="e.g. Zenith Tech Labs"
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
             />
+          </div>
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Assign To Developer</label>
+            <select
+              value={assigneeId}
+              onChange={(e) => setAssigneeId(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
+            >
+              <option value="">-- Leave Unassigned --</option>
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.user?.name || "Employee"} ({emp.user?.email})
+                </option>
+              ))}
+            </select>
           </div>
           <button
             type="submit"

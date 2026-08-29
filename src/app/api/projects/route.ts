@@ -120,22 +120,46 @@ export async function POST(req: Request) {
 
     const uniqueCode = `PRJ-2026-${Math.floor(100 + Math.random() * 900)}`;
 
+    const data: any = {
+      projectNumber: uniqueCode,
+      name: body.name || "New Digital Solution",
+      clientId: body.clientId || (firstClient ? firstClient.id : "CLT-001"),
+      contractValue: body.contractValue || 450000,
+      status: body.status || "IN_PROGRESS",
+      priority: body.priority || "HIGH",
+      progressPercentage: body.progressPercentage || 25,
+      targetDeadline: body.deadline ? new Date(body.deadline) : new Date(Date.now() + 86400000 * 45),
+      createdById: authRes.id,
+    };
+
+    if (body.assigneeId) {
+      data.memberships = {
+        create: [
+          {
+            employeeId: body.assigneeId,
+            roleInProject: "TM",
+            isActive: true,
+            assignedById: authRes.id,
+          }
+        ]
+      };
+    }
+
     const newProject = await prisma.project.create({
-      data: {
-        projectNumber: uniqueCode,
-        name: body.name || "New Digital Solution",
-        clientId: body.clientId || (firstClient ? firstClient.id : "CLT-001"),
-        contractValue: body.contractValue || 450000,
-        status: body.status || "IN_PROGRESS",
-        priority: body.priority || "HIGH",
-        progressPercentage: body.progressPercentage || 25,
-        targetDeadline: body.deadline ? new Date(body.deadline) : new Date(Date.now() + 86400000 * 45),
-        createdById: authRes.id,
-      },
+      data,
       include: {
         client: true,
+        memberships: {
+          include: {
+            employee: {
+              include: { user: true }
+            }
+          }
+        }
       },
     });
+
+    const tmMembership = newProject.memberships?.find((m: any) => m.roleInProject === "TM" && m.isActive);
 
     const formattedProject = {
       id: newProject.id,
@@ -143,8 +167,8 @@ export async function POST(req: Request) {
       name: newProject.name,
       clientId: newProject.clientId,
       clientName: newProject.client ? newProject.client.companyName : "Client Account",
-      tmId: "UNASSIGNED",
-      tmName: "Unassigned",
+      tmId: tmMembership?.employee.id || "UNASSIGNED",
+      tmName: tmMembership?.employee.user.name ? `${tmMembership.employee.user.name} (Tech Lead)` : "Unassigned",
       progress: newProject.progressPercentage,
       currentStage: newProject.status,
       contractValue: newProject.contractValue,
