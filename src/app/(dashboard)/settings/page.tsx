@@ -134,8 +134,8 @@ export default function SettingsPage() {
 
   const [lunchLoading, setLunchLoading] = useState(false);
 
-  const forceMassLunchBreak = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const forceMassLunchBreak = async (e: React.MouseEvent | React.FormEvent) => {
+    if (e && e.preventDefault) e.preventDefault();
     setLunchLoading(true);
     try {
       const res = await fetch("/crmtesting/api/attendance/mass-break", { 
@@ -151,6 +151,28 @@ export default function SettingsPage() {
       }
     } catch {
       showToast("Failed to trigger mass break", "error");
+    } finally {
+      setLunchLoading(false);
+    }
+  };
+
+  const forceMassResumeWork = async (e: React.MouseEvent | React.FormEvent) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setLunchLoading(true);
+    try {
+      const res = await fetch("/crmtesting/api/attendance/mass-break", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify({ action: "RESUME_WORK" }) 
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`✓ Successfully forced ${data.count || '0'} active employees back to Work!`, "success");
+      } else {
+        showToast("Failed to trigger mass resume: " + data.error, "error");
+      }
+    } catch {
+      showToast("Failed to trigger mass resume", "error");
     } finally {
       setLunchLoading(false);
     }
@@ -520,21 +542,34 @@ export default function SettingsPage() {
             </span>
           </div>
 
-          <form onSubmit={forceMassLunchBreak} className="space-y-4 text-xs">
-            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl">
-              <div>
-                <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">Force Team Lunch Break</h3>
-                <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-sm">Instantly puts all currently active and working employees onto a Lunch Break. They must manually resume work when their break is over.</p>
+          <form className="space-y-4 text-xs">
+            <div className="flex flex-col md:flex-row items-center justify-between p-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl gap-4">
+              <div className="flex-1">
+                <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">Force Team Mass Action</h3>
+                <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-sm">Instantly puts all currently working employees onto a Lunch Break, or forces all employees on break back to work.</p>
               </div>
               
-              <button
-                type="submit"
-                disabled={lunchLoading}
-                className="px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
-              >
-                {lunchLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Clock className="w-4 h-4" />}
-                <span>Trigger Lunch for All</span>
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={forceMassLunchBreak}
+                  disabled={lunchLoading}
+                  className="px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  {lunchLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Clock className="w-4 h-4" />}
+                  <span>Trigger Lunch</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={forceMassResumeWork}
+                  disabled={lunchLoading}
+                  className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  {lunchLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  <span>Resume Work</span>
+                </button>
+              </div>
             </div>
           </form>
         </div>

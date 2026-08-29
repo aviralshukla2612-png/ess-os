@@ -58,6 +58,53 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, count: activeWorkEvents.length });
     }
 
+    if (action === "RESUME_WORK") {
+      // Find all active Break events
+      const activeBreakEvents = await prisma.employeeStatusEvent.findMany({
+        where: {
+          endedAt: null,
+          statusType: {
+            not: "WORKING"
+          }
+        }
+      });
+
+      if (activeBreakEvents.length === 0) {
+        return NextResponse.json({ success: true, message: "No employees currently on break." });
+      }
+
+      const now = new Date();
+      
+      await prisma.$transaction(async (tx) => {
+        // End all break events
+        await tx.employeeStatusEvent.updateMany({
+          where: {
+            endedAt: null,
+            statusType: {
+              not: "WORKING"
+            }
+          },
+          data: {
+            endedAt: now
+          }
+        });
+
+        // Create new Working events for each
+        const newWorkEvents = activeBreakEvents.map(event => ({
+          employeeId: event.employeeId,
+          statusType: "WORKING",
+          startedAt: now,
+          notes: "Admin Triggered Resume Work"
+        }));
+
+        await tx.employeeStatusEvent.createMany({
+          data: newWorkEvents
+        });
+      });
+
+      return NextResponse.json({ success: true, count: activeBreakEvents.length });
+    }
+
     return NextResponse.json({ success: false, error: "Invalid action" }, { status: 400 });
 
   } catch (error) {
