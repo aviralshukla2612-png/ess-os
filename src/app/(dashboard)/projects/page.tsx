@@ -168,7 +168,7 @@ export default function ProjectsDirectoryPage() {
                 </div>
 
                 <div className="shrink-0 flex items-center gap-3">
-                  <span className="text-sm font-mono font-extrabold text-indigo-600 dark:text-indigo-400">{p.progress || 25}% Complete</span>
+                  <span className="text-sm font-mono font-extrabold text-indigo-600 dark:text-indigo-400">{p.progress || 0}% Complete</span>
                   <span
                     className={`text-[10px] font-mono font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
                       p.health === "AT_RISK"
@@ -185,14 +185,14 @@ export default function ProjectsDirectoryPage() {
               <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden border border-slate-200/80 dark:border-slate-800">
                 <div
                   className="h-full bg-gradient-to-r from-indigo-500 via-cyan-400 to-emerald-400 rounded-full transition-all duration-300"
-                  style={{ width: `${p.progress || 25}%` }}
+                  style={{ width: `${p.progress || 0}%` }}
                 />
               </div>
 
               {/* Row 2: TM info, Deadline & Navigation Arrow */}
               <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-1 font-medium">
                 <div>
-                  TM: <strong className="text-slate-800 dark:text-slate-200">{p.tmName || "Meet Shah (Tech Lead)"}</strong> • Deadline <strong className="text-slate-800 dark:text-slate-200">{p.deadline || "15 Sep 2026"}</strong>
+                  TM: <strong className="text-slate-800 dark:text-slate-200">{p.tmName || "Unassigned"}</strong> • Deadline <strong className="text-slate-800 dark:text-slate-200">{p.deadline || "TBD"}</strong>
                 </div>
 
                 <div className="flex items-center gap-1.5 font-bold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
