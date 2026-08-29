@@ -20,7 +20,6 @@ export default function LeaveRequestsPage() {
   // Global Leave Settings
   const [globalSick, setGlobalSick] = useState("10");
   const [globalCasual, setGlobalCasual] = useState("15");
-  const [globalPaid, setGlobalPaid] = useState("15");
   const [isGlobalLoading, setIsGlobalLoading] = useState(false);
 
   useEffect(() => {
@@ -51,8 +50,7 @@ export default function LeaveRequestsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           sickLeaveTotal: globalSick, 
-          casualLeaveTotal: globalCasual, 
-          paidLeaveTotal: globalPaid 
+          casualLeaveTotal: globalCasual 
         })
       });
       const json = await res.json();
@@ -191,8 +189,7 @@ export default function LeaveRequestsPage() {
                       <span className="text-[10px] ml-2 text-slate-500">
                         Balances: 
                         Sick ({p.employee.sickLeaveTotal - p.employee.sickLeaveUsed}) | 
-                        Casual ({p.employee.casualLeaveTotal - p.employee.casualLeaveUsed}) | 
-                        Paid ({p.employee.paidLeaveTotal - p.employee.paidLeaveUsed})
+                        Casual ({p.employee.casualLeaveTotal - p.employee.casualLeaveUsed})
                       </span>
                     )}
                   </div>
@@ -322,15 +319,6 @@ export default function LeaveRequestsPage() {
                   className="w-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-1.5 text-sm text-center outline-none focus:border-indigo-500" 
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase font-bold text-slate-500">Paid</label>
-                <input 
-                  type="number" 
-                  value={globalPaid} 
-                  onChange={(e) => setGlobalPaid(e.target.value)}
-                  className="w-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-1.5 text-sm text-center outline-none focus:border-indigo-500" 
-                />
-              </div>
             </div>
           </div>
           <button 
@@ -351,7 +339,7 @@ export default function LeaveRequestsPage() {
               <div key={emp.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 flex flex-col gap-4">
                 <div className="font-bold text-sm text-slate-900 dark:text-slate-100">{emp.user?.name} <span className="font-normal text-slate-500 text-xs">({emp.user?.email})</span></div>
                 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3">
                     <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Sick Leave</label>
                     <div className="flex gap-2 items-center text-xs">
@@ -395,38 +383,14 @@ export default function LeaveRequestsPage() {
                       />
                     </div>
                   </div>
-                  
-                  <div className="space-y-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3">
-                    <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">Paid Leave</label>
-                    <div className="flex gap-2 items-center text-xs">
-                      <span className="w-8">Tot:</span>
-                      <input 
-                        type="number" 
-                        value={emp.paidLeaveTotal} 
-                        onChange={(e) => updateLocalLeave(emp.id, 'paidLeaveTotal', e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg p-1.5 text-center outline-none focus:border-indigo-500" 
-                      />
-                    </div>
-                    <div className="flex gap-2 items-center text-xs">
-                      <span className="w-8">Usd:</span>
-                      <input 
-                        type="number" 
-                        value={emp.paidLeaveUsed} 
-                        onChange={(e) => updateLocalLeave(emp.id, 'paidLeaveUsed', e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg p-1.5 text-center outline-none focus:border-indigo-500" 
-                      />
-                    </div>
-                  </div>
                 </div>
 
                 <button 
                   onClick={() => handleUpdateLeaveBalance(emp.id, { 
                     sickLeaveTotal: emp.sickLeaveTotal, 
                     casualLeaveTotal: emp.casualLeaveTotal, 
-                    paidLeaveTotal: emp.paidLeaveTotal,
                     sickLeaveUsed: emp.sickLeaveUsed,
-                    casualLeaveUsed: emp.casualLeaveUsed,
-                    paidLeaveUsed: emp.paidLeaveUsed,
+                    casualLeaveUsed: emp.casualLeaveUsed
                   })}
                   disabled={saveLoadingId === emp.id}
                   className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg transition-all flex justify-center gap-2 items-center disabled:opacity-50"
