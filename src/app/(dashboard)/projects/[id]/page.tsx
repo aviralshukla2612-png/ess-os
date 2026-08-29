@@ -250,21 +250,23 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
           </div>
 
           <div className="space-y-4">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3 text-xs">
-              <h3 className="font-bold text-slate-900 dark:text-slate-100">Financial Contract Summary</h3>
-              <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
-                <span className="text-slate-500 dark:text-slate-400">Total Value:</span>
-                <strong className="font-mono text-slate-900 dark:text-slate-100">₹{(project.contractValue || 0).toLocaleString("en-IN")}</strong>
+            {session?.user?.activeRole !== "EMPLOYEE" && (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3 text-xs">
+                <h3 className="font-bold text-slate-900 dark:text-slate-100">Financial Contract Summary</h3>
+                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-500 dark:text-slate-400">Total Value:</span>
+                  <strong className="font-mono text-slate-900 dark:text-slate-100">₹{(project.contractValue || 0).toLocaleString("en-IN")}</strong>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800 text-emerald-600 dark:text-emerald-400">
+                  <span>Total Paid:</span>
+                  <strong className="font-mono">₹{(project.paidValue || 0).toLocaleString("en-IN")}</strong>
+                </div>
+                <div className="flex justify-between py-1 text-rose-600 dark:text-rose-400 font-bold">
+                  <span>Total Overdue:</span>
+                  <strong className="font-mono">₹{(project.overdueValue || 0).toLocaleString("en-IN")}</strong>
+                </div>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800 text-emerald-600 dark:text-emerald-400">
-                <span>Total Paid:</span>
-                <strong className="font-mono">₹{(project.paidValue || 0).toLocaleString("en-IN")}</strong>
-              </div>
-              <div className="flex justify-between py-1 text-rose-600 dark:text-rose-400 font-bold">
-                <span>Total Overdue:</span>
-                <strong className="font-mono">₹{(project.overdueValue || 0).toLocaleString("en-IN")}</strong>
-              </div>
-            </div>
+            )}
 
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3 text-xs">
               <h3 className="font-bold text-slate-900 dark:text-slate-100">Active Team Members</h3>
