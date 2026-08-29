@@ -100,20 +100,20 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
     setIsTaskSheetOpen(false);
   };
 
-  const tabs = [
-    { id: "overview", label: "Overview & Scope" },
-    { id: "workflow", label: "Workflow Playbook (72%)" },
-    { id: "tasks", label: `Task Stack (${project.tasks.length})` },
-    { id: "team", label: `Team & Removal History (${project.teamMembers.length})` },
-    { id: "docs", label: `Living Docs (${project.livingDocs.length})` },
-    { id: "notes", label: "Work Notes" },
-    { id: "calls", label: "Client Calls" },
-    { id: "changes", label: `Change Requests (${project.changeRequests.length})` },
-    { id: "payments", label: "Payment Milestones" },
-  ];
-
   if (loading) return <div className="p-12 text-center text-slate-400 animate-pulse">Loading Workspace...</div>;
   if (!project) return <div className="p-12 text-center text-rose-400">Project Not Found or Access Denied</div>;
+
+  const tabs = [
+    { id: "overview", label: "Overview & Scope" },
+    { id: "workflow", label: "Workflow Playbook" },
+    { id: "tasks", label: `Task Stack (${project.tasks?.length || 0})` },
+    { id: "team", label: `Team & Removal History (${project.teamMembers?.length || 0})` },
+    { id: "docs", label: `Living Docs (${project.livingDocs?.length || 0})` },
+    { id: "notes", label: "Work Notes" },
+    { id: "calls", label: "Client Calls" },
+    { id: "changes", label: `Change Requests (${project.changeRequests?.length || 0})` },
+    { id: "payments", label: "Payment Milestones" },
+  ];
 
   return (
     <div className="space-y-6 pb-16">
