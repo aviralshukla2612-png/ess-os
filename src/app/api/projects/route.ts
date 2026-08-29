@@ -133,16 +133,19 @@ export async function POST(req: Request) {
     };
 
     if (body.assigneeId) {
-      data.memberships = {
-        create: [
-          {
-            employeeId: body.assigneeId,
-            roleInProject: "TM",
-            isActive: true,
-            assignedById: authRes.id,
-          }
-        ]
-      };
+      const emp = await prisma.employee.findUnique({ where: { id: body.assigneeId } });
+      if (emp && emp.userId) {
+        data.memberships = {
+          create: [
+            {
+              employeeId: body.assigneeId,
+              roleInProject: "TM",
+              isActive: true,
+              assignedById: authRes.id,
+            }
+          ]
+        };
+      }
     }
 
     const newProject = await prisma.project.create({
@@ -158,6 +161,21 @@ export async function POST(req: Request) {
         }
       },
     });
+
+    if (body.assigneeId) {
+      const emp = await prisma.employee.findUnique({ where: { id: body.assigneeId } });
+      if (emp && emp.userId) {
+        await prisma.notification.create({
+          data: {
+            recipientId: emp.userId,
+            title: "New Project Assignment",
+            message: `Admin has assigned you to a new project: ${newProject.name}`,
+            urgency: "HIGH",
+            linkUrl: `/projects/${newProject.id}`,
+          }
+        });
+      }
+    }
 
     const tmMembership = newProject.memberships?.find((m: any) => m.roleInProject === "TM" && m.isActive);
 

@@ -1,11 +1,11 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coffee, LogOut, X } from "lucide-react";
+import { Coffee, LogOut, X, FolderKanban } from "lucide-react";
 
 interface PremiumReminderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  type: "LUNCH" | "PUNCH_OUT";
+  type: "LUNCH" | "PUNCH_OUT" | "PROJECT_ASSIGNMENT";
   title: string;
   message: string;
 }
@@ -18,6 +18,7 @@ export function PremiumReminderModal({
   message,
 }: PremiumReminderModalProps) {
   const isLunch = type === "LUNCH";
+  const isProject = type === "PROJECT_ASSIGNMENT";
   
   return (
     <AnimatePresence>
@@ -42,7 +43,7 @@ export function PremiumReminderModal({
             className="relative w-full max-w-md overflow-hidden rounded-[2rem] bg-white dark:bg-[#0B1120] shadow-2xl dark:shadow-[0_0_80px_-15px_rgba(79,70,229,0.3)] ring-1 ring-slate-200 dark:ring-slate-800"
           >
             {/* Glowing Accent Top Bar */}
-            <div className={`absolute top-0 left-0 w-full h-1.5 ${isLunch ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500' : 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500'}`} />
+            <div className={`absolute top-0 left-0 w-full h-1.5 ${isProject ? 'bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500' : isLunch ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500' : 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500'}`} />
 
             <div className="p-8 pb-10">
               <button
@@ -55,14 +56,18 @@ export function PremiumReminderModal({
               {/* Icon Container with Glow */}
               <div className="flex justify-center mb-6">
                 <div className={`relative flex items-center justify-center w-20 h-20 rounded-3xl ${
-                  isLunch 
+                  isProject
+                    ? 'bg-gradient-to-br from-cyan-100 to-blue-100 dark:from-cyan-500/20 dark:to-blue-500/20'
+                    : isLunch 
                     ? 'bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-500/20 dark:to-orange-500/20' 
                     : 'bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-500/20 dark:to-purple-500/20'
                 }`}>
                   <div className={`absolute inset-0 blur-xl opacity-50 ${
-                    isLunch ? 'bg-orange-400' : 'bg-indigo-400'
+                    isProject ? 'bg-cyan-400' : isLunch ? 'bg-orange-400' : 'bg-indigo-400'
                   }`} />
-                  {isLunch ? (
+                  {isProject ? (
+                    <FolderKanban className="w-10 h-10 text-cyan-600 dark:text-cyan-400 relative z-10" strokeWidth={1.5} />
+                  ) : isLunch ? (
                     <Coffee className="w-10 h-10 text-orange-500 dark:text-orange-400 relative z-10" strokeWidth={1.5} />
                   ) : (
                     <LogOut className="w-10 h-10 text-indigo-600 dark:text-indigo-400 relative z-10" strokeWidth={1.5} />
@@ -100,12 +105,14 @@ export function PremiumReminderModal({
                 <button
                   onClick={onClose}
                   className={`w-full py-3.5 px-6 rounded-2xl font-bold text-white shadow-lg transition-all active:scale-95 ${
-                    isLunch 
+                    isProject
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-cyan-500/25'
+                      : isLunch 
                       ? 'bg-gradient-to-r from-orange-500 to-rose-500 hover:shadow-orange-500/25' 
                       : 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-indigo-500/25'
                   }`}
                 >
-                  {isLunch ? 'Got it, taking a break!' : 'Got it, wrapping up!'}
+                  {isProject ? 'Open Workspace' : isLunch ? 'Got it, taking a break!' : 'Got it, wrapping up!'}
                 </button>
               </motion.div>
             </div>
