@@ -68,6 +68,26 @@ export async function POST(req: Request) {
     const logDate = dateOffsetDays ? new Date(Date.now() - 86400000 * dateOffsetDays) : new Date();
 
     if (actionType === "PUNCH_IN") {
+      // Duplicate guard — same logic as punch-in/route.ts
+      const startOfDay = new Date(logDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(logDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const existingToday = await prisma.attendance.findFirst({
+        where: {
+          employeeId: emp.id,
+          date: { gte: startOfDay, lte: endOfDay },
+        },
+      });
+
+      if (existingToday) {
+        return NextResponse.json(
+          { success: false, error: "Already punched in today.", attendance: existingToday },
+          { status: 400 }
+        );
+      }
+
       const [att] = await prisma.$transaction([
         prisma.attendance.create({
           data: {
