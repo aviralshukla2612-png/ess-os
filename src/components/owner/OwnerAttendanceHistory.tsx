@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Clock } from "lucide-react";
+import { Clock, Trash2 } from "lucide-react";
 import { CalendarDatePicker } from "@/components/ui/CalendarDatePicker";
 
 export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspectedEmployee?: string }) {
@@ -45,6 +45,25 @@ export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspecte
     fetchHistory();
   }, [inspectedEmployee, startDate, endDate]);
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this attendance record?")) return;
+    
+    try {
+      const res = await fetch(`/api/attendance/history/${id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAttendanceRecords(prev => prev.filter(record => record.id !== id));
+      } else {
+        alert("Failed to delete record: " + data.error);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error deleting record");
+    }
+  };
+
   return (
     <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6 md:p-8 shadow-xl dark:shadow-2xl space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 pb-4 gap-4">
@@ -80,7 +99,8 @@ export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspecte
               <th className="p-3 font-semibold">Punch Out</th>
               <th className="p-3 font-semibold">Status</th>
               <th className="p-3 font-semibold">Break Time</th>
-              <th className="p-3 font-semibold rounded-r-xl">Total Time</th>
+              <th className="p-3 font-semibold">Total Time</th>
+              <th className="p-3 font-semibold rounded-r-xl text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -139,6 +159,15 @@ export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspecte
                     </td>
                     <td className="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">
                       {formatMins(record.totalMinutes)}
+                    </td>
+                    <td className="p-3 text-right">
+                      <button
+                        onClick={() => handleDelete(record.id)}
+                        className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors"
+                        title="Delete Record"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 );

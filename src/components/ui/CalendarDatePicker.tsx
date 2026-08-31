@@ -107,7 +107,7 @@ export function CalendarDatePicker({ startDate, endDate, onDateChange, className
       </button>
 
       {isOpen && (
-        <div className="absolute top-full mt-2 right-0 md:left-0 z-50 w-72 bg-white dark:bg-[#0f172a]/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 animate-in fade-in zoom-in duration-200">
+        <div className="absolute top-full mt-2 right-0 origin-top-right z-50 w-72 bg-white dark:bg-[#0f172a]/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 animate-in fade-in zoom-in duration-200">
           
           {/* Calendar Header */}
           <div className="flex items-center justify-between mb-4">

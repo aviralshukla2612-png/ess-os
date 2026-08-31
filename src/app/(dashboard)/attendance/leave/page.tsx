@@ -24,6 +24,20 @@ export default function EmployeeLeavePage() {
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const calculateDays = (start: string, end: string) => {
+    if (start && end) {
+      const s = new Date(start);
+      const e = new Date(end);
+      if (e >= s) {
+        const diffTime = Math.abs(e.getTime() - s.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        setDays(diffDays.toString());
+      } else {
+        setDays("0");
+      }
+    }
+  };
+
   useEffect(() => {
     if (employeeId) {
       fetchLeaves();
@@ -129,23 +143,32 @@ export default function EmployeeLeavePage() {
                 </select>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Leave Period</label>
-                <div className="w-full">
-                  <CalendarDatePicker
-                    startDate={startDate}
-                    endDate={endDate}
-                    onDateChange={(start, end) => {
-                      setStartDate(start);
-                      setEndDate(end);
-                      if (start && end) {
-                        const s = new Date(start);
-                        const e = new Date(end);
-                        const diffTime = Math.abs(e.getTime() - s.getTime());
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-                        setDays(diffDays.toString());
-                      }
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Start Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      calculateDays(e.target.value, endDate);
                     }}
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">End Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={endDate}
+                    min={startDate}
+                    onChange={(e) => {
+                      setEndDate(e.target.value);
+                      calculateDays(startDate, e.target.value);
+                    }}
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
