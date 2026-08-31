@@ -81,6 +81,7 @@ export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspecte
           <CalendarDatePicker
             startDate={startDate}
             endDate={endDate}
+            align="right"
             onDateChange={(start, end) => {
               setStartDate(start);
               setEndDate(end);

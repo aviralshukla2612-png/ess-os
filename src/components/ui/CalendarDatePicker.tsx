@@ -10,9 +10,10 @@ interface CalendarDatePickerProps {
   onDateChange: (start: string, end: string) => void;
   className?: string;
   isSingle?: boolean;
+  align?: "left" | "right";
 }
 
-export function CalendarDatePicker({ startDate, endDate, onDateChange, className = "", isSingle = false }: CalendarDatePickerProps) {
+export function CalendarDatePicker({ startDate, endDate, onDateChange, className = "", isSingle = false, align = "left" }: CalendarDatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   
   // Date objects for rendering
@@ -120,7 +121,7 @@ export function CalendarDatePicker({ startDate, endDate, onDateChange, className
       </button>
 
       {isOpen && (
-        <div className="absolute top-full mt-2 right-0 origin-top-right z-50 w-72 bg-white dark:bg-[#0f172a]/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 animate-in fade-in zoom-in duration-200">
+        <div className={`absolute top-full mt-2 ${align === 'right' ? 'right-0 origin-top-right' : 'left-0 origin-top-left'} z-50 w-72 bg-white dark:bg-[#0f172a]/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 animate-in fade-in zoom-in duration-200`}>
           
           {/* Calendar Header */}
           <div className="flex items-center justify-between mb-4">
