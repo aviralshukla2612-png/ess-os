@@ -141,21 +141,23 @@ export default function ProjectsDirectoryPage() {
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
             />
           </div>
-          <div>
-            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Assign To Developer</label>
-            <select
-              value={assigneeId}
-              onChange={(e) => setAssigneeId(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
-            >
-              <option value="">-- Leave Unassigned --</option>
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.name || "Employee"} ({emp.email})
-                </option>
-              ))}
-            </select>
-          </div>
+          {(session?.user as any)?.role !== "EMPLOYEE" && (
+            <div>
+              <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Assign To Developer</label>
+              <select
+                value={assigneeId}
+                onChange={(e) => setAssigneeId(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
+              >
+                <option value="">-- Leave Unassigned --</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.name || "Employee"} ({emp.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <button
             type="submit"
             className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all mt-2"
