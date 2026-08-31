@@ -31,6 +31,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
   const [isBreakSheetOpen, setIsBreakSheetOpen] = useState(false);
   const [isPunchOutConfirmOpen, setIsPunchOutConfirmOpen] = useState(false);
   const [punchOutReason, setPunchOutReason] = useState("");
+  const [isPunchingIn, setIsPunchingIn] = useState(false);
 
   // Track active breaks for owner notifications
   const knownBreakStarts = React.useRef<Set<string>>(new Set());
@@ -75,6 +76,8 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
   }, [currentUser.role, showToast]);
 
   const handlePunchInClick = async () => {
+    if (isPunchingIn) return;
+    setIsPunchingIn(true);
     try {
       const res = await fetch("/crmtesting/api/attendance/punch-in", {
         method: "POST",
@@ -85,6 +88,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
       
       if (!res.ok || !data.success) {
         showToast(data.error || "Failed to punch in.", "error");
+        setIsPunchingIn(false);
         return;
       }
       
@@ -92,6 +96,8 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
       showToast("✓ Punched In successfully!", "success");
     } catch (e) {
       showToast("Network error while punching in.", "error");
+    } finally {
+      setIsPunchingIn(false);
     }
   };
 
@@ -231,11 +237,12 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
           {status === "NOT_PUNCHED_IN" && (
             <button
               onClick={handlePunchInClick}
-              className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/20 active:scale-95 transition-all touch-target shrink-0"
+              disabled={isPunchingIn}
+              className={`px-4 py-1.5 rounded-xl text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/20 active:scale-95 transition-all touch-target shrink-0 ${isPunchingIn ? 'bg-emerald-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500'}`}
               title="Punch In to Work Clock"
             >
               <Play className="w-3.5 h-3.5 fill-white shrink-0" />
-              <span>Punch In</span>
+              <span>{isPunchingIn ? "Punching In..." : "Punch In"}</span>
             </button>
           )}
 
