@@ -49,7 +49,7 @@ export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspecte
     if (!confirm("Are you sure you want to delete this attendance record?")) return;
     
     try {
-      const res = await fetch(`/api/attendance/history/${id}`, {
+      const res = await fetch(`/crmtesting/api/attendance/history/${id}`, {
         method: 'DELETE',
       });
       const data = await res.json();
