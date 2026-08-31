@@ -36,19 +36,7 @@ export function TimeReminders() {
           }
         }
       }
-      
-      // 1:15 PM = 13:15 -> Automatically start lunch break if still working
-      const autoLunchKey = `auto_lunch_${employeeId}_${todayDateStr}`;
-      if (hours === 13 && minutes === 15) {
-        if (!localStorage.getItem(autoLunchKey)) {
-          if (status === "WORKING") {
-            startBreak("LUNCH", "System: Automatic Lunch Break");
-            localStorage.setItem(autoLunchKey, "true");
-            // Optionally close the reminder if it's still open
-            setShowLunchReminder(false);
-          }
-        }
-      }
+
       
       // 6:45 PM = 18:45 -> Show Punch Out Reminder
       if (hours === 18 && minutes === 45) {
