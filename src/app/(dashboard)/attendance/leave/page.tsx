@@ -164,6 +164,7 @@ export default function EmployeeLeavePage() {
                     <CalendarDatePicker
                       startDate={endDate}
                       isSingle={true}
+                      align="right"
                       onDateChange={(end) => {
                         setEndDate(end);
                         calculateDays(startDate, end);
