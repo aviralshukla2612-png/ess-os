@@ -14,10 +14,8 @@ export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspecte
   const [selectedEmployeeName, setSelectedEmployeeName] = useState("");
 
   useEffect(() => {
-    const d = new Date();
-    const today = d.toISOString().split("T")[0];
-    const firstDayOfYear = new Date(d.getFullYear(), 0, 2).toISOString().split("T")[0]; // Use 2 to avoid timezone issues making it Dec 31
-    setStartDate(`${d.getFullYear()}-01-01`);
+    const today = new Date().toISOString().split("T")[0];
+    setStartDate(today);
     setEndDate(today);
   }, []);
 
