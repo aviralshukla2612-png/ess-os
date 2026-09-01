@@ -24,6 +24,10 @@ export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspecte
 
   // Fetch history when filters change
   useEffect(() => {
+    if (!startDate || !endDate) return;
+
+    const controller = new AbortController();
+    
     const fetchHistory = async () => {
       setLoading(true);
       try {
@@ -33,12 +37,13 @@ export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspecte
           url += `&startDate=${startDate}&endDate=${endDate}`;
         }
 
-        const res = await fetch(url);
+        const res = await fetch(url, { signal: controller.signal });
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
           setAttendanceRecords(json.data);
         }
-      } catch (e) {
+      } catch (e: any) {
+        if (e.name === 'AbortError') return;
         console.error(e);
       } finally {
         setLoading(false);
@@ -46,6 +51,10 @@ export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspecte
     };
 
     fetchHistory();
+    
+    return () => {
+      controller.abort();
+    };
   }, [inspectedEmployee, startDate, endDate]);
 
   const handleDelete = async (id: string) => {
