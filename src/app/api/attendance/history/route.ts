@@ -21,6 +21,51 @@ export async function GET(req: NextRequest) {
     }
 
     let dateFilter: any = {};
+    
+    // ── Global Lazy Cleanup of Forgotten Punch-Outs ──────────────
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const forgottenGlobalRecords = await prisma.attendance.findMany({
+      where: {
+        punchOut: null,
+        date: { lt: todayStart },
+      },
+    });
+
+    if (forgottenGlobalRecords.length > 0) {
+      for (const forgotten of forgottenGlobalRecords) {
+        const autoPunchOut = new Date(forgotten.date);
+        autoPunchOut.setHours(23, 59, 59, 0);
+
+        const punchInMs = new Date(forgotten.punchIn).getTime();
+        const totalMinutes = Math.max(0, Math.floor((autoPunchOut.getTime() - punchInMs) / 60000));
+
+        await prisma.$transaction([
+          prisma.attendance.update({
+            where: { id: forgotten.id },
+            data: {
+              punchOut: autoPunchOut,
+              totalMinutes,
+              status: "PRESENT",
+              punchOutReason: "Auto punch-out: system closed shift at midnight.",
+            },
+          }),
+          prisma.employeeStatusEvent.updateMany({
+            where: {
+              employeeId: forgotten.employeeId,
+              endedAt: null,
+              startedAt: {
+                gte: new Date(new Date(forgotten.date).setHours(0, 0, 0, 0)),
+                lte: autoPunchOut,
+              },
+            },
+            data: { endedAt: autoPunchOut },
+          }),
+        ]);
+      }
+    }
+    // ─────────────────────────────────────────────────────────────
     if (startDateParam && endDateParam) {
       const start = new Date(startDateParam);
       start.setHours(0, 0, 0, 0);
