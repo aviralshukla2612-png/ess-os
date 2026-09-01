@@ -19,7 +19,6 @@ export async function GET() {
         statusEvents: {
           where: { 
             endedAt: null, 
-            statusType: { in: ["WORKING", "BREAK", "Lunch", "Tea", "LUNCH", "TEA_BREAK"] } 
           },
           orderBy: { startedAt: "desc" },
           take: 1
@@ -79,6 +78,12 @@ export async function GET() {
             statusColor = "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700";
             task = "Not currently working";
             duration = "-";
+            
+            // Debug logging for Parth or any online-but-offline issues
+            if (emp.attendances && emp.attendances.length > 0 && !completedShiftToday) {
+              console.log(`[DEBUG] Employee ${emp.user.name} is marked OFFLINE but has an open attendance today.`);
+              console.log(`[DEBUG] statusEvents found:`, emp.statusEvents);
+            }
           }
         }
 
