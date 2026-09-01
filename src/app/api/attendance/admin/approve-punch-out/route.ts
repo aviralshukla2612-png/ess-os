@@ -67,7 +67,11 @@ export async function POST(req: Request) {
 
           // Close open EmployeeStatusEvents
           await tx.employeeStatusEvent.updateMany({
-            where: { employeeId: attendance.employeeId, endedAt: null },
+            where: { 
+              employeeId: attendance.employeeId, 
+              endedAt: null,
+              startedAt: { lte: punchOutTime }
+            },
             data: { endedAt: punchOutTime }
           });
         });
