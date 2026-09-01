@@ -32,6 +32,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
   const [isPunchOutConfirmOpen, setIsPunchOutConfirmOpen] = useState(false);
   const [punchOutReason, setPunchOutReason] = useState("");
   const [isPunchingIn, setIsPunchingIn] = useState(false);
+  const isPunchingInRef = React.useRef(false);
 
   // Track active breaks for owner notifications
   const knownBreakStarts = React.useRef<Set<string>>(new Set());
@@ -76,7 +77,8 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
   }, [currentUser.role, showToast]);
 
   const handlePunchInClick = async () => {
-    if (isPunchingIn) return;
+    if (isPunchingInRef.current) return;
+    isPunchingInRef.current = true;
     setIsPunchingIn(true);
     try {
       const res = await fetch("/crmtesting/api/attendance/punch-in", {
@@ -97,6 +99,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
     } catch (e) {
       showToast("Network error while punching in.", "error");
     } finally {
+      isPunchingInRef.current = false;
       setIsPunchingIn(false);
     }
   };

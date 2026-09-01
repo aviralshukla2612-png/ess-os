@@ -93,6 +93,7 @@ export async function GET(req: NextRequest) {
 
       return {
         ...record,
+        breakEvents,
         breakMinutes,
         totalMinutes: totalElapsedMinutes
       };

@@ -1,19 +1,22 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Clock, Trash2 } from "lucide-react";
+import { Clock, Trash2, Coffee } from "lucide-react";
 import { CalendarDatePicker } from "@/components/ui/CalendarDatePicker";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 
 export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspectedEmployee?: string }) {
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [selectedBreaks, setSelectedBreaks] = useState<any[]>([]);
+  const [isBreakSheetOpen, setIsBreakSheetOpen] = useState(false);
+  const [selectedEmployeeName, setSelectedEmployeeName] = useState("");
 
   useEffect(() => {
-    const d = new Date();
-    d.setDate(1);
-    setStartDate(d.toISOString().split("T")[0]);
-    setEndDate(new Date().toISOString().split("T")[0]);
+    const today = new Date().toISOString().split("T")[0];
+    setStartDate(today);
+    setEndDate(today);
   }, []);
 
   const [loading, setLoading] = useState(true);
@@ -162,13 +165,26 @@ export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspecte
                       {formatMins(record.totalMinutes)}
                     </td>
                     <td className="p-3 text-right">
-                      <button
-                        onClick={() => handleDelete(record.id)}
-                        className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors"
-                        title="Delete Record"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => {
+                            setSelectedBreaks(record.breakEvents || []);
+                            setSelectedEmployeeName(record.employee?.user?.name || "Unknown");
+                            setIsBreakSheetOpen(true);
+                          }}
+                          className="p-1.5 text-violet-500 hover:text-violet-700 hover:bg-violet-50 dark:hover:bg-violet-500/10 rounded transition-colors"
+                          title="View Break Details"
+                        >
+                          <Coffee className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(record.id)}
+                          className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors"
+                          title="Delete Record"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -177,6 +193,39 @@ export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspecte
           </tbody>
         </table>
       </div>
+
+      <BottomSheet
+        isOpen={isBreakSheetOpen}
+        onClose={() => setIsBreakSheetOpen(false)}
+        title="Break Details"
+        subtitle={`Breaks for ${selectedEmployeeName}`}
+      >
+        <div className="space-y-3 mt-2 max-h-[60vh] overflow-y-auto">
+          {selectedBreaks.length === 0 ? (
+            <div className="p-4 text-center text-slate-500 dark:text-slate-400 text-xs">
+              No breaks recorded for this day.
+            </div>
+          ) : (
+            selectedBreaks.map((b) => {
+              const formatTime = (dateStr: string) => dateStr ? new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--';
+              const duration = b.endedAt ? Math.round((new Date(b.endedAt).getTime() - new Date(b.startedAt).getTime()) / 60000) : "Ongoing";
+              return (
+                <div key={b.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs flex justify-between items-center">
+                  <div className="space-y-1">
+                    <div className="font-bold text-slate-700 dark:text-slate-300 capitalize">{b.statusType.toLowerCase()}</div>
+                    <div className="text-slate-500 dark:text-slate-400 font-mono">
+                      {formatTime(b.startedAt)} - {formatTime(b.endedAt)}
+                    </div>
+                  </div>
+                  <div className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                    {duration} {typeof duration === 'number' ? 'mins' : ''}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </BottomSheet>
     </div>
   );
 }
