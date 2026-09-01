@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, Clock } from "lucide-react";
+import { Users, Clock, User } from "lucide-react";
 
 export function RealtimeTeamView() {
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
@@ -58,8 +58,16 @@ export function RealtimeTeamView() {
                 <img
                   src={m.avatar}
                   alt={m.name}
-                  className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700"
+                  className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700 bg-white"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    e.currentTarget.nextElementSibling?.classList.add('flex');
+                  }}
                 />
+                <div className="hidden w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 items-center justify-center text-slate-400 shrink-0">
+                  <User className="w-5 h-5" />
+                </div>
                 {m.helpWaiting && (
                   <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900 animate-ping" />
                 )}
