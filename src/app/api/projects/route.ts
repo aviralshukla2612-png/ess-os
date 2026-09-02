@@ -127,7 +127,7 @@ export async function POST(req: Request) {
       contractValue: body.contractValue || 450000,
       status: body.status || "IN_PROGRESS",
       priority: body.priority || "HIGH",
-      progressPercentage: body.progressPercentage || 25,
+      progressPercentage: body.progressPercentage !== undefined ? body.progressPercentage : 25,
       targetDeadline: body.deadline ? new Date(body.deadline) : new Date(Date.now() + 86400000 * 45),
       createdById: authRes.id,
     };

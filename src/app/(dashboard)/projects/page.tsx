@@ -18,6 +18,7 @@ export default function ProjectsDirectoryPage() {
   const [projectName, setProjectName] = useState("");
   const [clientName, setClientName] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
+  const [progress, setProgress] = useState<number | "">("");
   const [employees, setEmployees] = useState<any[]>([]);
   const { data: session } = useSession();
 
@@ -78,7 +79,7 @@ export default function ProjectsDirectoryPage() {
       const res = await fetch("/crmtesting/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: projectName, contractValue: 450000, assigneeId }),
+        body: JSON.stringify({ name: projectName, contractValue: 450000, assigneeId, progressPercentage: progress !== "" ? Number(progress) : 0 }),
       });
       const json = await res.json();
       if (json.success) {
@@ -92,6 +93,7 @@ export default function ProjectsDirectoryPage() {
     setProjectName("");
     setClientName("");
     setAssigneeId("");
+    setProgress("");
   };
 
   return (
@@ -138,6 +140,18 @@ export default function ProjectsDirectoryPage() {
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
               placeholder="e.g. Zenith Tech Labs"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
+            />
+          </div>
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Progress Percentage</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={progress}
+              onChange={(e) => setProgress(e.target.value === "" ? "" : Number(e.target.value))}
+              placeholder="e.g. 10"
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
             />
           </div>
