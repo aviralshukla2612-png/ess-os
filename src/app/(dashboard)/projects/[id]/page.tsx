@@ -22,6 +22,7 @@ import {
   Plus,
   History,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -34,6 +35,8 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditProgressOpen, setIsEditProgressOpen] = useState(false);
+  const [newProgress, setNewProgress] = useState<number | "">("");
 
   React.useEffect(() => {
     fetchProject();
@@ -131,6 +134,29 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
     }
   };
 
+  const handleUpdateProgress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newProgress === "") return;
+    try {
+      const res = await fetch(`/crmtesting/api/projects/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ progressPercentage: Number(newProgress) }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast("Progress updated successfully", "success");
+        setProject({ ...project, progress: Number(newProgress) });
+        setIsEditProgressOpen(false);
+      } else {
+        showToast(json.error || "Failed to update progress", "error");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("An unexpected error occurred", "error");
+    }
+  };
+
   if (loading) return <div className="p-12 text-center text-slate-400 animate-pulse">Loading Workspace...</div>;
   if (!project) return <div className="p-12 text-center text-rose-400">Project Not Found or Access Denied</div>;
 
@@ -210,9 +236,22 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
 
         {/* Progress Engine */}
         <div className="space-y-1 pt-1">
-          <div className="flex justify-between text-xs font-bold">
+          <div className="flex justify-between text-xs font-bold items-center">
             <span className="text-slate-600 dark:text-slate-400">WEIGHTED PLAYBOOK PROGRESS ∑(Stage × Weight)</span>
-            <span className="text-indigo-600 dark:text-indigo-400 font-mono text-sm">{project.progress}%</span>
+            <div className="flex items-center gap-3">
+              <span className="text-indigo-600 dark:text-indigo-400 font-mono text-sm">{project.progress}%</span>
+              {(session?.user as any)?.role !== "EMPLOYEE" && (
+                <button
+                  onClick={() => {
+                    setNewProgress(project.progress);
+                    setIsEditProgressOpen(true);
+                  }}
+                  className="p-1 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
           <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
             <div className="h-full bg-indigo-600 dark:bg-indigo-500 rounded-full transition-all duration-300" style={{ width: `${project.progress}%` }} />
@@ -440,6 +479,34 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
             className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs touch-target mt-2"
           >
             Assign Task
+          </button>
+        </form>
+      </BottomSheet>
+
+      <BottomSheet
+        isOpen={isEditProgressOpen}
+        onClose={() => setIsEditProgressOpen(false)}
+        title="Update Progress Percentage"
+        subtitle="Manually override the weighted playbook progress."
+      >
+        <form onSubmit={handleUpdateProgress} className="space-y-3 text-xs">
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1">New Progress Percentage</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              required
+              value={newProgress}
+              onChange={(e) => setNewProgress(e.target.value === "" ? "" : Number(e.target.value))}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs touch-target mt-2"
+          >
+            Save Progress
           </button>
         </form>
       </BottomSheet>
