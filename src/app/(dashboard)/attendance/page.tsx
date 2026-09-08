@@ -235,10 +235,9 @@ export default function AttendanceWorkClockPage() {
     }
   }, [startDate, endDate, session?.user?.employeeId]);
 
-  const REQUIRED_WORK_SECONDS = parseInt(process.env.NEXT_PUBLIC_REQUIRED_WORK_HOURS || "9") * 3600;
-  const totalActiveSeconds = workSeconds + breakSeconds;
-  const progressPercent = Math.min(100, Math.round((totalActiveSeconds / REQUIRED_WORK_SECONDS) * 100));
-  const remainingWorkSeconds = Math.max(0, REQUIRED_WORK_SECONDS - totalActiveSeconds);
+  const REQUIRED_WORK_SECONDS = parseInt(process.env.NEXT_PUBLIC_REQUIRED_WORK_HOURS || "8") * 3600;
+  const progressPercent = Math.min(100, Math.round((workSeconds / REQUIRED_WORK_SECONDS) * 100));
+  const remainingWorkSeconds = Math.max(0, REQUIRED_WORK_SECONDS - workSeconds);
 
 function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371e3; // metres
@@ -497,7 +496,7 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
             <div className="space-y-2">
               <div className="flex justify-between font-bold">
                 <span className="text-slate-600 dark:text-slate-400">{Math.floor(REQUIRED_WORK_SECONDS / 3600)}-Hour Work Goal</span>
-                <span className="font-mono text-indigo-600 dark:text-indigo-400">{formatHM(totalActiveSeconds)} / {formatHM(REQUIRED_WORK_SECONDS)} ({progressPercent}%)</span>
+                <span className="font-mono text-indigo-600 dark:text-indigo-400">{formatHM(workSeconds)} / {formatHM(REQUIRED_WORK_SECONDS)} ({progressPercent}%)</span>
               </div>
               <div className="w-full h-3 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden border border-slate-200/80 dark:border-slate-800">
                 <div

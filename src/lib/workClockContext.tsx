@@ -400,15 +400,14 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     ]);
   };
 
-  const REQUIRED_WORK_SECONDS = parseInt(process.env.NEXT_PUBLIC_REQUIRED_WORK_HOURS || "9") * 3600;
+  const REQUIRED_WORK_SECONDS = parseInt(process.env.NEXT_PUBLIC_REQUIRED_WORK_HOURS || "8") * 3600;
 
   const punchOut = () => {
-    const totalActiveSeconds = workSeconds + breakSeconds;
-    if (totalActiveSeconds >= REQUIRED_WORK_SECONDS) {
+    if (workSeconds >= REQUIRED_WORK_SECONDS) {
       confirmPunchOutAnyway();
       return { success: true, requiresConfirmation: false, remainingSeconds: 0 };
     } else {
-      const remainingSeconds = REQUIRED_WORK_SECONDS - totalActiveSeconds;
+      const remainingSeconds = REQUIRED_WORK_SECONDS - workSeconds;
       return { success: false, requiresConfirmation: true, remainingSeconds };
     }
   };

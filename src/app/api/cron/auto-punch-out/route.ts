@@ -12,9 +12,9 @@ import { prisma } from "@/lib/prisma";
  * Security: protected by a shared CRON_SECRET env variable.
  * Call with:  Authorization: Bearer <CRON_SECRET>
  *
- * Vercel Cron example (vercel.json):
+ * Vercel Cron example (vercel.json) - Runs at 11:59 PM IST (18:29 UTC):
  * {
- *   "crons": [{ "path": "/api/cron/auto-punch-out", "schedule": "59 23 * * *" }]
+ *   "crons": [{ "path": "/api/cron/auto-punch-out", "schedule": "29 18 * * *" }]
  * }
  */
 export async function POST(req: NextRequest) {
@@ -28,17 +28,11 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const now = new Date();
-
-    // "Today" starts at midnight of the current calendar day (server TZ)
-    const startOfToday = new Date(now);
-    startOfToday.setHours(0, 0, 0, 0);
-
-    // Find every attendance record that is still open and belongs to a previous day
+    // Find every attendance record that is still open
+    // We will punch them out at 23:59:59 IST of their respective punch-in day
     const openRecords = await prisma.attendance.findMany({
       where: {
         punchOut: null,
-        date: { lt: startOfToday },
       },
       include: {
         employee: {
@@ -53,24 +47,34 @@ export async function POST(req: NextRequest) {
 
     let closedCount = 0;
 
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
     for (const record of openRecords) {
-      // Auto punch-out time = 23:59:59 of the day the record belongs to
-      const autoPunchOut = new Date(record.date);
-      autoPunchOut.setHours(23, 59, 59, 0);
+      // 1. Convert the punch-in time from UTC to IST
+      const punchInUTC = new Date(record.punchIn);
+      const punchInIST = new Date(punchInUTC.getTime() + IST_OFFSET_MS);
+
+      // 2. Set the auto punch-out time to 23:59:59 of that IST day
+      const autoPunchOutIST = new Date(punchInIST);
+      autoPunchOutIST.setUTCHours(23, 59, 59, 0);
+
+      // 3. Convert that 23:59:59 IST time back to UTC to store in DB
+      const autoPunchOutUTC = new Date(autoPunchOutIST.getTime() - IST_OFFSET_MS);
+
+      // 4. Same for start of day for closing status events
+      const startOfDayIST = new Date(punchInIST);
+      startOfDayIST.setUTCHours(0, 0, 0, 0);
+      const startOfDayUTC = new Date(startOfDayIST.getTime() - IST_OFFSET_MS);
 
       // Total worked minutes = elapsed from punch-in to 23:59:59 (cap at 0)
-      const punchInMs = new Date(record.punchIn).getTime();
-      const totalMinutes = Math.max(0, Math.floor((autoPunchOut.getTime() - punchInMs) / 60000));
-
-      const startOfDay = new Date(record.date);
-      startOfDay.setHours(0, 0, 0, 0);
+      const totalMinutes = Math.max(0, Math.floor((autoPunchOutUTC.getTime() - punchInUTC.getTime()) / 60000));
 
       await prisma.$transaction([
         // Close the attendance record
         prisma.attendance.update({
           where: { id: record.id },
           data: {
-            punchOut: autoPunchOut,
+            punchOut: autoPunchOutUTC,
             totalMinutes,
             status: "PRESENT",
             punchOutReason: "Auto punch-out: employee did not punch out before midnight.",
@@ -82,19 +86,19 @@ export async function POST(req: NextRequest) {
             employeeId: record.employeeId,
             endedAt: null,
             startedAt: {
-              gte: startOfDay,
-              lte: autoPunchOut,
+              gte: startOfDayUTC,
+              lte: autoPunchOutUTC,
             },
           },
-          data: { endedAt: autoPunchOut },
+          data: { endedAt: autoPunchOutUTC },
         }),
       ]);
 
       closedCount++;
       console.log(
         `[auto-punch-out] Closed record for ${record.employee.user.name} ` +
-        `(${record.employee.employeeIdCode}) on ${startOfDay.toDateString()} ` +
-        `at ${autoPunchOut.toTimeString().slice(0, 8)}`
+        `(${record.employee.employeeIdCode}) on ${startOfDayUTC.toDateString()} ` +
+        `at ${autoPunchOutUTC.toTimeString().slice(0, 8)} (UTC)`
       );
     }
 
