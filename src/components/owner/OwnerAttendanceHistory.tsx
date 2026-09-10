@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Clock, Trash2, Coffee } from "lucide-react";
+import Link from "next/link";
+import { Clock, Trash2, Coffee, ArrowUpRight } from "lucide-react";
 import { CalendarDatePicker } from "@/components/ui/CalendarDatePicker";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 
@@ -147,7 +148,12 @@ export function OwnerAttendanceHistory({ inspectedEmployee = "ALL" }: { inspecte
                 return (
                   <tr key={record.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                     <td className="p-3 font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">
-                      {record.employee?.user?.name || "Unknown"}
+                      <Link
+                        href={`/employees/${record.employeeId || record.employee?.id}`}
+                        className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition-colors inline-flex items-center gap-1"
+                      >
+                        <span>{record.employee?.user?.name || "Unknown"}</span>
+                      </Link>
                     </td>
                     <td className="p-3 font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
                       {formatDate(record.date)}

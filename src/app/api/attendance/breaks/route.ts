@@ -87,7 +87,15 @@ export async function POST(req: Request) {
         ]);
         return NextResponse.json({ success: true, data: updated, newEvent: newWorkEvent });
       } else {
-        return NextResponse.json({ success: true, message: "No open event found" });
+        const newWorkEvent = await prisma.employeeStatusEvent.create({
+          data: {
+            employeeId: employee.id,
+            statusType: "WORKING",
+            startedAt: new Date(),
+            notes: "Resumed work after break"
+          }
+        });
+        return NextResponse.json({ success: true, newEvent: newWorkEvent });
       }
     } else {
       return NextResponse.json({ success: false, error: "Invalid action" }, { status: 400 });

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Coffee, Clock, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { Coffee, Clock, CheckCircle2, ArrowUpRight } from "lucide-react";
 
 export function OwnerBreakDashboard({ inspectedEmployee }: { inspectedEmployee?: string }) {
   const [breaks, setBreaks] = useState<any[]>([]);
@@ -50,6 +51,7 @@ export function OwnerBreakDashboard({ inspectedEmployee }: { inspectedEmployee?:
       ) : (
         <div className="grid gap-4">
           {breaks.filter(b => !inspectedEmployee || inspectedEmployee === "ALL" || b.employeeId === inspectedEmployee).map((b) => {
+            const empId = b.employee?.id || b.employeeId;
             const name = b.employee?.user?.name || "Unknown Employee";
             const type = b.statusType || "Break";
             const reason = b.notes || "No reason provided";
@@ -65,21 +67,25 @@ export function OwnerBreakDashboard({ inspectedEmployee }: { inspectedEmployee?:
             }
 
             return (
-              <div
+              <Link
                 key={b.id}
-                className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-all"
+                href={`/employees/${empId}`}
+                className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700/80 transition-all cursor-pointer group"
               >
                 <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-xl ${
+                  <div className={`p-3 rounded-xl transition-all ${
                     ended 
-                      ? "bg-slate-50 dark:bg-slate-800 text-slate-500" 
-                      : "bg-orange-50 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400"
+                      ? "bg-slate-50 dark:bg-slate-800 text-slate-500 group-hover:bg-slate-100 dark:group-hover:bg-slate-700" 
+                      : "bg-orange-50 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 group-hover:bg-orange-100 dark:group-hover:bg-orange-900/60"
                   }`}>
                     {ended ? <CheckCircle2 className="w-6 h-6" /> : <Coffee className="w-6 h-6" />}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-slate-900 dark:text-slate-100">{name}</h4>
+                      <h4 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors flex items-center gap-1">
+                        <span>{name}</span>
+                        <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all -translate-y-0.5 text-indigo-500 shrink-0" />
+                      </h4>
                       {!ended && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded uppercase font-mono bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">
                           Active Now
@@ -100,7 +106,7 @@ export function OwnerBreakDashboard({ inspectedEmployee }: { inspectedEmployee?:
                     {started} {ended ? `- ${ended}` : ""}
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

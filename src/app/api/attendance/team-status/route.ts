@@ -65,10 +65,19 @@ export async function GET() {
           const mins = Math.round(((nowMs - startMs) % 3600000) / 60000);
           duration = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
         } else {
-          // Check if they completed a shift today
+          // Check if they have an active open attendance today (punched in, not punched out)
+          const activeAttendance = emp.attendances?.find(a => !a.punchOut);
           const completedShiftToday = emp.attendances?.some(a => a.punchOut);
           
-          if (completedShiftToday) {
+          if (activeAttendance) {
+            status = "WORKING";
+            task = "Active Shift";
+            const startMs = new Date(activeAttendance.punchIn).getTime();
+            const nowMs = Date.now();
+            const hrs = Math.floor((nowMs - startMs) / 3600000);
+            const mins = Math.round(((nowMs - startMs) % 3600000) / 60000);
+            duration = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+          } else if (completedShiftToday) {
             status = "COMPLETED";
             statusColor = "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800";
             task = "Shift completed for today";
@@ -78,12 +87,6 @@ export async function GET() {
             statusColor = "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700";
             task = "Not currently working";
             duration = "-";
-            
-            // Debug logging for Parth or any online-but-offline issues
-            if (emp.attendances && emp.attendances.length > 0 && !completedShiftToday) {
-              console.log(`[DEBUG] Employee ${emp.user.name} is marked OFFLINE but has an open attendance today.`);
-              console.log(`[DEBUG] statusEvents found:`, emp.statusEvents);
-            }
           }
         }
 

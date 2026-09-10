@@ -18,6 +18,11 @@ import {
   Phone,
   Building,
   Sparkles,
+  BarChart3,
+  Calendar,
+  Coffee,
+  LogIn,
+  LogOut,
 } from "lucide-react";
 
 export default function EmployeeDetailPage({ params }: { params: { id: string } }) {
@@ -76,13 +81,31 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
             project: w.project?.name || "General",
             duration: `${w.durationMinutes}m`,
           })) || [],
-          attendanceRecord: e.attendances?.map((a: any) => ({
-            date: new Date(a.date).toLocaleDateString(),
-            punchIn: a.punchIn ? new Date(a.punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "09:00 AM",
-            punchOut: a.punchOut ? new Date(a.punchOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "On-Going",
-            status: a.status,
-            workHours: `${Math.floor((a.totalMinutes || 0) / 60)}h ${(a.totalMinutes || 0) % 60}m`,
-          })) || [],
+          rawAttendances: e.attendances || [],
+          rawStatusEvents: e.statusEvents || [],
+          attendanceRecord: e.attendances?.map((a: any) => {
+            const dayStr = new Date(a.date || a.punchIn).toDateString();
+            const dayBreaks = e.statusEvents?.filter((ev: any) => {
+              return ev.statusType !== "WORKING" && new Date(ev.startedAt).toDateString() === dayStr;
+            }) || [];
+            
+            const breakMins = dayBreaks.reduce((acc: number, ev: any) => {
+              const start = new Date(ev.startedAt).getTime();
+              const end = ev.endedAt ? new Date(ev.endedAt).getTime() : Date.now();
+              return acc + Math.max(0, Math.floor((end - start) / 60000));
+            }, 0);
+
+            const breakHoursStr = breakMins > 0 ? `${Math.floor(breakMins / 60)}h ${breakMins % 60}m` : "0m";
+
+            return {
+              date: new Date(a.date || a.punchIn).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+              punchIn: a.punchIn ? new Date(a.punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "09:00 AM",
+              punchOut: a.punchOut ? new Date(a.punchOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "On-Going",
+              status: a.status || "PRESENT",
+              workHours: `${Math.floor((a.totalMinutes || 0) / 60)}h ${(a.totalMinutes || 0) % 60}m`,
+              breakHours: breakHoursStr,
+            };
+          }) || [],
           isActive: e.user?.isActive !== false,
           empStatus: e.status,
         });
@@ -156,6 +179,122 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
 
   if (loading) return <div className="p-12 text-center text-slate-400 animate-pulse">Loading Employee Data...</div>;
   if (!employee) return <div className="p-12 text-center text-rose-400">Employee Not Found or Access Denied</div>;
+
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => new Date().toISOString().slice(0, 7));
+
+  const getAvailableMonths = () => {
+    const monthsSet = new Set<string>();
+    const currentM = new Date().toISOString().slice(0, 7);
+    monthsSet.add(currentM);
+    
+    employee?.rawAttendances?.forEach((a: any) => {
+      if (a.date || a.punchIn) {
+        const d = new Date(a.date || a.punchIn);
+        const mKey = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+        monthsSet.add(mKey);
+      }
+    });
+
+    employee?.rawStatusEvents?.forEach((ev: any) => {
+      if (ev.startedAt) {
+        const d = new Date(ev.startedAt);
+        const mKey = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+        monthsSet.add(mKey);
+      }
+    });
+
+    return Array.from(monthsSet).sort().reverse();
+  };
+
+  const computeMonthlyMetrics = (monthKey: string) => {
+    if (!employee) return { totalWorkHours: "0h 0m", totalBreakHours: "0h 0m", avgPunchIn: "N/A", avgPunchOut: "N/A", daysPresent: 0, avgWorkPerDay: "0h 0m", breakCount: 0, completedShifts: 0 };
+
+    const rawAtts = employee.rawAttendances || [];
+    const rawEvs = employee.rawStatusEvents || [];
+
+    const monthAtts = rawAtts.filter((a: any) => {
+      const d = new Date(a.date || a.punchIn);
+      const key = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+      return key === monthKey;
+    });
+
+    const monthEvs = rawEvs.filter((ev: any) => {
+      const d = new Date(ev.startedAt);
+      const key = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+      return key === monthKey;
+    });
+
+    const totalWorkMin = monthAtts.reduce((sum: number, a: any) => {
+      if (typeof a.totalMinutes === "number" && a.totalMinutes > 0) {
+        return sum + a.totalMinutes;
+      }
+      if (a.punchIn && a.punchOut) {
+        const diff = Math.max(0, Math.floor((new Date(a.punchOut).getTime() - new Date(a.punchIn).getTime()) / 60000));
+        return sum + diff;
+      }
+      return sum;
+    }, 0);
+
+    const totalWorkHours = `${Math.floor(totalWorkMin / 60)}h ${totalWorkMin % 60}m`;
+
+    const totalBreakMin = monthEvs
+      .filter((ev: any) => ev.statusType !== "WORKING")
+      .reduce((sum: number, ev: any) => {
+        const start = new Date(ev.startedAt).getTime();
+        const end = ev.endedAt ? new Date(ev.endedAt).getTime() : Date.now();
+        const mins = Math.max(0, Math.floor((end - start) / 60000));
+        return sum + mins;
+      }, 0);
+
+    const totalBreakHours = `${Math.floor(totalBreakMin / 60)}h ${totalBreakMin % 60}m`;
+
+    const validPunchIns = monthAtts.filter((a: any) => a.punchIn);
+    let avgPunchIn = "N/A";
+    if (validPunchIns.length > 0) {
+      const sumMin = validPunchIns.reduce((sum: number, a: any) => {
+        const d = new Date(a.punchIn);
+        return sum + (d.getHours() * 60 + d.getMinutes());
+      }, 0);
+      const avg = Math.round(sumMin / validPunchIns.length);
+      const h = Math.floor(avg / 60);
+      const m = avg % 60;
+      const ampm = h >= 12 ? "PM" : "AM";
+      const displayH = h % 12 || 12;
+      avgPunchIn = `${displayH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
+    }
+
+    const validPunchOuts = monthAtts.filter((a: any) => a.punchOut);
+    let avgPunchOut = "N/A";
+    if (validPunchOuts.length > 0) {
+      const sumMin = validPunchOuts.reduce((sum: number, a: any) => {
+        const d = new Date(a.punchOut);
+        return sum + (d.getHours() * 60 + d.getMinutes());
+      }, 0);
+      const avg = Math.round(sumMin / validPunchOuts.length);
+      const h = Math.floor(avg / 60);
+      const m = avg % 60;
+      const ampm = h >= 12 ? "PM" : "AM";
+      const displayH = h % 12 || 12;
+      avgPunchOut = `${displayH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
+    }
+
+    const daysPresent = monthAtts.length;
+    const avgWorkPerDayMin = daysPresent > 0 ? Math.round(totalWorkMin / daysPresent) : 0;
+    const avgWorkPerDay = `${Math.floor(avgWorkPerDayMin / 60)}h ${avgWorkPerDayMin % 60}m`;
+
+    return {
+      totalWorkHours,
+      totalBreakHours,
+      avgPunchIn,
+      avgPunchOut,
+      daysPresent,
+      avgWorkPerDay,
+      breakCount: monthEvs.filter((ev: any) => ev.statusType !== "WORKING").length,
+      completedShifts: validPunchOuts.length,
+    };
+  };
+
+  const monthlyMetrics = computeMonthlyMetrics(selectedMonth);
 
   return (
     <div className="space-y-6 pb-16">
@@ -237,6 +376,104 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
           <p className="text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
             "{employee.currentTask}"
           </p>
+        </div>
+      </div>
+
+      {/* Monthly Performance Analytics Section */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-slate-100">
+                Monthly Work & Attendance Analytics
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Monthly working hours, total break durations, and average punch times
+            </p>
+          </div>
+
+          {/* Month Selector Dropdown */}
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-slate-400" />
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-bold rounded-xl px-3 py-2 outline-none focus:border-indigo-500 transition-all cursor-pointer"
+            >
+              {getAvailableMonths().map((mKey) => {
+                const [year, month] = mKey.split("-");
+                const dateObj = new Date(parseInt(year), parseInt(month) - 1, 1);
+                const monthName = dateObj.toLocaleString("default", { month: "long", year: "numeric" });
+                const isCurrent = mKey === new Date().toISOString().slice(0, 7);
+                return (
+                  <option key={mKey} value={mKey}>
+                    {monthName} {isCurrent ? "(Current Month)" : ""}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        </div>
+
+        {/* 4 Monthly Metrics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Total Working Hours */}
+          <div className="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">TOTAL WORK HOURS</span>
+              <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+              {monthlyMetrics.totalWorkHours}
+            </div>
+            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
+              Avg {monthlyMetrics.avgWorkPerDay} / day ({monthlyMetrics.daysPresent} days present)
+            </div>
+          </div>
+
+          {/* Card 2: Total Break Time */}
+          <div className="p-4 rounded-xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-amber-800 dark:text-amber-300">TOTAL BREAK TIME</span>
+              <Coffee className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+              {monthlyMetrics.totalBreakHours}
+            </div>
+            <div className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">
+              {monthlyMetrics.breakCount} break session(s) taken
+            </div>
+          </div>
+
+          {/* Card 3: Avg Punch-Out Time */}
+          <div className="p-4 rounded-xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-purple-800 dark:text-purple-300">AVG PUNCH-OUT TIME</span>
+              <LogOut className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+              {monthlyMetrics.avgPunchOut}
+            </div>
+            <div className="text-[11px] text-purple-700 dark:text-purple-400 font-medium">
+              Across {monthlyMetrics.completedShifts} completed shift(s)
+            </div>
+          </div>
+
+          {/* Card 4: Avg Punch-In Time */}
+          <div className="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/60 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-indigo-800 dark:text-indigo-300">AVG PUNCH-IN TIME</span>
+              <LogIn className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+              {monthlyMetrics.avgPunchIn}
+            </div>
+            <div className="text-[11px] text-indigo-700 dark:text-indigo-400 font-medium">
+              {monthlyMetrics.daysPresent} Working Day(s) Present
+            </div>
+          </div>
         </div>
       </div>
 
@@ -327,16 +564,24 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
       {/* Tab 3: Attendance Records */}
       {activeTab === "attendance" && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
-          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Attendance & Punch Log</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Attendance & Punch Log</h3>
+            <span className="text-xs font-mono font-bold text-slate-500">
+              Total Records: {employee.attendanceRecord.length}
+            </span>
+          </div>
           <div className="space-y-2 text-xs">
             {employee.attendanceRecord.map((rec: any, idx: number) => (
-              <div key={idx} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between font-mono">
+              <div key={idx} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono">
                 <div>
                   <span className="font-bold text-slate-900 dark:text-slate-100">{rec.date}</span>
                   <span className="text-slate-400 ml-3">In: {rec.punchIn} • Out: {rec.punchOut}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">{rec.workHours}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">Work: {rec.workHours}</span>
+                  {rec.breakHours && rec.breakHours !== "0m" && (
+                    <span className="text-amber-600 dark:text-amber-400 font-bold">Break: {rec.breakHours}</span>
+                  )}
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                     {rec.status}
                   </span>

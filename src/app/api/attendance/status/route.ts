@@ -91,7 +91,18 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    const finalStatus = attendance.punchOut ? "DAY_COMPLETE" : (events.find(e => !e.endedAt)?.statusType === "WORKING" ? "WORKING" : "ON_BREAK");
+    // Find the latest open event (where endedAt is null)
+    const latestOpenEvent = [...events].reverse().find(e => !e.endedAt);
+
+    let finalStatus: string;
+    if (attendance.punchOut) {
+      finalStatus = "DAY_COMPLETE";
+    } else if (latestOpenEvent) {
+      finalStatus = latestOpenEvent.statusType === "WORKING" ? "WORKING" : "ON_BREAK";
+    } else {
+      // If employee is punched in but has no active open event, default to WORKING
+      finalStatus = "WORKING";
+    }
 
     // Build a simplified event list for timeline reconstruction on the client
     const todayEvents = events.map(ev => ({
