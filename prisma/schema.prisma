@@ -579,3 +579,11 @@ model SystemSetting {
   value String
 }
 
+model CompanyHoliday {
+  id          String   @id @default(uuid())
+  title       String
+  date        DateTime
+  description String?
+  createdAt   DateTime @default(now())
+}
+

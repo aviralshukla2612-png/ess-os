@@ -23,6 +23,11 @@ import {
   Coffee,
   LogIn,
   LogOut,
+  Calculator,
+  DollarSign,
+  PartyPopper,
+  AlertCircle,
+  Percent,
 } from "lucide-react";
 
 export default function EmployeeDetailPage({ params }: { params: { id: string } }) {
@@ -32,6 +37,14 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => new Date().toISOString().slice(0, 7));
   const [selectedDayDetail, setSelectedDayDetail] = useState<any>(null);
+  const [companyHolidays, setCompanyHolidays] = useState<any[]>([]);
+
+  // Simulator states (unsaved)
+  const [simBaseSalary, setSimBaseSalary] = useState<number>(0);
+  const [simWorkingDays, setSimWorkingDays] = useState<number>(22);
+  const [simUnpaidLeaves, setSimUnpaidLeaves] = useState<number>(0);
+  const [simHalfDays, setSimHalfDays] = useState<number>(0);
+  const [isSalarySimInitialized, setIsSalarySimInitialized] = useState<boolean>(false);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
@@ -42,7 +55,20 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
 
   React.useEffect(() => {
     fetchEmployee();
+    fetchHolidays();
   }, []);
+
+  const fetchHolidays = async () => {
+    try {
+      const res = await fetch("/crmtesting/api/holidays");
+      const json = await res.json();
+      if (json.success && json.data) {
+        setCompanyHolidays(json.data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const fetchEmployee = async () => {
     try {
@@ -207,7 +233,22 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
   };
 
   const computeMonthlyMetrics = (monthKey: string) => {
-    if (!employee) return { totalWorkHours: "0h 0m", totalBreakHours: "0h 0m", avgPunchIn: "N/A", avgPunchOut: "N/A", daysPresent: 0, avgWorkPerDay: "0h 0m", breakCount: 0, completedShifts: 0 };
+    if (!employee) return { 
+      totalWorkHours: "0h 0m", 
+      totalBreakHours: "0h 0m", 
+      avgPunchIn: "N/A", 
+      avgPunchOut: "N/A", 
+      daysPresent: 0, 
+      avgWorkPerDay: "0h 0m", 
+      breakCount: 0, 
+      completedShifts: 0,
+      halfDaysCount: 0,
+      totalOffDaysCount: 0,
+      totalDeclaredHolidays: 0,
+      totalWeekendsCount: 0,
+      totalWorkingDaysInMonth: 22,
+      fullDayLeavesCount: 0,
+    };
 
     const rawAtts = employee.rawAttendances || [];
     const rawEvs = employee.rawStatusEvents || [];
@@ -220,6 +261,12 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
 
     const monthEvs = rawEvs.filter((ev: any) => {
       const d = new Date(ev.startedAt);
+      const key = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+      return key === monthKey;
+    });
+
+    const monthHolidays = companyHolidays.filter((h: any) => {
+      const d = new Date(h.date);
       const key = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
       return key === monthKey;
     });
@@ -282,6 +329,29 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
     const avgWorkPerDayMin = daysPresent > 0 ? Math.round(totalWorkMin / daysPresent) : 0;
     const avgWorkPerDay = `${Math.floor(avgWorkPerDayMin / 60)}h ${avgWorkPerDayMin % 60}m`;
 
+    // Half days count
+    const halfDaysCount = monthAtts.filter((a: any) => {
+      const mins = a.totalMinutes || (a.punchIn && a.punchOut ? Math.max(0, Math.floor((new Date(a.punchOut).getTime() - new Date(a.punchIn).getTime()) / 60000)) : 0);
+      return a.punchOutRequestStatus === "APPROVED" || a.punchOutReason?.toLowerCase().includes("early") || (a.punchOut && mins < 420);
+    }).length;
+
+    // Total Holidays & Off Days count
+    const [yearStr, monthStr] = monthKey.split("-");
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr) - 1;
+    const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+
+    let totalWeekendsCount = 0;
+    for (let d = 1; d <= totalDaysInMonth; d++) {
+      const dayOfWeek = new Date(year, month, d).getDay();
+      if (dayOfWeek === 0) totalWeekendsCount++;
+    }
+
+    const totalDeclaredHolidays = monthHolidays.length;
+    const totalOffDaysCount = totalWeekendsCount + totalDeclaredHolidays;
+    const totalWorkingDaysInMonth = Math.max(1, totalDaysInMonth - totalOffDaysCount);
+    const fullDayLeavesCount = Math.max(0, totalWorkingDaysInMonth - daysPresent);
+
     return {
       totalWorkHours,
       totalBreakHours,
@@ -291,6 +361,12 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
       avgWorkPerDay,
       breakCount: monthEvs.filter((ev: any) => ev.statusType !== "WORKING").length,
       completedShifts: validPunchOuts.length,
+      halfDaysCount,
+      totalOffDaysCount,
+      totalDeclaredHolidays,
+      totalWeekendsCount,
+      totalWorkingDaysInMonth,
+      fullDayLeavesCount,
     };
   };
 
@@ -316,6 +392,12 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
       const dayOfWeek = currentDayDate.getDay();
       const isWeekend = dayOfWeek === 0;
 
+      const holidayMatch = companyHolidays.find((h: any) => {
+        const dObj = new Date(h.date);
+        const localStr = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}-${String(dObj.getDate()).padStart(2, '0')}`;
+        return localStr === dayDateStr;
+      });
+
       const attRecord = employee?.rawAttendances?.find((a: any) => {
         if (!a.date && !a.punchIn) return false;
         const dObj = new Date(a.date || a.punchIn);
@@ -329,7 +411,11 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
       let inTimeText = "";
       let outTimeText = "";
 
-      if (attRecord) {
+      if (holidayMatch) {
+        statusType = "GREY";
+        statusLabel = `Holiday: ${holidayMatch.title}`;
+        workHoursText = holidayMatch.title;
+      } else if (attRecord) {
         inTimeText = attRecord.punchIn ? new Date(attRecord.punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--";
         outTimeText = attRecord.punchOut ? new Date(attRecord.punchOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Ongoing";
 
@@ -500,8 +586,8 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
           </div>
         </div>
 
-        {/* 4 Monthly Metrics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* 6 Monthly Metrics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Card 1: Total Working Hours */}
           <div className="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 space-y-1.5">
             <div className="flex items-center justify-between">
@@ -530,7 +616,35 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
             </div>
           </div>
 
-          {/* Card 3: Avg Punch-Out Time */}
+          {/* Card 3: Half Days / Early Punch Outs */}
+          <div className="p-4 rounded-xl bg-rose-50/50 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-800/60 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-rose-800 dark:text-rose-300">HALF DAYS / EARLY OUTS</span>
+              <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+            </div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+              {monthlyMetrics.halfDaysCount} Half Day(s)
+            </div>
+            <div className="text-[11px] text-rose-700 dark:text-rose-400 font-medium">
+              0.5 day salary deduction / half day
+            </div>
+          </div>
+
+          {/* Card 4: Total Holidays & Days Off */}
+          <div className="p-4 rounded-xl bg-sky-50/50 dark:bg-sky-950/30 border border-sky-200/80 dark:border-sky-800/60 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-sky-800 dark:text-sky-300">HOLIDAYS & DAYS OFF</span>
+              <PartyPopper className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+            </div>
+            <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+              {monthlyMetrics.totalOffDaysCount} Days Off
+            </div>
+            <div className="text-[11px] text-sky-700 dark:text-sky-400 font-medium">
+              {monthlyMetrics.totalDeclaredHolidays} Official Holidays + {monthlyMetrics.totalWeekendsCount} Weekends
+            </div>
+          </div>
+
+          {/* Card 5: Avg Punch-Out Time */}
           <div className="p-4 rounded-xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-purple-800 dark:text-purple-300">AVG PUNCH-OUT TIME</span>
@@ -544,7 +658,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
             </div>
           </div>
 
-          {/* Card 4: Avg Punch-In Time */}
+          {/* Card 6: Avg Punch-In Time */}
           <div className="p-4 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/60 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-indigo-800 dark:text-indigo-300">AVG PUNCH-IN TIME</span>
@@ -657,6 +771,100 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Live Unsaved Salary & Deduction Simulator */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Calculator className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-slate-100">
+                Live Salary & Deduction Simulator
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Simulate monthly payout based on leaves & half days. (Preview only — does not save to DB)
+            </p>
+          </div>
+
+          <span className="text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 shrink-0">
+            ℹ️ Unsaved Live Simulator
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+          {/* Base Salary Input */}
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+            <label className="text-slate-500 dark:text-slate-400 font-bold block">Base Monthly Salary (₹)</label>
+            <input
+              type="number"
+              value={simBaseSalary || (employee?.salaryMonthly || 0)}
+              onChange={(e) => setSimBaseSalary(Number(e.target.value))}
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2 font-mono font-bold text-sm text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+            />
+            <div className="text-[10px] text-slate-400">Current Base Salary</div>
+          </div>
+
+          {/* Working Days in Month Input */}
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+            <label className="text-slate-500 dark:text-slate-400 font-bold block">Working Days in Month</label>
+            <input
+              type="number"
+              value={simWorkingDays}
+              onChange={(e) => setSimWorkingDays(Number(e.target.value))}
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2 font-mono font-bold text-sm text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+            />
+            <div className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold font-mono">
+              Daily Rate: ₹{simWorkingDays > 0 ? Math.round((simBaseSalary || employee?.salaryMonthly || 0) / simWorkingDays) : 0}/day
+            </div>
+          </div>
+
+          {/* Full Day Leaves Input */}
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+            <label className="text-slate-500 dark:text-slate-400 font-bold block">Full Day Leaves Taken</label>
+            <input
+              type="number"
+              value={simUnpaidLeaves}
+              onChange={(e) => setSimUnpaidLeaves(Number(e.target.value))}
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2 font-mono font-bold text-sm text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+            />
+            <div className="text-[10px] text-rose-500 font-semibold font-mono">
+              Deduction: -₹{Math.round(simUnpaidLeaves * (simWorkingDays > 0 ? (simBaseSalary || employee?.salaryMonthly || 0) / simWorkingDays : 0))}
+            </div>
+          </div>
+
+          {/* Half Days Input */}
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+            <label className="text-slate-500 dark:text-slate-400 font-bold block">Half Days / Early Out</label>
+            <input
+              type="number"
+              value={simHalfDays}
+              onChange={(e) => setSimHalfDays(Number(e.target.value))}
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2 font-mono font-bold text-sm text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+            />
+            <div className="text-[10px] text-amber-500 font-semibold font-mono">
+              Deduction: -₹{Math.round(simHalfDays * (simWorkingDays > 0 ? ((simBaseSalary || employee?.salaryMonthly || 0) / simWorkingDays) / 2 : 0))}
+            </div>
+          </div>
+        </div>
+
+        {/* Payout Summary Banner */}
+        <div className="p-4 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-mono">
+          <div className="space-y-1">
+            <div className="text-xs text-emerald-800 dark:text-emerald-300 font-bold">CALCULATED PAYOUT SUMMARY</div>
+            <div className="text-xs text-slate-600 dark:text-slate-300">
+              Base: <span className="font-bold">₹{(simBaseSalary || employee?.salaryMonthly || 0).toLocaleString()}</span> • Total Deductions: <span className="font-bold text-rose-600 dark:text-rose-400">-₹{(Math.round(simUnpaidLeaves * (simWorkingDays > 0 ? (simBaseSalary || employee?.salaryMonthly || 0) / simWorkingDays : 0)) + Math.round(simHalfDays * (simWorkingDays > 0 ? ((simBaseSalary || employee?.salaryMonthly || 0) / simWorkingDays) / 2 : 0))).toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div className="text-right shrink-0">
+            <div className="text-[10px] uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-bold">Estimated Net Salary Payout</div>
+            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+              ₹{Math.max(0, (simBaseSalary || employee?.salaryMonthly || 0) - (Math.round(simUnpaidLeaves * (simWorkingDays > 0 ? (simBaseSalary || employee?.salaryMonthly || 0) / simWorkingDays : 0)) + Math.round(simHalfDays * (simWorkingDays > 0 ? ((simBaseSalary || employee?.salaryMonthly || 0) / simWorkingDays) / 2 : 0)))).toLocaleString()}
             </div>
           </div>
         </div>

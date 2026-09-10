@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { OwnerBreakDashboard } from "@/components/owner/OwnerBreakDashboard";
 import { OwnerAttendanceHistory } from "@/components/owner/OwnerAttendanceHistory";
+import { OwnerHolidayManager } from "@/components/owner/OwnerHolidayManager";
 import { CalendarDatePicker } from "@/components/ui/CalendarDatePicker";
 import {
   Clock,
@@ -406,6 +407,7 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
             </div>
           }
         />
+        <OwnerHolidayManager />
         <OwnerBreakDashboard inspectedEmployee={inspectedEmployee} />
         <OwnerAttendanceHistory inspectedEmployee={inspectedEmployee} />
       </div>
