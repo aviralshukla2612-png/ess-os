@@ -155,17 +155,59 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
             if (json.data.punchIn) {
               const correctTime = new Date(json.data.punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
               setPunchInTime(correctTime);
-              // Also fix the PUNCH_IN entry in the timeline if it has a wrong time
+              // Rebuild the full timeline from server events when it's empty
+              // This restores ALL breaks (e.g. 2 lunches) after a localStorage wipe
               setTimeline((prev) => {
-                if (prev.length === 0) {
-                  // Rebuild the initial PUNCH_IN event from server data
-                  return [{
+                if (prev.length === 0 && json.data.todayEvents?.length > 0) {
+                  // Rebuild complete timeline from server status events
+                  const rebuilt: TimelineEvent[] = [];
+                  // Always start with PUNCH_IN
+                  rebuilt.push({
                     id: `evt-punch-in`,
                     time: correctTime,
-                    type: "PUNCH_IN" as const,
+                    type: "PUNCH_IN",
                     title: "Punch In",
                     subtitle: "Approved Device • Location Verified",
-                  }];
+                  });
+                  // Add each break and resume-work event from the DB
+                  (json.data.todayEvents as any[]).forEach((ev: any, idx: number) => {
+                    const evTime = new Date(ev.startedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                    if (ev.statusType !== "WORKING" || idx > 0) {
+                      if (ev.statusType === "WORKING" && idx > 0) {
+                        rebuilt.push({
+                          id: ev.id + "-resume",
+                          time: evTime,
+                          type: "WORK",
+                          title: "Resumed Work",
+                          subtitle: "Break ended",
+                        });
+                      } else if (ev.statusType !== "WORKING") {
+                        const breakLabel = ev.notes?.includes("Lunch") ? "Lunch" 
+                          : ev.notes?.includes("Tea") ? "Tea" 
+                          : ev.notes?.includes("Call") ? "Client Call" 
+                          : ev.statusType;
+                        rebuilt.push({
+                          id: ev.id,
+                          time: evTime,
+                          type: ev.statusType === "CLIENT_CALL" ? "CALL" : "BREAK",
+                          title: `${breakLabel} Break`,
+                          subtitle: `Started at ${evTime}`,
+                        });
+                      }
+                    }
+                  });
+                  // If punch-out exists, add it
+                  if (json.data.punchOut) {
+                    const outTime = new Date(json.data.punchOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                    rebuilt.push({
+                      id: `evt-punch-out`,
+                      time: outTime,
+                      type: "PUNCH_OUT",
+                      title: "Punch Out",
+                      subtitle: `Day Complete at ${outTime}`,
+                    });
+                  }
+                  return rebuilt;
                 }
                 // Fix the time on the existing PUNCH_IN entry if it's wrong
                 return prev.map((evt) =>

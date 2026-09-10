@@ -92,17 +92,26 @@ export async function GET(req: NextRequest) {
     });
 
     const finalStatus = attendance.punchOut ? "DAY_COMPLETE" : (events.find(e => !e.endedAt)?.statusType === "WORKING" ? "WORKING" : "ON_BREAK");
-    console.log("Returning status to client:", finalStatus);
+
+    // Build a simplified event list for timeline reconstruction on the client
+    const todayEvents = events.map(ev => ({
+      id: ev.id,
+      statusType: ev.statusType,
+      startedAt: ev.startedAt.toISOString(),
+      endedAt: ev.endedAt ? ev.endedAt.toISOString() : null,
+      notes: ev.notes,
+    }));
 
     return NextResponse.json({ 
       success: true, 
       data: {
         status: finalStatus,
-        punchOutRequestStatus: attendance.punchOutRequestStatus, // PENDING, APPROVED, REJECTED, or null
+        punchOutRequestStatus: attendance.punchOutRequestStatus,
         punchOut: attendance.punchOut,
         punchIn: attendance.punchIn,
         workSeconds: serverWorkSeconds,
         breakSeconds: serverBreakSeconds,
+        todayEvents, // Full event list for timeline rebuild
       } 
     });
 
