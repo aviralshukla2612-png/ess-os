@@ -99,16 +99,17 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
 
     const pollStatus = async () => {
       try {
-        const pollStart = Date.now();
         const employeeId = session?.user?.employeeId;
         if (!employeeId) return; // Don't poll if no employee profile
-        const res = await fetch(`/crmtesting/api/attendance/status?employeeId=${employeeId}&t=${Date.now()}`, { cache: "no-store" });
-        const json = await res.json();
-        
-        // Discard fetch results if a local action occurred while the request was in flight
-        if (lastActionTimeRef.current > pollStart) {
+
+        // Skip poll entirely if user took a local action in the last 8 seconds
+        // This prevents the poll from reverting the UI before the DB catches up
+        if (Date.now() - lastActionTimeRef.current < 8000) {
           return;
         }
+
+        const res = await fetch(`/crmtesting/api/attendance/status?employeeId=${employeeId}&t=${Date.now()}`, { cache: "no-store" });
+        const json = await res.json();
 
         if (json.success && json.data) {
           const dbStatus = json.data.punchOutRequestStatus;
