@@ -153,7 +153,25 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
             // Always sync punch-in time from server — this prevents stale localStorage
             // times (e.g. yesterday's 07:02 PM) from showing on a fresh day
             if (json.data.punchIn) {
-              setPunchInTime(new Date(json.data.punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+              const correctTime = new Date(json.data.punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+              setPunchInTime(correctTime);
+              // Also fix the PUNCH_IN entry in the timeline if it has a wrong time
+              setTimeline((prev) => {
+                if (prev.length === 0) {
+                  // Rebuild the initial PUNCH_IN event from server data
+                  return [{
+                    id: `evt-punch-in`,
+                    time: correctTime,
+                    type: "PUNCH_IN" as const,
+                    title: "Punch In",
+                    subtitle: "Approved Device • Location Verified",
+                  }];
+                }
+                // Fix the time on the existing PUNCH_IN entry if it's wrong
+                return prev.map((evt) =>
+                  evt.type === "PUNCH_IN" ? { ...evt, time: correctTime } : evt
+                );
+              });
             }
             if (generalStatus !== status) {
               // Do not overwrite ON_BREAK with WORKING locally unless they just logged in
@@ -203,12 +221,13 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
         const parsed = JSON.parse(saved);
 
         // ── Date guard ──────────────────────────────────────────────────────────
-        // If the saved state is from a previous calendar day, discard it entirely.
-        // This prevents yesterday's punch-in time (e.g. "07:02 PM") from showing
-        // on a fresh day and causing timing mismatches.
+        // If the saved state is from a previous calendar day OR has no date stamp
+        // (old format), discard it entirely. This prevents yesterday's punch-in
+        // time (e.g. "07:02 PM") from showing on a fresh day and causing timing
+        // mismatches for employees like Kirna.
         const today = new Date().toDateString();
         const savedDate = parsed.savedDate;
-        if (savedDate && savedDate !== today) {
+        if (!savedDate || savedDate !== today) {
           // Stale data — wipe it and start fresh
           localStorage.removeItem(`ess_work_clock_state_v2_${employeeId}`);
           setIsLoaded(true);
