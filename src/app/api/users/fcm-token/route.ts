@@ -19,7 +19,10 @@ export async function POST(req: Request) {
     // Save token for user, ignoring if it already exists
     await prisma.userFcmToken.upsert({
       where: {
-        token: token,
+        userId_token: {
+          userId: session.user.id,
+          token: token,
+        },
       },
       update: {
         userId: session.user.id,
