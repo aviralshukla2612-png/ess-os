@@ -150,7 +150,9 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
               );
             }
 
-            if (json.data.punchIn && !punchInTime) {
+            // Always sync punch-in time from server — this prevents stale localStorage
+            // times (e.g. yesterday's 07:02 PM) from showing on a fresh day
+            if (json.data.punchIn) {
               setPunchInTime(new Date(json.data.punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
             }
             if (generalStatus !== status) {
@@ -199,6 +201,21 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+
+        // ── Date guard ──────────────────────────────────────────────────────────
+        // If the saved state is from a previous calendar day, discard it entirely.
+        // This prevents yesterday's punch-in time (e.g. "07:02 PM") from showing
+        // on a fresh day and causing timing mismatches.
+        const today = new Date().toDateString();
+        const savedDate = parsed.savedDate;
+        if (savedDate && savedDate !== today) {
+          // Stale data — wipe it and start fresh
+          localStorage.removeItem(`ess_work_clock_state_v2_${employeeId}`);
+          setIsLoaded(true);
+          return;
+        }
+        // ────────────────────────────────────────────────────────────────────────
+
         if (parsed.status) setStatus(parsed.status);
         if (parsed.workSeconds !== undefined) setWorkSeconds(parsed.workSeconds);
         if (parsed.breakSeconds !== undefined) setBreakSeconds(parsed.breakSeconds);
@@ -239,6 +256,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
       usedTeaSeconds,
       usedCallSeconds,
       timeline,
+      savedDate: new Date().toDateString(), // Used to detect stale next-day data
     };
     const employeeId = session?.user?.employeeId;
     if (!employeeId) return;
