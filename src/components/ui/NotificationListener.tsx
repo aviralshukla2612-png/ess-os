@@ -4,12 +4,49 @@ import React, { useEffect, useState } from "react";
 import { PremiumReminderModal } from "./PremiumReminderModal";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { requestForToken, onMessageListener } from "@/lib/firebase";
 
 export function NotificationListener() {
   const { data: session } = useSession();
   const router = useRouter();
   
   const [activeNotification, setActiveNotification] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    
+    // Request FCM Token and send to backend
+    const setupFCM = async () => {
+      try {
+        const token = await requestForToken();
+        if (token) {
+          await fetch("/api/users/fcm-token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token }),
+          });
+        }
+      } catch (err) {
+        console.error("FCM Setup Failed", err);
+      }
+    };
+    setupFCM();
+
+    // Listen for foreground messages
+    onMessageListener((payload: any) => {
+      if (payload?.notification) {
+        setActiveNotification((prev: any) => {
+          if (prev) return prev; // don't override active
+          return {
+            id: payload.messageId || Date.now().toString(),
+            title: payload.notification.title,
+            message: payload.notification.body,
+            linkUrl: payload.data?.linkUrl,
+          };
+        });
+      }
+    });
+  }, [session?.user?.id]);
 
   useEffect(() => {
     if (!session?.user?.id) return;

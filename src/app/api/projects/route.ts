@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, requireRole } from "@/lib/auth";
+import { createAndSendNotification } from "@/lib/notifications";
 
 export async function GET() {
   const authRes = await requireAuth();
@@ -165,14 +166,12 @@ export async function POST(req: Request) {
     if (body.assigneeId) {
       const emp = await prisma.employee.findUnique({ where: { id: body.assigneeId } });
       if (emp && emp.userId) {
-        await prisma.notification.create({
-          data: {
-            recipientId: emp.userId,
-            title: "New Project Assignment",
-            message: `Admin has assigned you to a new project: ${newProject.name}`,
-            urgency: "HIGH",
-            linkUrl: `/projects/${newProject.id}`,
-          }
+        await createAndSendNotification({
+          recipientId: emp.userId,
+          title: "New Project Assignment",
+          message: `Admin has assigned you to a new project: ${newProject.name}`,
+          urgency: "HIGH",
+          linkUrl: `/projects/${newProject.id}`,
         });
       }
     }

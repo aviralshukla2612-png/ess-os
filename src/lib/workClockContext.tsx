@@ -84,6 +84,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const lastPunchOutStatusRef = React.useRef<string | null>(null);
   const statusRef = React.useRef<ClockState>("WORKING");
+  const lastActionTimeRef = React.useRef<number>(0);
   const { showToast } = useToast();
   const { data: session } = useSession();
   const currentEmployeeId = session?.user?.employeeId;
@@ -98,10 +99,17 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
 
     const pollStatus = async () => {
       try {
+        const pollStart = Date.now();
         const employeeId = session?.user?.employeeId;
         if (!employeeId) return; // Don't poll if no employee profile
         const res = await fetch(`/crmtesting/api/attendance/status?employeeId=${employeeId}&t=${Date.now()}`, { cache: "no-store" });
         const json = await res.json();
+        
+        // Discard fetch results if a local action occurred while the request was in flight
+        if (lastActionTimeRef.current > pollStart) {
+          return;
+        }
+
         if (json.success && json.data) {
           const dbStatus = json.data.punchOutRequestStatus;
           const generalStatus = json.data.status;
@@ -144,16 +152,11 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
             if (json.data.punchIn && !punchInTime) {
               setPunchInTime(new Date(json.data.punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
             }
-
-
-            console.log("[WORK CLOCK] pollStatus:", { generalStatus, currentStatus: status, isLoaded });
             if (generalStatus !== status) {
               // Do not overwrite ON_BREAK with WORKING locally unless they just logged in
               if (status === "ON_BREAK" && generalStatus === "WORKING" && isLoaded) {
-                console.log("[WORK CLOCK] Preserving ON_BREAK");
                 // Preserve ON_BREAK
               } else {
-                console.log("[WORK CLOCK] Setting status to:", generalStatus);
                 setStatus(generalStatus);
                 if (generalStatus === "NOT_PUNCHED_IN") {
                   setWorkSeconds(0);
@@ -297,6 +300,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
   };
 
   const punchIn = () => {
+    lastActionTimeRef.current = Date.now();
     const now = new Date();
     const formatted = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     setPunchInTime(formatted);
@@ -316,6 +320,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
   };
 
   const startBreak = async (type: string, reason?: string) => {
+    lastActionTimeRef.current = Date.now();
     const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     setBreakType(type);
     setBreakReason(reason || "");
@@ -353,6 +358,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resumeWork = async () => {
+    lastActionTimeRef.current = Date.now();
     const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     setStatus("WORKING");
     setTimeline((prev) => [
@@ -418,6 +424,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
       const json = await res.json();
       
       if (json.success) {
+        lastActionTimeRef.current = Date.now();
         const serverPunchOutTime = new Date(json.data.punchOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         
         setPunchOutTime(serverPunchOutTime);
