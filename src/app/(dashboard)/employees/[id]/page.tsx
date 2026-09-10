@@ -30,6 +30,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
   const [employee, setEmployee] = useState<any>(null);
   const [assignedProjs, setAssignedProjs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => new Date().toISOString().slice(0, 7));
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
@@ -179,8 +180,6 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
 
   if (loading) return <div className="p-12 text-center text-slate-400 animate-pulse">Loading Employee Data...</div>;
   if (!employee) return <div className="p-12 text-center text-rose-400">Employee Not Found or Access Denied</div>;
-
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => new Date().toISOString().slice(0, 7));
 
   const getAvailableMonths = () => {
     const monthsSet = new Set<string>();
