@@ -108,23 +108,43 @@ export async function POST(req: Request) {
     // ────────────────────────────────────────────────────────────────────────
 
     // Create new attendance and initial working status event
-    const [attendance] = await prisma.$transaction([
-      prisma.attendance.create({
-        data: {
-          employeeId: employee.id,
-          punchIn: new Date(),
-          date: new Date(),
-        }
-      }),
-      prisma.employeeStatusEvent.create({
-        data: {
-          employeeId: employee.id,
-          statusType: "WORKING",
-          startedAt: new Date(),
-          notes: "Punched in for the day",
-        }
-      })
-    ]);
+    // Wrap in a transaction to prevent race conditions from multiple simultaneous clicks
+    let attendance;
+    try {
+      const punchInTime = new Date();
+      const [newAttendance] = await prisma.$transaction([
+        prisma.attendance.create({
+          data: {
+            employeeId: employee.id,
+            punchIn: punchInTime,
+            date: punchInTime,
+          }
+        }),
+        prisma.employeeStatusEvent.create({
+          data: {
+            employeeId: employee.id,
+            statusType: "WORKING",
+            startedAt: punchInTime,
+            notes: "Punched in for the day",
+          }
+        })
+      ]);
+      attendance = newAttendance;
+    } catch (createError: any) {
+      // P2002 = Prisma unique constraint violation
+      // If two requests raced and one already created the record, return the existing one
+      if (createError?.code === "P2002") {
+        const existing = await prisma.attendance.findFirst({
+          where: { employeeId: employee.id, date: { gte: startOfDay, lte: endOfDay } }
+        });
+        return NextResponse.json({ 
+          success: false, 
+          error: "Already punched in today.",
+          attendance: existing
+        }, { status: 400 });
+      }
+      throw createError;
+    }
 
     return NextResponse.json({ success: true, data: attendance });
   } catch (error) {

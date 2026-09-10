@@ -168,6 +168,8 @@ export default function AttendanceWorkClockPage() {
   const [isBreakSheetOpen, setIsBreakSheetOpen] = useState(false);
   const [isChangeWorkOpen, setIsChangeWorkOpen] = useState(false);
   const [isPunchOutConfirmOpen, setIsPunchOutConfirmOpen] = useState(false);
+  const [isPunchingIn, setIsPunchingIn] = useState(false);
+  const isPunchingInRef = React.useRef(false);
 
   // Form states for change work
   const [selectedProject, setSelectedProject] = useState(currentProject);
@@ -255,20 +257,31 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
 }
 
   const handlePunchInClick = async () => {
+    // Prevent multiple simultaneous punch-in requests
+    if (isPunchingInRef.current) return;
+    isPunchingInRef.current = true;
+    setIsPunchingIn(true);
+
     // Client-side device check
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile) {
       showToast("Punch In unavailable: You must punch in from a laptop or desktop computer.", "error");
+      isPunchingInRef.current = false;
+      setIsPunchingIn(false);
       return;
     }
 
     if (simulatedDeviceError) {
       showToast("Punch In unavailable: Morning Punch In must be initiated from your registered office laptop.", "error");
+      isPunchingInRef.current = false;
+      setIsPunchingIn(false);
       return;
     }
 
     if (!navigator.geolocation) {
       showToast("Geolocation is not supported by your browser.", "error");
+      isPunchingInRef.current = false;
+      setIsPunchingIn(false);
       return;
     }
 
@@ -287,6 +300,8 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
 
         if (distance > 50000) { // Increased to 50km to prevent blocking during testing
           showToast(`Punch In unavailable: You are outside the allowed region.`, "error");
+          isPunchingInRef.current = false;
+          setIsPunchingIn(false);
           return;
         }
 
@@ -307,10 +322,15 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
           showToast("✓ Punched In successfully at " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), "success");
         } catch (e) {
           showToast("Network error while punching in.", "error");
+        } finally {
+          isPunchingInRef.current = false;
+          setIsPunchingIn(false);
         }
       },
       (error) => {
         showToast("Location access denied. Please allow location access to punch in.", "error");
+        isPunchingInRef.current = false;
+        setIsPunchingIn(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
@@ -449,10 +469,13 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
 
           <button
             onClick={handlePunchInClick}
-            className="w-full max-w-sm mx-auto py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-extrabold text-sm shadow-sm transition-all flex items-center justify-center gap-2"
+            disabled={isPunchingIn}
+            className={`w-full max-w-sm mx-auto py-4 rounded-xl active:scale-95 text-white font-extrabold text-sm shadow-sm transition-all flex items-center justify-center gap-2 ${
+              isPunchingIn ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-500"
+            }`}
           >
             <Play className="w-4 h-4 fill-white" />
-            <span>Punch In to Work Clock</span>
+            <span>{isPunchingIn ? "Punching In..." : "Punch In to Work Clock"}</span>
           </button>
         </div>
       )}
