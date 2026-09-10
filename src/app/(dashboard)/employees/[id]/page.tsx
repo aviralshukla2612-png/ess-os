@@ -31,6 +31,7 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
   const [assignedProjs, setAssignedProjs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => new Date().toISOString().slice(0, 7));
+  const [selectedDayDetail, setSelectedDayDetail] = useState<any>(null);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
@@ -293,6 +294,89 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
     };
   };
 
+  const renderMonthlyCalendar = () => {
+    const [yearStr, monthStr] = selectedMonth.split("-");
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr) - 1;
+
+    const firstDayOfWeek = new Date(year, month, 1).getDay();
+    const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const daysArray = [];
+
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      daysArray.push({ isPadding: true, dayNumber: 0, dateStr: `pad-${i}` });
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    for (let d = 1; d <= totalDaysInMonth; d++) {
+      const currentDayDate = new Date(year, month, d);
+      const dayDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const dayOfWeek = currentDayDate.getDay();
+      const isWeekend = dayOfWeek === 0;
+
+      const attRecord = employee?.rawAttendances?.find((a: any) => {
+        if (!a.date && !a.punchIn) return false;
+        const dObj = new Date(a.date || a.punchIn);
+        const localStr = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}-${String(dObj.getDate()).padStart(2, '0')}`;
+        return localStr === dayDateStr;
+      });
+
+      let statusType: "GREEN" | "RED" | "GREY" | "BLUE" | "NONE" = "NONE";
+      let statusLabel = "No Punch Record";
+      let workHoursText = "";
+      let inTimeText = "";
+      let outTimeText = "";
+
+      if (attRecord) {
+        inTimeText = attRecord.punchIn ? new Date(attRecord.punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--";
+        outTimeText = attRecord.punchOut ? new Date(attRecord.punchOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Ongoing";
+
+        const mins = attRecord.totalMinutes || (attRecord.punchIn && attRecord.punchOut ? Math.max(0, Math.floor((new Date(attRecord.punchOut).getTime() - new Date(attRecord.punchIn).getTime()) / 60000)) : 0);
+        const hrs = Math.floor(mins / 60);
+        const m = mins % 60;
+        workHoursText = `${hrs}h ${m}m`;
+
+        const isEarlyPunchOut = attRecord.punchOutRequestStatus === "APPROVED" || 
+                                attRecord.punchOutReason?.toLowerCase().includes("early") || 
+                                (attRecord.punchOut && mins < 420);
+
+        if (attRecord.punchIn && !attRecord.punchOut && dayDateStr === todayStr) {
+          statusType = "BLUE";
+          statusLabel = "Working Now";
+        } else if (isEarlyPunchOut) {
+          statusType = "RED";
+          statusLabel = "Early Punch Out / Incomplete Hours";
+        } else if (mins >= 420 || (attRecord.punchIn && attRecord.punchOut)) {
+          statusType = "GREEN";
+          statusLabel = "Completed Full Work Hours";
+        } else {
+          statusType = "RED";
+          statusLabel = "Incomplete Hours";
+        }
+      } else if (isWeekend) {
+        statusType = "GREY";
+        statusLabel = "Weekend / Holiday";
+      }
+
+      daysArray.push({
+        isPadding: false,
+        dayNumber: d,
+        dateStr: dayDateStr,
+        isWeekend,
+        statusType,
+        statusLabel,
+        workHoursText,
+        inTimeText,
+        outTimeText,
+        isToday: dayDateStr === todayStr,
+      });
+    }
+
+    return daysArray;
+  };
+
   const monthlyMetrics = computeMonthlyMetrics(selectedMonth);
 
   return (
@@ -471,6 +555,108 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
             </div>
             <div className="text-[11px] text-indigo-700 dark:text-indigo-400 font-medium">
               {monthlyMetrics.daysPresent} Working Day(s) Present
+            </div>
+          </div>
+        </div>
+
+        {/* Monthly Attendance Calendar Grid */}
+        <div className="pt-5 border-t border-slate-100 dark:border-slate-800 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                Monthly Attendance Calendar Grid
+              </h3>
+            </div>
+
+            {/* Calendar Color Legend */}
+            <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-xs" />
+                <span className="text-slate-600 dark:text-slate-300">Complete Hours</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-xs" />
+                <span className="text-slate-600 dark:text-slate-300">Early Punch Out</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-400 dark:bg-slate-500 shadow-xs" />
+                <span className="text-slate-600 dark:text-slate-300">Weekend / Holiday</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-xs animate-pulse" />
+                <span className="text-slate-600 dark:text-slate-300">Working Today</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Calendar Grid Container */}
+          <div className="bg-slate-50/70 dark:bg-slate-950/40 rounded-xl p-3 border border-slate-200/80 dark:border-slate-800 space-y-2">
+            {/* Days of Week Header */}
+            <div className="grid grid-cols-7 gap-1 text-center font-mono text-[11px] font-bold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 pb-2">
+              <span className="text-rose-500">SUN</span>
+              <span>MON</span>
+              <span>TUE</span>
+              <span>WED</span>
+              <span>THU</span>
+              <span>FRI</span>
+              <span>SAT</span>
+            </div>
+
+            {/* Day Grid Cells */}
+            <div className="grid grid-cols-7 gap-1.5">
+              {renderMonthlyCalendar().map((cell, idx) => {
+                if (cell.isPadding) {
+                  return <div key={`pad-${idx}`} className="h-14 rounded-lg bg-transparent" />;
+                }
+
+                let cellBg = "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300";
+                let dotBg = "";
+
+                if (cell.statusType === "GREEN") {
+                  cellBg = "bg-emerald-500/10 dark:bg-emerald-950/50 border-emerald-500/40 text-emerald-900 dark:text-emerald-200 font-bold";
+                  dotBg = "bg-emerald-500";
+                } else if (cell.statusType === "RED") {
+                  cellBg = "bg-rose-500/10 dark:bg-rose-950/50 border-rose-500/40 text-rose-900 dark:text-rose-200 font-bold";
+                  dotBg = "bg-rose-500";
+                } else if (cell.statusType === "GREY") {
+                  cellBg = "bg-slate-100 dark:bg-slate-800/60 border-slate-200/60 dark:border-slate-700/60 text-slate-400 dark:text-slate-500";
+                  dotBg = "bg-slate-400 dark:bg-slate-600";
+                } else if (cell.statusType === "BLUE") {
+                  cellBg = "bg-blue-500/10 dark:bg-blue-950/50 border-blue-500/40 text-blue-900 dark:text-blue-200 font-bold";
+                  dotBg = "bg-blue-500 animate-ping";
+                }
+
+                return (
+                  <div
+                    key={cell.dateStr}
+                    onClick={() => {
+                      if (cell.statusType !== "NONE" && cell.statusType !== "GREY") {
+                        setSelectedDayDetail(cell);
+                      }
+                    }}
+                    className={`h-14 p-1.5 rounded-xl border flex flex-col justify-between transition-all cursor-pointer hover:scale-[1.02] shadow-2xs relative group ${cellBg} ${
+                      cell.isToday ? "ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-slate-900" : ""
+                    }`}
+                    title={`${cell.dateStr}: ${cell.statusLabel} ${cell.workHoursText ? `(${cell.workHoursText})` : ""}`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className="font-mono text-xs font-extrabold">{cell.dayNumber}</span>
+                      {dotBg && <span className={`w-2 h-2 rounded-full ${dotBg} shrink-0`} />}
+                    </div>
+
+                    {cell.workHoursText ? (
+                      <div className="font-mono text-[10px] font-bold truncate">
+                        {cell.workHoursText}
+                      </div>
+                    ) : cell.isWeekend ? (
+                      <div className="text-[9px] font-bold uppercase tracking-tighter text-slate-400 dark:text-slate-500 truncate">
+                        Off
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -658,6 +844,47 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
           isDestructive={employee.isActive}
         />
       )}
+
+      {/* Day Attendance Detail Bottom Sheet */}
+      <BottomSheet
+        isOpen={!!selectedDayDetail}
+        onClose={() => setSelectedDayDetail(null)}
+        title={`Attendance Detail — ${selectedDayDetail?.dateStr}`}
+        subtitle={`Employee: ${employee?.name}`}
+      >
+        {selectedDayDetail && (
+          <div className="space-y-4 text-xs font-mono">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-semibold">Status</span>
+                <span className={`px-2.5 py-1 rounded text-xs font-bold ${
+                  selectedDayDetail.statusType === "GREEN" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300" :
+                  selectedDayDetail.statusType === "RED" ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-300" :
+                  selectedDayDetail.statusType === "BLUE" ? "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-300" :
+                  "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                }`}>
+                  {selectedDayDetail.statusLabel}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+                <span className="text-slate-500 font-semibold">Punch In Time</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100">{selectedDayDetail.inTimeText || "--"}</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-semibold">Punch Out Time</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100">{selectedDayDetail.outTimeText || "--"}</span>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+                <span className="text-slate-500 font-semibold">Total Work Hours</span>
+                <span className="font-bold text-indigo-600 dark:text-indigo-400 text-sm">{selectedDayDetail.workHoursText || "0h 0m"}</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </BottomSheet>
     </div>
   );
 }
