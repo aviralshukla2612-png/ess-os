@@ -26,6 +26,7 @@ export interface Lead {
 }
 
 export function LeadPipelineBoard({ leads, updateLeadStageApi, convertLeadToClientApi, deleteLeadApi }: { leads: Lead[], updateLeadStageApi: any, convertLeadToClientApi: any, deleteLeadApi?: any }) {
+  const router = useRouter();
   const STAGES = [
     { id: "NEW", title: "New Prospects" },
     { id: "CONTACTED", title: "Contacted" },
@@ -87,8 +88,8 @@ export function LeadPipelineBoard({ leads, updateLeadStageApi, convertLeadToClie
                     }}
                     onClick={(e) => {
                       const target = e.target as HTMLElement;
-                      if (!target.closest("button")) {
-                        // Optional: Navigate to lead details
+                      if (!target.closest("button") && !target.closest("a")) {
+                        router.push(`/leads/${lead.id}`);
                       }
                     }}
                     className="p-3.5 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800/80 shadow-xs hover:border-indigo-500/50 dark:hover:border-indigo-500/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/90 hover:scale-[1.01] hover:shadow-sm transition-all duration-200 space-y-2 group cursor-grab active:cursor-grabbing"
@@ -105,7 +106,17 @@ export function LeadPipelineBoard({ leads, updateLeadStageApi, convertLeadToClie
                         }`}>
                           {lead.leadPriority}
                         </span>
-                        <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200 shrink-0" />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/leads/${lead.id}`);
+                          }}
+                          className="p-0.5 rounded text-slate-400 hover:text-indigo-500 transition-colors"
+                          title="View lead details"
+                        >
+                          <ArrowUpRight className="w-3.5 h-3.5 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200 shrink-0" />
+                        </button>
                         {deleteLeadApi && (
                           <button
                             onClick={(e) => {
@@ -122,10 +133,24 @@ export function LeadPipelineBoard({ leads, updateLeadStageApi, convertLeadToClie
                     </div>
 
                     <div>
-                      <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                      <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                         {lead.clientName}
                       </h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">{lead.contactPerson}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{lead.contactPerson}</p>
+                      
+                      {lead.phone && (
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <a
+                            href={`tel:${lead.phone}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700/50 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-[11px] font-mono font-medium text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors border border-slate-200/60 dark:border-slate-700/60"
+                            title={`Call ${lead.phone}`}
+                          >
+                            <PhoneCall className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            <span>{lead.phone}</span>
+                          </a>
+                        </div>
+                      )}
                     </div>
 
                     <div className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
