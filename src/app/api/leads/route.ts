@@ -17,8 +17,10 @@ export async function GET() {
     });
 
     const formatted = leads.map((l) => {
+      const effectiveGstNo = l.description?.startsWith("GST: ")
+        ? l.description.replace("GST: ", "")
+        : (l.description || (l.remarks?.startsWith("GST: ") ? l.remarks.replace("GST: ", "") : undefined));
       const effectiveRemarks = l.remarks?.startsWith("GST: ") ? "" : (l.remarks || "");
-      const effectiveGstNo = l.gstNo || (l.remarks?.startsWith("GST: ") ? l.remarks.replace("GST: ", "") : undefined);
       return {
         id: l.id,
         leadNumber: l.leadNumber,
@@ -84,12 +86,12 @@ export async function POST(req: Request) {
         mobile: validData.phone,
         email: validData.email,
         interestedService: validData.projectScope,
+        description: validData.gstNo ? `GST: ${validData.gstNo}` : null,
         estimatedBudget: validData.leadValue,
         expectedValue: validData.expectedRevenue,
         priority: validData.leadPriority,
         status: validData.stage,
         remarks: validData.remarks || null,
-        gstNo: validData.gstNo || null,
         createdById: authRes.id,
       },
     });
@@ -108,7 +110,7 @@ export async function POST(req: Request) {
         expectedRevenue: newLead.expectedValue,
         projectScope: newLead.interestedService,
         assignedSales: "Karan Verma",
-        gstNo: newLead.gstNo || undefined,
+        gstNo: validData.gstNo || undefined,
         remarks: newLead.remarks || "",
         nextFollowupDate: "Tomorrow 10:00 AM",
         leadPriority: newLead.priority,

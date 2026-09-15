@@ -16,8 +16,10 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ success: false, error: "Lead not found" }, { status: 404 });
     }
 
+    const effectiveGstNo = lead.description?.startsWith("GST: ")
+      ? lead.description.replace("GST: ", "")
+      : (lead.description || (lead.remarks?.startsWith("GST: ") ? lead.remarks.replace("GST: ", "") : undefined));
     const effectiveRemarks = lead.remarks?.startsWith("GST: ") ? "" : (lead.remarks || "");
-    const effectiveGstNo = lead.gstNo || (lead.remarks?.startsWith("GST: ") ? lead.remarks.replace("GST: ", "") : undefined);
 
     return NextResponse.json({
       success: true,
@@ -78,7 +80,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       if (!isNaN(val)) updateData.expectedValue = val;
     }
     if (body.gstNo !== undefined) {
-      updateData.gstNo = body.gstNo;
+      updateData.description = body.gstNo ? `GST: ${body.gstNo}` : null;
     }
     if (body.remarks !== undefined) {
       updateData.remarks = body.remarks;
@@ -102,8 +104,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       // Activity logging optional failure
     }
 
+    const effectiveGstNo = lead.description?.startsWith("GST: ")
+      ? lead.description.replace("GST: ", "")
+      : (lead.description || (lead.remarks?.startsWith("GST: ") ? lead.remarks.replace("GST: ", "") : undefined));
     const effectiveRemarks = lead.remarks?.startsWith("GST: ") ? "" : (lead.remarks || "");
-    const effectiveGstNo = lead.gstNo || (lead.remarks?.startsWith("GST: ") ? lead.remarks.replace("GST: ", "") : undefined);
 
     return NextResponse.json({
       success: true,

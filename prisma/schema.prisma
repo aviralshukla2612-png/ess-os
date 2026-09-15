@@ -111,7 +111,6 @@ model Lead {
   assignedSalespersonId String?
   nextFollowupAt        DateTime?
   remarks               String?
-  gstNo                 String?
   lostReason            String?
   createdById           String
   createdAt             DateTime       @default(now())
