@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { X, Pencil, Building, User, Phone, Mail, IndianRupee, Layers, AlertCircle, FileText, Check } from "lucide-react";
+import { X, Pencil, Building, User, Phone, Mail, IndianRupee, Layers, AlertCircle, FileText, Check, MessageSquare } from "lucide-react";
 import { Lead } from "./LeadPipelineBoard";
 
 interface EditLeadModalProps {
@@ -45,6 +45,7 @@ export function EditLeadModal({ isOpen, lead, onClose, onSuccess }: EditLeadModa
   const [expectedRevenue, setExpectedRevenue] = useState("");
   const [projectScope, setProjectScope] = useState("");
   const [gstNo, setGstNo] = useState("");
+  const [remarks, setRemarks] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -66,6 +67,7 @@ export function EditLeadModal({ isOpen, lead, onClose, onSuccess }: EditLeadModa
       );
       setProjectScope(lead.projectScope || "");
       setGstNo(lead.gstNo || "");
+      setRemarks(lead.remarks || "");
       setErrorMsg("");
     }
   }, [lead, isOpen]);
@@ -100,6 +102,7 @@ export function EditLeadModal({ isOpen, lead, onClose, onSuccess }: EditLeadModa
         expectedRevenue: Number(expectedRevenue) || Number(leadValue) || 0,
         projectScope: projectScope.trim(),
         gstNo: gstNo.trim(),
+        remarks: remarks.trim(),
       };
 
       const res = await fetch(`/crmtesting/api/leads/${lead.id}`, {
@@ -356,7 +359,22 @@ export function EditLeadModal({ isOpen, lead, onClose, onSuccess }: EditLeadModa
               value={projectScope}
               onChange={(e) => setProjectScope(e.target.value)}
               placeholder="e.g. Complete ERP overhaul, custom ecommerce store, mobile apps..."
-              rows={3}
+              rows={2}
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all resize-none"
+            />
+          </div>
+
+          {/* Row 7: Remark / Notes */}
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5 flex items-center gap-1.5">
+              <MessageSquare className="w-3.5 h-3.5 text-indigo-500" />
+              Remark / Notes (Optional)
+            </label>
+            <textarea
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              placeholder="e.g. Client requested customized demo, followup on pricing next week..."
+              rows={2}
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all resize-none"
             />
           </div>

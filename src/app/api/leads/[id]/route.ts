@@ -16,7 +16,17 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ success: false, error: "Lead not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: lead });
+    const effectiveRemarks = lead.remarks?.startsWith("GST: ") ? "" : (lead.remarks || "");
+    const effectiveGstNo = lead.gstNo || (lead.remarks?.startsWith("GST: ") ? lead.remarks.replace("GST: ", "") : undefined);
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...lead,
+        remarks: effectiveRemarks,
+        gstNo: effectiveGstNo,
+      },
+    });
   } catch (error) {
     return NextResponse.json({ success: false, error: "Failed to fetch lead" }, { status: 500 });
   }
@@ -68,8 +78,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       if (!isNaN(val)) updateData.expectedValue = val;
     }
     if (body.gstNo !== undefined) {
-      updateData.remarks = body.gstNo ? `GST: ${body.gstNo}` : null;
-    } else if (body.remarks !== undefined) {
+      updateData.gstNo = body.gstNo;
+    }
+    if (body.remarks !== undefined) {
       updateData.remarks = body.remarks;
     }
 
@@ -91,6 +102,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       // Activity logging optional failure
     }
 
+    const effectiveRemarks = lead.remarks?.startsWith("GST: ") ? "" : (lead.remarks || "");
+    const effectiveGstNo = lead.gstNo || (lead.remarks?.startsWith("GST: ") ? lead.remarks.replace("GST: ", "") : undefined);
+
     return NextResponse.json({
       success: true,
       data: {
@@ -105,7 +119,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         expectedRevenue: lead.expectedValue,
         projectScope: lead.interestedService,
         assignedSales: "Karan Verma",
-        gstNo: lead.remarks ? lead.remarks.replace("GST: ", "") : undefined,
+        gstNo: effectiveGstNo,
+        remarks: effectiveRemarks,
         nextFollowupDate: lead.nextFollowupAt ? new Date(lead.nextFollowupAt).toLocaleDateString() : "Tomorrow 10:00 AM",
         leadPriority: lead.priority,
       },

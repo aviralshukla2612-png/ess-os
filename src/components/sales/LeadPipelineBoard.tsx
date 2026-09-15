@@ -24,6 +24,7 @@ export interface Lead {
   nextFollowupDate: string;
   leadPriority: string;
   gstNo?: string;
+  remarks?: string;
   updatedAt?: string;
 }
 
@@ -184,6 +185,13 @@ export function LeadPipelineBoard({
                     <div className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
                       ₹{lead.leadValue.toLocaleString("en-IN")}
                     </div>
+
+                    {lead.remarks && (
+                      <div className="text-[10.5px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-850 p-1.5 rounded-lg border border-slate-200/50 dark:border-slate-800 line-clamp-2 leading-relaxed">
+                        <span className="font-bold text-indigo-600 dark:text-indigo-400">Remark: </span>
+                        {lead.remarks}
+                      </div>
+                    )}
 
                     {lead.stage === "WON" && (
                       <button

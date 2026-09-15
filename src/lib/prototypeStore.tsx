@@ -22,6 +22,7 @@ export interface LeadEntity {
   email: string;
   phone: string;
   gstNo?: string;
+  remarks?: string;
   stage: "NEW" | "CONTACTED" | "REQUIREMENTS" | "PROPOSAL" | "NEGOTIATION" | "WON" | "LOST";
   leadValue: number;
   expectedRevenue: number;

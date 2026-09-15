@@ -21,6 +21,7 @@ export default function LeadsPage() {
   const [leadValue, setLeadValue] = useState("");
   const [gstNo, setGstNo] = useState("");
   const [projectScope, setProjectScope] = useState("");
+  const [remarks, setRemarks] = useState("");
   const [isImportOpen, setIsImportOpen] = useState(false);
 
   React.useEffect(() => {
@@ -107,6 +108,8 @@ export default function LeadsPage() {
             projectScope: projectScope || "General inquiry",
             leadValue: Number(leadValue) || 250000,
             expectedRevenue: Number(leadValue) || 250000,
+            gstNo: gstNo.trim() || undefined,
+            remarks: remarks.trim() || undefined,
             stage: "NEW",
             leadPriority: "HIGH",
           }),
@@ -132,6 +135,7 @@ export default function LeadsPage() {
     setLeadValue("");
     setGstNo("");
     setProjectScope("");
+    setRemarks("");
   };
 
   const handleImportData = async (data: any[]) => {
@@ -297,7 +301,16 @@ export default function LeadsPage() {
               value={projectScope}
               onChange={(e) => setProjectScope(e.target.value)}
               placeholder="e.g. E-Commerce website development..."
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none transition-all resize-none h-20"
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none transition-all resize-none h-16"
+            />
+          </div>
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">Remark / Notes (Optional)</label>
+            <textarea
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              placeholder="e.g. Initial discussion notes, follow-up preferences..."
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none transition-all resize-none h-16"
             />
           </div>
           <div>

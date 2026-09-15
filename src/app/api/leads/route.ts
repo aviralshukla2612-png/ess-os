@@ -16,35 +16,40 @@ export async function GET() {
       },
     });
 
-    const formatted = leads.map((l) => ({
-      id: l.id,
-      leadNumber: l.leadNumber,
-      clientName: l.companyName || l.contactPerson,
-      contactPerson: l.contactPerson,
-      email: l.email || "prospect@example.com",
-      phone: l.mobile,
-      stage: l.status,
-      leadValue: l.estimatedBudget,
-      expectedRevenue: l.expectedValue,
-      projectScope: l.interestedService,
-      assignedSales: "Karan Verma",
-      gstNo: l.remarks ? l.remarks.replace("GST: ", "") : undefined,
-      nextFollowupDate: l.nextFollowupAt ? new Date(l.nextFollowupAt).toLocaleDateString() : "Tomorrow 10:00 AM",
-      leadPriority: l.priority,
-      notes: [],
-      callHistory: l.followups.map((f) => ({
-        id: f.id,
-        caller: "Karan Verma",
-        notes: f.notes || "Call logged",
-        date: new Date(f.scheduledAt).toLocaleDateString(),
-        outcome: f.result || "Scheduled",
-      })),
-      activityHistory: l.activities.map((a) => ({
-        id: a.id,
-        time: new Date(a.createdAt).toLocaleDateString(),
-        text: a.action,
-      })),
-    }));
+    const formatted = leads.map((l) => {
+      const effectiveRemarks = l.remarks?.startsWith("GST: ") ? "" : (l.remarks || "");
+      const effectiveGstNo = l.gstNo || (l.remarks?.startsWith("GST: ") ? l.remarks.replace("GST: ", "") : undefined);
+      return {
+        id: l.id,
+        leadNumber: l.leadNumber,
+        clientName: l.companyName || l.contactPerson,
+        contactPerson: l.contactPerson,
+        email: l.email || "prospect@example.com",
+        phone: l.mobile,
+        stage: l.status,
+        leadValue: l.estimatedBudget,
+        expectedRevenue: l.expectedValue,
+        projectScope: l.interestedService,
+        assignedSales: "Karan Verma",
+        gstNo: effectiveGstNo,
+        remarks: effectiveRemarks,
+        nextFollowupDate: l.nextFollowupAt ? new Date(l.nextFollowupAt).toLocaleDateString() : "Tomorrow 10:00 AM",
+        leadPriority: l.priority,
+        notes: [],
+        callHistory: l.followups.map((f) => ({
+          id: f.id,
+          caller: "Karan Verma",
+          notes: f.notes || "Call logged",
+          date: new Date(f.scheduledAt).toLocaleDateString(),
+          outcome: f.result || "Scheduled",
+        })),
+        activityHistory: l.activities.map((a) => ({
+          id: a.id,
+          time: new Date(a.createdAt).toLocaleDateString(),
+          text: a.action,
+        })),
+      };
+    });
 
     return NextResponse.json({ success: true, data: formatted });
   } catch (error) {
@@ -83,7 +88,8 @@ export async function POST(req: Request) {
         expectedValue: validData.expectedRevenue,
         priority: validData.leadPriority,
         status: validData.stage,
-        remarks: validData.gstNo ? `GST: ${validData.gstNo}` : null,
+        remarks: validData.remarks || null,
+        gstNo: validData.gstNo || null,
         createdById: authRes.id,
       },
     });
@@ -102,7 +108,8 @@ export async function POST(req: Request) {
         expectedRevenue: newLead.expectedValue,
         projectScope: newLead.interestedService,
         assignedSales: "Karan Verma",
-        gstNo: newLead.remarks ? newLead.remarks.replace("GST: ", "") : undefined,
+        gstNo: newLead.gstNo || undefined,
+        remarks: newLead.remarks || "",
         nextFollowupDate: "Tomorrow 10:00 AM",
         leadPriority: newLead.priority,
         notes: [],

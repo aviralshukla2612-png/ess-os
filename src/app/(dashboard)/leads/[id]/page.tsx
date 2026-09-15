@@ -50,7 +50,9 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
           email: l.email || "No Email",
           phone: l.mobile,
           leadValue: l.expectedValue || 0,
-          projectScope: l.description || "General Inquiry",
+          projectScope: l.interestedService || l.description || "General Inquiry",
+          remarks: l.remarks || "",
+          gstNo: l.gstNo || "",
           timeline: l.activities?.map((a: any) => ({
             id: a.id,
             type: a.action,
@@ -292,6 +294,18 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
               {lead.projectScope}
             </p>
 
+            {lead.remarks && (
+              <div className="space-y-1.5 pt-1">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-indigo-500" />
+                  Lead Remarks / Notes
+                </h4>
+                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium p-4 rounded-xl bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-200/50 dark:border-indigo-900/30 whitespace-pre-wrap">
+                  {lead.remarks}
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2 pt-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Pipeline Stage Transition</h4>
               <div className="flex flex-wrap gap-2">
@@ -326,6 +340,12 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
                 <span>Weighted Expected Value:</span>
                 <strong className="font-mono">₹{lead.expectedRevenue.toLocaleString("en-IN")}</strong>
               </div>
+              {lead.gstNo && (
+                <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400">
+                  <span>GST / Tax Number:</span>
+                  <strong className="font-mono text-slate-800 dark:text-slate-200">{lead.gstNo}</strong>
+                </div>
+              )}
               <div className="flex justify-between py-1 text-slate-700 dark:text-slate-300">
                 <span>Assigned Salesperson:</span>
                 <strong>{lead.assignedSales}</strong>

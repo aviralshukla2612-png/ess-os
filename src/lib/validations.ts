@@ -11,6 +11,7 @@ export const leadSchema = z.object({
   leadPriority: z.enum(["HOT", "HIGH", "MEDIUM", "LOW"]).default("MEDIUM"),
   stage: z.enum(["NEW", "CONTACTED", "REQUIREMENTS", "PROPOSAL", "NEGOTIATION", "WON", "LOST"]).default("NEW"),
   gstNo: z.string().optional(),
+  remarks: z.string().optional(),
 });
 
 export const clientSchema = z.object({
