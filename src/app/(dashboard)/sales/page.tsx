@@ -377,7 +377,16 @@ export default function SalesDashboardPage() {
           </span>
         </div>
 
-        <LeadPipelineBoard leads={leads} updateLeadStageApi={updateLeadStageApi} convertLeadToClientApi={convertLeadToClientApi} deleteLeadApi={deleteLeadApi} />
+        <LeadPipelineBoard
+          leads={leads}
+          updateLeadStageApi={updateLeadStageApi}
+          convertLeadToClientApi={convertLeadToClientApi}
+          deleteLeadApi={deleteLeadApi}
+          onLeadUpdated={(updatedLead) => {
+            setLeads((prev) => prev.map((l) => (l.id === updatedLead.id ? updatedLead : l)));
+            fetchLeads();
+          }}
+        />
       </div>
 
       <DataImportModal

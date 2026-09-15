@@ -3,9 +3,10 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, PhoneCall, Calendar, ArrowRight, ArrowUpRight, CheckCircle2, User, Building, IndianRupee, Trash } from "lucide-react";
+import { Plus, PhoneCall, Calendar, ArrowRight, ArrowUpRight, CheckCircle2, User, Building, IndianRupee, Trash, Pencil } from "lucide-react";
 import { ConvertLeadModal } from "./ConvertLeadModal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { EditLeadModal } from "./EditLeadModal";
 import { useToast } from "@/components/ui/Toast";
 
 export interface Lead {
@@ -22,11 +23,25 @@ export interface Lead {
   assignedSales: string;
   nextFollowupDate: string;
   leadPriority: string;
+  gstNo?: string;
   updatedAt?: string;
 }
 
-export function LeadPipelineBoard({ leads, updateLeadStageApi, convertLeadToClientApi, deleteLeadApi }: { leads: Lead[], updateLeadStageApi: any, convertLeadToClientApi: any, deleteLeadApi?: any }) {
+export function LeadPipelineBoard({
+  leads,
+  updateLeadStageApi,
+  convertLeadToClientApi,
+  deleteLeadApi,
+  onLeadUpdated,
+}: {
+  leads: Lead[];
+  updateLeadStageApi: any;
+  convertLeadToClientApi: any;
+  deleteLeadApi?: any;
+  onLeadUpdated?: (lead: Lead) => void;
+}) {
   const router = useRouter();
+  const { showToast } = useToast();
   const STAGES = [
     { id: "NEW", title: "New Prospects" },
     { id: "CONTACTED", title: "Contacted" },
@@ -37,6 +52,7 @@ export function LeadPipelineBoard({ leads, updateLeadStageApi, convertLeadToClie
   ];
   
   const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
 
   return (
     <div className="space-y-4">
@@ -106,6 +122,18 @@ export function LeadPipelineBoard({ leads, updateLeadStageApi, convertLeadToClie
                         }`}>
                           {lead.leadPriority}
                         </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setEditingLead(lead);
+                          }}
+                          className="p-1 rounded text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 transition-colors"
+                          title="Edit lead details"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -189,6 +217,18 @@ export function LeadPipelineBoard({ leads, updateLeadStageApi, convertLeadToClie
         message="Are you sure you want to permanently delete this lead? This action cannot be undone and will remove all associated follow-ups and data."
         confirmText="Delete Lead"
         isDestructive={true}
+      />
+
+      <EditLeadModal
+        isOpen={!!editingLead}
+        lead={editingLead}
+        onClose={() => setEditingLead(null)}
+        onSuccess={(updatedLead) => {
+          showToast(`✓ Lead "${updatedLead.clientName}" updated`, "success");
+          if (onLeadUpdated) {
+            onLeadUpdated(updatedLead);
+          }
+        }}
       />
     </div>
   );

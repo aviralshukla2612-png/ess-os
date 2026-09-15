@@ -20,7 +20,9 @@ import {
   FileText,
   Sparkles,
   ShieldCheck,
+  Pencil,
 } from "lucide-react";
+import { EditLeadModal } from "@/components/sales/EditLeadModal";
 
 export default function LeadDetailPage({ params }: { params: { id: string } }) {
   const { showToast } = useToast();
@@ -78,6 +80,7 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
   };
 
   const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "calls" | "notes">("overview");
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isNoteSheetOpen, setIsNoteSheetOpen] = useState(false);
   const [newNoteText, setNewNoteText] = useState("");
   const [isFollowupSheetOpen, setIsFollowupSheetOpen] = useState(false);
@@ -190,6 +193,13 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setIsEditOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5 touch-target border border-slate-200 dark:border-slate-700"
+            >
+              <Pencil className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <span>Edit Lead</span>
+            </button>
             {lead.stage !== "WON" ? (
               <button
                 onClick={handleConvertLead}
@@ -461,6 +471,15 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
           </button>
         </form>
       </BottomSheet>
+      <EditLeadModal
+        isOpen={isEditOpen}
+        lead={lead}
+        onClose={() => setIsEditOpen(false)}
+        onSuccess={(updated) => {
+          showToast(`✓ Lead "${updated.clientName}" updated successfully`, "success");
+          fetchLead();
+        }}
+      />
     </div>
   );
 }
