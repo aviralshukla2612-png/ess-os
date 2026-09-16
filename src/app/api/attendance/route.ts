@@ -9,7 +9,8 @@ export async function GET() {
     const user = authResult;
 
     let whereClause = {};
-    if (user.activeRole !== "OWNER") {
+    const isSubAdminWithAttendance = user.activeRole === "SUB_ADMIN" && (user.subAdminPermissions?.includes("attendance") || false);
+    if (user.activeRole !== "OWNER" && !isSubAdminWithAttendance) {
       if (!user.employeeId) {
         return NextResponse.json({ success: false, data: [] });
       }

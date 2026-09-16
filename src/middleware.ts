@@ -59,8 +59,10 @@ export async function middleware(req: any) {
       if (userPerms.includes(requiredModule)) {
         return NextResponse.next();
       } else {
-        // If they don't have access to this module, redirect to attendance or first allowed page
-        return NextResponse.redirect(new URL("/crmtesting/attendance", req.url));
+        // Redirect to their first allowed module, or login if none
+        const firstAllowedKey = Object.keys(subAdminRouteMap).find(prefix => userPerms.includes(subAdminRouteMap[prefix]));
+        const destination = firstAllowedKey ? `/crmtesting${firstAllowedKey}` : "/crmtesting/login";
+        return NextResponse.redirect(new URL(destination, req.url));
       }
     }
     return NextResponse.next();
