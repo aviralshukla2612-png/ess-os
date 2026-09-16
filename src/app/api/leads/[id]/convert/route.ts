@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const authRes = await requireRole(["OWNER", "SALES"]);
+  const authRes = await requireRole(["OWNER", "SALES"], "leads");
   if (authRes instanceof NextResponse) return authRes;
 
   try {

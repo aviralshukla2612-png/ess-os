@@ -40,38 +40,63 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
       const json = await res.json();
       if (json.success && json.data) {
         const l = json.data;
+        const mappedTimeline = (l.activities || []).map((a: any) => ({
+          id: a.id,
+          type: a.action,
+          text: a.detailsJson || a.action || "Activity",
+          timestamp: a.createdAt ? new Date(a.createdAt).toLocaleString("en-IN") : "Just now",
+          time: a.createdAt ? new Date(a.createdAt).toLocaleString("en-IN") : "Just now",
+        }));
+
+        const mappedFollowups = (l.followups || []).map((f: any) => ({
+          id: f.id,
+          date: f.scheduledAt ? new Date(f.scheduledAt).toLocaleString("en-IN") : "Pending",
+          note: f.notes || "Followup",
+          notes: f.notes || "Followup",
+          completed: f.status === "COMPLETED",
+          callerName: f.communicationType || "Call",
+          outcome: f.result || (f.status === "COMPLETED" ? "Completed" : "Scheduled"),
+          createdAt: f.createdAt ? new Date(f.createdAt).toLocaleString("en-IN") : "Recently",
+        }));
+
+        const mappedNotes = (l.activities || [])
+          .filter((a: any) => a.action === "NOTE_ADDED" || a.action === "NOTE")
+          .map((a: any) => ({
+            id: a.id,
+            text: a.detailsJson || "",
+            content: a.detailsJson || "",
+            author: "System",
+            authorName: "System",
+            timestamp: a.createdAt ? new Date(a.createdAt).toLocaleString("en-IN") : "Recently",
+            createdAt: a.createdAt ? new Date(a.createdAt).toLocaleString("en-IN") : "Recently",
+          }));
+
+        const nextFollowup = (l.followups || []).find((f: any) => f.status !== "COMPLETED");
+
         setLead({
           ...l,
-          leadNumber: l.leadNumber,
-          leadPriority: l.priority,
-          stage: l.status,
-          clientName: l.companyName || l.contactPerson,
-          contactPerson: l.contactPerson,
+          id: l.id,
+          leadNumber: l.leadNumber || "LEAD",
+          leadPriority: l.priority || "MEDIUM",
+          stage: l.status || "NEW",
+          clientName: l.companyName || l.contactPerson || "Unnamed Prospect",
+          contactPerson: l.contactPerson || "N/A",
           email: l.email || "No Email",
-          phone: l.mobile,
-          leadValue: l.expectedValue || 0,
+          phone: l.mobile || "",
+          leadValue: Number(l.estimatedBudget || l.expectedValue || 0),
+          expectedRevenue: Number(l.expectedValue || l.estimatedBudget || 0),
           projectScope: l.interestedService || l.description || "General Inquiry",
           remarks: l.remarks || "",
           gstNo: l.gstNo || "",
-          timeline: l.activities?.map((a: any) => ({
-            id: a.id,
-            type: a.action,
-            text: a.detailsJson || a.action,
-            timestamp: new Date(a.createdAt).toLocaleString(),
-          })) || [],
-          scheduledFollowups: l.followups?.map((f: any) => ({
-            id: f.id,
-            date: new Date(f.scheduledAt).toLocaleString(),
-            note: f.notes || "Followup",
-            completed: f.status === "COMPLETED",
-          })) || [],
-          callLogs: [],
-          notes: l.activities?.filter((a: any) => a.action === "NOTE_ADDED").map((a: any) => ({
-            id: a.id,
-            text: a.detailsJson,
-            author: "System",
-            timestamp: new Date(a.createdAt).toLocaleString(),
-          })) || [],
+          assignedSales: l.assignedSales || l.assignedSalesperson?.name || "Unassigned",
+          nextFollowupDate: nextFollowup ? new Date(nextFollowup.scheduledAt).toLocaleDateString("en-IN") : "Not Scheduled",
+          timeline: mappedTimeline,
+          activityHistory: mappedTimeline,
+          scheduledFollowups: mappedFollowups,
+          callHistory: mappedFollowups,
+          callLogs: mappedFollowups,
+          calls: mappedFollowups,
+          notes: mappedNotes,
         });
       }
     } catch (e) {
@@ -92,11 +117,27 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
   const handleAddNoteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNoteText.trim()) return;
-    // Mock local update since no POST /notes endpoint exists in Phase 2
+    const newNote = {
+      id: Date.now().toString(),
+      text: newNoteText,
+      content: newNoteText,
+      author: "You",
+      authorName: "You",
+      timestamp: "Just now",
+      createdAt: "Just now",
+    };
+    const newActivity = {
+      id: Date.now().toString(),
+      type: "NOTE_ADDED",
+      text: `Note added: "${newNoteText}"`,
+      timestamp: "Just now",
+      time: "Just now",
+    };
     setLead((prev: any) => ({
       ...prev,
-      notes: [...prev.notes, { id: Date.now().toString(), text: newNoteText, author: "You", timestamp: "Just now" }],
-      timeline: [{ id: Date.now().toString(), type: "NOTE_ADDED", text: `Note added: "${newNoteText}"`, timestamp: "Just now" }, ...prev.timeline],
+      notes: [newNote, ...(prev.notes || [])],
+      timeline: [newActivity, ...(prev.timeline || [])],
+      activityHistory: [newActivity, ...(prev.activityHistory || [])],
     }));
     showToast("✓ Note added to Lead activity log (local)", "success");
     setNewNoteText("");
@@ -106,11 +147,31 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
   const handleAddFollowupSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!followupNote.trim()) return;
-    // Mock local update
+    const newFollowup = {
+      id: Date.now().toString(),
+      date: followupDate,
+      note: followupNote,
+      notes: followupNote,
+      completed: false,
+      callerName: "Sales Rep",
+      outcome: "Scheduled",
+      createdAt: "Just now",
+    };
+    const newActivity = {
+      id: Date.now().toString(),
+      type: "FOLLOWUP_SCHEDULED",
+      text: `Scheduled for ${followupDate}: ${followupNote}`,
+      timestamp: "Just now",
+      time: "Just now",
+    };
     setLead((prev: any) => ({
       ...prev,
-      scheduledFollowups: [...prev.scheduledFollowups, { id: Date.now().toString(), date: followupDate, note: followupNote, completed: false }],
-      timeline: [{ id: Date.now().toString(), type: "FOLLOWUP_SCHEDULED", text: `Scheduled for ${followupDate}: ${followupNote}`, timestamp: "Just now" }, ...prev.timeline],
+      scheduledFollowups: [newFollowup, ...(prev.scheduledFollowups || [])],
+      callHistory: [newFollowup, ...(prev.callHistory || [])],
+      callLogs: [newFollowup, ...(prev.callLogs || [])],
+      calls: [newFollowup, ...(prev.calls || [])],
+      timeline: [newActivity, ...(prev.timeline || [])],
+      activityHistory: [newActivity, ...(prev.activityHistory || [])],
     }));
     showToast(`✓ Follow-up scheduled for ${followupDate} (local)`, "success");
     setFollowupNote("");
@@ -166,7 +227,7 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
           <span>Back to Sales CRM & Leads</span>
         </Link>
         <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-          {lead.leadNumber}
+          {lead.leadNumber || "LEAD"}
         </span>
       </div>
 
@@ -176,21 +237,21 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-mono">
-                {lead.leadPriority} PRIORITY
+                {lead.leadPriority || "MEDIUM"} PRIORITY
               </span>
               <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-mono uppercase">
-                {lead.stage} STAGE
+                {lead.stage || "NEW"} STAGE
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-              {lead.clientName}
+              {lead.clientName || "Unnamed Lead"}
             </h1>
             <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-3">
-              <span>👤 <strong>{lead.contactPerson}</strong></span>
+              <span>👤 <strong>{lead.contactPerson || "N/A"}</strong></span>
               <span>•</span>
-              <span>✉️ {lead.email}</span>
+              <span>✉️ {lead.email || "No email"}</span>
               <span>•</span>
-              <span>📞 {lead.phone}</span>
+              <span>📞 {lead.phone || "No phone"}</span>
             </div>
           </div>
 
@@ -222,14 +283,14 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
         {/* Quick Action Controls */}
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <a
-            href={`tel:${lead.phone}`}
+            href={`tel:${lead.phone || ""}`}
             className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 touch-target"
           >
             <Phone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>Call</span>
           </a>
           <a
-            href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}`}
+            href={`https://wa.me/${(lead.phone || "").toString().replace(/[^0-9]/g, "")}`}
             target="_blank"
             rel="noreferrer"
             className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 touch-target"
@@ -238,7 +299,7 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
             <span>WhatsApp</span>
           </a>
           <a
-            href={`mailto:${lead.email}`}
+            href={`mailto:${lead.email || ""}`}
             className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 touch-target"
           >
             <Mail className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
@@ -267,9 +328,9 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
       <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-1 overflow-x-auto">
         {[
           { id: "overview", label: "Overview & Scope" },
-          { id: "timeline", label: `Activity Timeline (${lead.activityHistory.length})` },
-          { id: "calls", label: `Call History (${lead.callHistory.length})` },
-          { id: "notes", label: `Internal Notes (${lead.notes.length})` },
+          { id: "timeline", label: `Activity Timeline (${lead.activityHistory?.length ?? lead.timeline?.length ?? 0})` },
+          { id: "calls", label: `Call History (${lead.callHistory?.length ?? lead.calls?.length ?? 0})` },
+          { id: "notes", label: `Internal Notes (${lead.notes?.length ?? 0})` },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -291,7 +352,7 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
           <div className="md:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Project Scope & Proposal Summary</h3>
             <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
-              {lead.projectScope}
+              {lead.projectScope || "No scope described yet."}
             </p>
 
             {lead.remarks && (
@@ -334,11 +395,15 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
               <h3 className="font-bold text-slate-900 dark:text-slate-100">Financial Metrics</h3>
               <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                 <span className="text-slate-500 dark:text-slate-400">Estimated Deal Value:</span>
-                <strong className="font-mono text-slate-900 dark:text-slate-100">₹{lead.leadValue.toLocaleString("en-IN")}</strong>
+                <strong className="font-mono text-slate-900 dark:text-slate-100">
+                  ₹{(Number(lead.leadValue) || 0).toLocaleString("en-IN")}
+                </strong>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800 text-emerald-600 dark:text-emerald-400">
                 <span>Weighted Expected Value:</span>
-                <strong className="font-mono">₹{lead.expectedRevenue.toLocaleString("en-IN")}</strong>
+                <strong className="font-mono">
+                  ₹{(Number(lead.expectedRevenue) || Number(lead.leadValue) || 0).toLocaleString("en-IN")}
+                </strong>
               </div>
               {lead.gstNo && (
                 <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400">
@@ -348,11 +413,11 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
               )}
               <div className="flex justify-between py-1 text-slate-700 dark:text-slate-300">
                 <span>Assigned Salesperson:</span>
-                <strong>{lead.assignedSales}</strong>
+                <strong>{lead.assignedSales || "Unassigned"}</strong>
               </div>
               <div className="flex justify-between py-1 text-amber-700 dark:text-amber-400 font-bold">
                 <span>Next Follow-up:</span>
-                <span>{lead.nextFollowupDate}</span>
+                <span>{lead.nextFollowupDate || "Not Scheduled"}</span>
               </div>
             </div>
           </div>
@@ -363,17 +428,21 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
       {activeTab === "timeline" && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
           <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Audit & Change History Timeline</h3>
-          <div className="space-y-3 text-xs">
-            {lead.timeline?.map((act: any) => (
-              <div key={act.id} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                <div className="space-y-0.5">
-                  <div className="font-bold text-slate-900 dark:text-slate-100">{act.text}</div>
-                  <div className="text-[10px] font-mono text-slate-400">{act.time}</div>
+          {(!lead.timeline || lead.timeline.length === 0) ? (
+            <div className="p-8 text-center text-slate-400 text-xs">No activity recorded yet for this lead.</div>
+          ) : (
+            <div className="space-y-3 text-xs">
+              {lead.timeline.map((act: any) => (
+                <div key={act.id} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-start gap-3">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
+                  <div className="space-y-0.5">
+                    <div className="font-bold text-slate-900 dark:text-slate-100">{act.text}</div>
+                    <div className="text-[10px] font-mono text-slate-400">{act.timestamp || act.time}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -389,18 +458,22 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
               + Log New Call
             </button>
           </div>
-          <div className="space-y-3 text-xs">
-            {lead.calls?.map((call: any) => (
-              <div key={call.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1">
-                <div className="flex items-center justify-between font-bold text-slate-900 dark:text-slate-100">
-                  <span>Caller: {call.callerName}</span>
-                  <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">{call.outcome}</span>
+          {(!lead.calls || lead.calls.length === 0) ? (
+            <div className="p-8 text-center text-slate-400 text-xs">No calls or meetings scheduled yet.</div>
+          ) : (
+            <div className="space-y-3 text-xs">
+              {lead.calls.map((call: any) => (
+                <div key={call.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1">
+                  <div className="flex items-center justify-between font-bold text-slate-900 dark:text-slate-100">
+                    <span>Caller: {call.callerName || "Sales Rep"}</span>
+                    <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">{call.outcome || "Scheduled"}</span>
+                  </div>
+                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{call.notes || call.note}</p>
+                  <div className="text-[10px] font-mono text-slate-400">{call.createdAt || call.date}</div>
                 </div>
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{call.notes}</p>
-                <div className="text-[10px] font-mono text-slate-400">{call.createdAt}</div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -416,15 +489,19 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
               + Add Note
             </button>
           </div>
-          <div className="space-y-3 text-xs">
-            {lead.notes?.map((n: any) => (
-              <div key={n.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1">
-                <div className="font-bold text-slate-900 dark:text-slate-100">{n.authorName}</div>
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{n.content}</p>
-                <div className="text-[10px] font-mono text-slate-400">{n.createdAt}</div>
-              </div>
-            ))}
-          </div>
+          {(!lead.notes || lead.notes.length === 0) ? (
+            <div className="p-8 text-center text-slate-400 text-xs">No internal notes added yet.</div>
+          ) : (
+            <div className="space-y-3 text-xs">
+              {lead.notes.map((n: any) => (
+                <div key={n.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1">
+                  <div className="font-bold text-slate-900 dark:text-slate-100">{n.authorName || n.author || "Internal"}</div>
+                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{n.content || n.text}</p>
+                  <div className="text-[10px] font-mono text-slate-400">{n.createdAt || n.timestamp}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

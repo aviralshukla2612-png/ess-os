@@ -5,7 +5,7 @@ import { leadSchema } from "@/lib/validations";
 import { notifyAdmins } from "@/lib/notifications";
 
 export async function GET() {
-  const authRes = await requireRole(["OWNER", "SALES"]);
+  const authRes = await requireRole(["OWNER", "SALES"], "leads");
   if (authRes instanceof NextResponse) return authRes;
 
   try {
@@ -61,7 +61,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const authRes = await requireRole(["OWNER", "SALES"]);
+  const authRes = await requireRole(["OWNER", "SALES"], "leads");
   if (authRes instanceof NextResponse) return authRes;
 
   try {

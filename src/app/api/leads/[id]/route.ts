@@ -3,13 +3,17 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
-  const authRes = await requireRole(["OWNER", "SALES"]);
+  const authRes = await requireRole(["OWNER", "SALES"], "leads");
   if (authRes instanceof NextResponse) return authRes;
 
   try {
     const lead = await prisma.lead.findFirst({
       where: { OR: [{ id: params.id }, { leadNumber: params.id }] },
-      include: { followups: true, activities: true },
+      include: {
+        followups: { orderBy: { scheduledAt: "desc" } },
+        activities: { orderBy: { createdAt: "desc" } },
+        assignedSalesperson: { select: { id: true, name: true, email: true } },
+      },
     });
 
     if (!lead) {
@@ -27,6 +31,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         ...lead,
         remarks: effectiveRemarks,
         gstNo: effectiveGstNo,
+        assignedSales: lead.assignedSalesperson?.name || "Unassigned",
       },
     });
   } catch (error) {
@@ -35,7 +40,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const authRes = await requireRole(["OWNER", "SALES"]);
+  const authRes = await requireRole(["OWNER", "SALES"], "leads");
   if (authRes instanceof NextResponse) return authRes;
 
   try {
