@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { notifyAdmins } from "@/lib/notifications";
 
 export async function POST(req: Request) {
   const authRes = await requireAuth();
@@ -20,6 +21,9 @@ export async function POST(req: Request) {
           { id: employeeId },
           { employeeIdCode: employeeId }
         ]
+      },
+      include: {
+        user: true,
       }
     });
 
@@ -79,6 +83,30 @@ export async function POST(req: Request) {
         data: { endedAt: serverNow }
       })
     ]);
+
+    // Dispatch real-time push notification to all admins/owners
+    const empName = employee.user?.name || "An employee";
+    const hours = Math.floor(workedMinutes / 60);
+    const mins = workedMinutes % 60;
+    const workDuration = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+    const timeFormatted = serverNow.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    notifyAdmins({
+      title: `🛑 Punch-Out: ${empName}`,
+      message: `${empName} punched out for the day at ${timeFormatted} (Worked: ${workDuration}).`,
+      linkUrl: "/attendance",
+      type: "PUNCH_OUT",
+      metadata: {
+        employeeId: employee.id,
+        employeeName: empName,
+        workedMinutes,
+        time: timeFormatted,
+      },
+    }).catch((err) => console.error("Admin notification error on punch-out:", err));
 
     return NextResponse.json({
       success: true,

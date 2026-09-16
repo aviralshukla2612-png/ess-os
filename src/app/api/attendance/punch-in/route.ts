@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { notifyAdmins } from "@/lib/notifications";
 
 export async function POST(req: Request) {
   const authRes = await requireAuth();
@@ -37,7 +38,10 @@ export async function POST(req: Request) {
           { id: employeeId },
           { employeeIdCode: employeeId }
         ]
-      }
+      },
+      include: {
+        user: true,
+      },
     });
 
     if (!employee) {
@@ -130,6 +134,27 @@ export async function POST(req: Request) {
         })
       ]);
       attendance = newAttendance;
+
+      // Dispatch real-time push notification to all admins/owners
+      const timeFormatted = punchInTime.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+      const empName = employee.user?.name || "An employee";
+      const empCode = employee.employeeIdCode ? ` (${employee.employeeIdCode})` : "";
+
+      notifyAdmins({
+        title: `🟢 Punch-In: ${empName}`,
+        message: `${empName}${empCode} punched in for work at ${timeFormatted}.`,
+        linkUrl: "/attendance",
+        type: "PUNCH_IN",
+        metadata: {
+          employeeId: employee.id,
+          employeeName: empName,
+          time: timeFormatted,
+        },
+      }).catch((err) => console.error("Admin notification error on punch-in:", err));
     } catch (createError: any) {
       // P2002 = Prisma unique constraint violation
       // If two requests raced and one already created the record, return the existing one

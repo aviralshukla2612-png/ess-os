@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { notifyAdmins } from "@/lib/notifications";
 
 export async function POST(req: Request) {
   const authRes = await requireAuth();
@@ -27,6 +28,9 @@ export async function POST(req: Request) {
           { id: employeeId },
           { employeeIdCode: employeeId }
         ]
+      },
+      include: {
+        user: true,
       }
     });
 
@@ -76,6 +80,22 @@ export async function POST(req: Request) {
         punchOutRequestedAt: now,
       }
     });
+
+    // Notify admins about the early punch-out approval request
+    const empName = employee.user?.name || "An employee";
+    notifyAdmins({
+      title: `⚠️ Early Punch-Out Request: ${empName}`,
+      message: `${empName} requested early punch-out approval. Reason: "${reason}".`,
+      linkUrl: "/attendance",
+      type: "PUNCH_OUT_REQUEST",
+      urgency: "HIGH",
+      metadata: {
+        employeeId: employee.id,
+        employeeName: empName,
+        reason,
+      },
+    }).catch((err) => console.error("Admin notification error on punch-out request:", err));
+
     return NextResponse.json({ success: true, data: updated });
 
   } catch (error) {
