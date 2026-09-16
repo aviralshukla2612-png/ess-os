@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Search, ChevronDown, LogOut, Coffee, Play, Power, Sparkles, Clock, ShieldCheck } from "lucide-react";
+import { Search, ChevronDown, LogOut, Coffee, Play, Power, Sparkles, Clock, ShieldCheck, Hourglass } from "lucide-react";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { BottomSheet } from "../ui/BottomSheet";
 import { NotificationDropdown } from "./NotificationDropdown";
@@ -25,7 +25,7 @@ interface Props {
 }
 
 export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout }: Props) {
-  const { status, workSeconds, breakSeconds, breakType, formatHMS, punchIn, startBreak, resumeWork, punchOut, confirmPunchOutAnyway, markPunchOutPending } = useWorkClock();
+  const { status, workSeconds, breakSeconds, breakType, formatHMS, remainingWorkSeconds, punchIn, startBreak, resumeWork, punchOut, confirmPunchOutAnyway, markPunchOutPending } = useWorkClock();
   const { showToast } = useToast();
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -319,14 +319,43 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
         subtitle={`Current Status: ${status === 'WORKING' ? 'Working (Stopwatch Active)' : 'On Break'}`}
       >
         <div className="space-y-4 text-xs">
-          <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-center space-y-1">
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              {status === "WORKING" ? "Active Work Duration" : `Break Duration (${breakType})`}
+          {status === "WORKING" ? (
+            <div className="grid grid-cols-2 gap-2 text-center">
+              <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200/80 dark:border-amber-500/20 space-y-1">
+                <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center justify-center gap-1">
+                  <Hourglass className="w-3.5 h-3.5" />
+                  Time Left
+                </div>
+                <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 dark:text-slate-100">
+                  {formatHMS(remainingWorkSeconds)}
+                </div>
+                <div className="text-[10px] text-slate-500 font-medium">to complete 8h day</div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/80 dark:border-emerald-500/20 space-y-1">
+                <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center justify-center gap-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  Total Worked
+                </div>
+                <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 dark:text-slate-100">
+                  {formatHMS(workSeconds)}
+                </div>
+                <div className="text-[10px] text-slate-500 font-medium">active session</div>
+              </div>
             </div>
-            <div className="text-4xl font-extrabold font-mono text-slate-900 dark:text-slate-100">
-              {status === "WORKING" ? formatHMS(workSeconds) : formatHMS(breakSeconds)}
+          ) : (
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-center space-y-1">
+              <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                {`Break Duration (${breakType})`}
+              </div>
+              <div className="text-4xl font-extrabold font-mono text-slate-900 dark:text-slate-100">
+                {formatHMS(breakSeconds)}
+              </div>
+              <div className="text-[11px] font-mono text-slate-500 pt-1">
+                Shift Remaining: {formatHMS(remainingWorkSeconds)}
+              </div>
             </div>
-          </div>
+          )}
 
           {status === "WORKING" ? (
             <div className="space-y-3">

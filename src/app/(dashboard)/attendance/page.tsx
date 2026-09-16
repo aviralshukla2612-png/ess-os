@@ -26,6 +26,7 @@ import {
   ChevronDown,
   Check,
   Users,
+  Hourglass,
 } from "lucide-react";
 
 const CustomStaffDropdown = ({ employees, value, onChange }: any) => {
@@ -190,6 +191,7 @@ export default function AttendanceWorkClockPage() {
   const [isPunchOutConfirmOpen, setIsPunchOutConfirmOpen] = useState(false);
   const [isPunchingIn, setIsPunchingIn] = useState(false);
   const isPunchingInRef = React.useRef(false);
+  const [timerMode, setTimerMode] = useState<"countdown" | "elapsed">("countdown");
 
   // Form states for change work
   const [selectedProject, setSelectedProject] = useState(currentProject);
@@ -260,6 +262,9 @@ export default function AttendanceWorkClockPage() {
   const REQUIRED_WORK_SECONDS = parseInt(process.env.NEXT_PUBLIC_REQUIRED_WORK_HOURS || "8") * 3600;
   const progressPercent = Math.min(100, Math.round((workSeconds / REQUIRED_WORK_SECONDS) * 100));
   const remainingWorkSeconds = Math.max(0, REQUIRED_WORK_SECONDS - workSeconds);
+  const estimatedFinishTime = remainingWorkSeconds === 0
+    ? "Completed!"
+    : new Date(Date.now() + remainingWorkSeconds * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
 function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371e3; // metres
@@ -550,21 +555,131 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
         </div>
       )}
 
-      {/* STATE 2: WORKING (STOPWATCH) */}
+      {/* STATE 2: WORKING (STOPWATCH / COUNTDOWN) */}
       {status === "WORKING" && (
         <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-8 shadow-xl dark:shadow-2xl space-y-6 text-center">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-xs font-bold">
+          {/* Status & View Mode Switcher */}
+          <div className="flex flex-col items-center gap-3">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-xs font-bold shadow-xs">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
               <span>WORK CLOCK • Active Session</span>
             </div>
 
-            <div className="text-6xl sm:text-7xl font-black font-mono tracking-tight text-slate-900 dark:text-slate-100 pt-2">
-              {formatHMS(workSeconds)}
+            {/* Segmented Mode Switcher */}
+            <div className="inline-flex items-center p-1 rounded-2xl bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 shadow-xs">
+              <button
+                type="button"
+                onClick={() => setTimerMode("countdown")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  timerMode === "countdown"
+                    ? "bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 shadow-sm"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+                }`}
+              >
+                <Hourglass className="w-3.5 h-3.5" />
+                <span>Time Left (Countdown)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimerMode("elapsed")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  timerMode === "elapsed"
+                    ? "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Total Worked (Elapsed)</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-6xl sm:text-7xl font-black font-mono tracking-tight text-slate-900 dark:text-slate-100 pt-1">
+              {timerMode === "countdown" ? formatHMS(remainingWorkSeconds) : formatHMS(workSeconds)}
             </div>
 
-            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 font-mono">
-              Punched In at {punchInTime || "09:00 AM"} • Required: {Math.floor(REQUIRED_WORK_SECONDS / 3600)}h {Math.floor((REQUIRED_WORK_SECONDS % 3600) / 60)}m
+            <div className="text-xs font-semibold font-mono">
+              {timerMode === "countdown" ? (
+                remainingWorkSeconds > 0 ? (
+                  <span className="text-amber-600 dark:text-amber-400 inline-flex items-center gap-1.5">
+                    <Hourglass className="w-3.5 h-3.5 animate-pulse text-amber-500" />
+                    Time left to complete {Math.floor(REQUIRED_WORK_SECONDS / 3600)}-hour daily shift
+                  </span>
+                ) : (
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold inline-flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    Shift Goal Completed! {workSeconds > REQUIRED_WORK_SECONDS ? `(+${formatHMS(workSeconds - REQUIRED_WORK_SECONDS)} Overtime)` : ""}
+                  </span>
+                )
+              ) : (
+                <span className="text-slate-500 dark:text-slate-400">
+                  Total active work duration today
+                </span>
+              )}
+            </div>
+
+            <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+              Punched In at {punchInTime || "09:00 AM"} • Required: {Math.floor(REQUIRED_WORK_SECONDS / 3600)}h 00m
+            </div>
+          </div>
+
+          {/* Quick Metrics at a Glance */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mx-auto pt-1">
+            {/* Time Left */}
+            <div
+              onClick={() => setTimerMode("countdown")}
+              className={`p-3.5 rounded-2xl border transition-all text-center cursor-pointer ${
+                timerMode === "countdown"
+                  ? "bg-amber-500/10 border-amber-300 dark:border-amber-500/30 ring-2 ring-amber-500/20 shadow-xs"
+                  : "bg-slate-50/70 dark:bg-slate-950/40 border-slate-200/80 dark:border-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-900/60"
+              }`}
+            >
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1">
+                <Hourglass className="w-3 h-3 text-amber-500" />
+                Time Remaining
+              </div>
+              <div className="font-mono font-extrabold text-base sm:text-lg text-slate-900 dark:text-slate-100 mt-1">
+                {formatHMS(remainingWorkSeconds)}
+              </div>
+              <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                {remainingWorkSeconds === 0 ? "Goal Met! 🎉" : "to finish 8h"}
+              </div>
+            </div>
+
+            {/* Time Worked */}
+            <div
+              onClick={() => setTimerMode("elapsed")}
+              className={`p-3.5 rounded-2xl border transition-all text-center cursor-pointer ${
+                timerMode === "elapsed"
+                  ? "bg-emerald-500/10 border-emerald-300 dark:border-emerald-500/30 ring-2 ring-emerald-500/20 shadow-xs"
+                  : "bg-slate-50/70 dark:bg-slate-950/40 border-slate-200/80 dark:border-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-900/60"
+              }`}
+            >
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1">
+                <Clock className="w-3 h-3 text-emerald-500" />
+                Total Worked
+              </div>
+              <div className="font-mono font-extrabold text-base sm:text-lg text-slate-900 dark:text-slate-100 mt-1">
+                {formatHMS(workSeconds)}
+              </div>
+              <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                {progressPercent}% of target
+              </div>
+            </div>
+
+            {/* Target End Time */}
+            <div className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200/80 dark:border-slate-800/80 text-center">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1">
+                <CheckCircle2 className="w-3 h-3 text-indigo-500" />
+                Est. Day End
+              </div>
+              <div className="font-mono font-extrabold text-base sm:text-lg text-indigo-600 dark:text-indigo-400 mt-1">
+                {estimatedFinishTime}
+              </div>
+              <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
+                Target punch-out
+              </div>
             </div>
           </div>
 
@@ -574,7 +689,9 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
             <div className="space-y-2">
               <div className="flex justify-between font-bold">
                 <span className="text-slate-600 dark:text-slate-400">{Math.floor(REQUIRED_WORK_SECONDS / 3600)}-Hour Work Goal</span>
-                <span className="font-mono text-indigo-600 dark:text-indigo-400">{formatHM(workSeconds)} / {formatHM(REQUIRED_WORK_SECONDS)} ({progressPercent}%)</span>
+                <span className="font-mono text-indigo-600 dark:text-indigo-400">
+                  {formatHM(workSeconds)} / {formatHM(REQUIRED_WORK_SECONDS)} ({progressPercent}%) • {remainingWorkSeconds > 0 ? `${formatHM(remainingWorkSeconds)} left` : "Done! 🎉"}
+                </span>
               </div>
               <div className="w-full h-3 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden border border-slate-200/80 dark:border-slate-800">
                 <div
@@ -601,7 +718,6 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
             </div>
 
             {/* Client Call / Meeting Bar */}
-            {/* Client Call / Meeting Bar */}
             <div className="space-y-2">
               <div className="flex justify-between font-bold">
                 <span className="text-slate-600 dark:text-slate-400">Client Calls / Meetings Today</span>
@@ -617,7 +733,6 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
               </div>
             </div>
           </div>
-
 
           {/* Action CTAs */}
           <div className="flex items-center justify-center gap-4 max-w-md mx-auto pt-2">
@@ -651,6 +766,17 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
 
             <div className="text-6xl sm:text-7xl font-black font-mono tracking-tight text-slate-900 dark:text-slate-100 pt-2">
               {formatHMS(breakSeconds)}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-mono text-slate-500 dark:text-slate-400 pt-1">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200/60 dark:border-amber-500/20 text-amber-700 dark:text-amber-400 font-bold">
+                <Hourglass className="w-3.5 h-3.5" />
+                Shift Left: {formatHMS(remainingWorkSeconds)}
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/60 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-bold">
+                <Clock className="w-3.5 h-3.5" />
+                Worked: {formatHMS(workSeconds)}
+              </span>
             </div>
           </div>
 

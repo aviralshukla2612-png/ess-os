@@ -49,6 +49,8 @@ interface WorkClockContextType {
   toggleDeviceError: () => void;
   formatHMS: (sec: number) => string;
   formatHM: (sec: number) => string;
+  requiredWorkSeconds: number;
+  remainingWorkSeconds: number;
 }
 
 const WorkClockContext = createContext<WorkClockContextType | undefined>(undefined);
@@ -533,6 +535,8 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     lastPunchOutStatusRef.current = "PENDING";
   };
 
+  const remainingWorkSeconds = Math.max(0, REQUIRED_WORK_SECONDS - workSeconds);
+
   return (
     <WorkClockContext.Provider
       value={{
@@ -567,6 +571,8 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
         toggleDeviceError,
         formatHMS,
         formatHM,
+        requiredWorkSeconds: REQUIRED_WORK_SECONDS,
+        remainingWorkSeconds,
       }}
     >
       {children}
