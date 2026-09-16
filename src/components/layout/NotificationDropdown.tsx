@@ -179,10 +179,8 @@ export function NotificationDropdown() {
 
     setIsOpen(false);
     if (notif.linkUrl) {
-      const target = notif.linkUrl.startsWith("/crmtesting") 
-        ? notif.linkUrl 
-        : `/crmtesting${notif.linkUrl.startsWith("/") ? "" : "/"}${notif.linkUrl}`;
-      router.push(target);
+      const cleanPath = notif.linkUrl.replace(/^\/crmtesting/, "") || "/attendance";
+      router.push(cleanPath);
     }
   };
 
@@ -401,7 +399,7 @@ export function NotificationDropdown() {
             <button
               onClick={() => {
                 setIsOpen(false);
-                router.push("/crmtesting/attendance");
+                router.push("/attendance");
               }}
               className="text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors inline-flex items-center gap-1"
             >

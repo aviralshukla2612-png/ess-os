@@ -67,7 +67,11 @@ self.addEventListener('push', function(event) {
 
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
-  const targetUrl = event.notification.data?.url || '/crmtesting/attendance';
+  let targetUrl = event.notification.data?.url || '/crmtesting/attendance';
+  targetUrl = targetUrl.replace(/\/crmtesting\/crmtesting/, '/crmtesting');
+  if (!targetUrl.startsWith('/crmtesting')) {
+    targetUrl = '/crmtesting' + (targetUrl.startsWith('/') ? targetUrl : '/' + targetUrl);
+  }
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {

@@ -217,7 +217,8 @@ export function NotificationListener() {
       setActiveNotification(null);
       
       if (linkUrl) {
-        router.push(linkUrl);
+        const cleanPath = linkUrl.replace(/^\/crmtesting/, "") || "/attendance";
+        router.push(cleanPath);
       }
     } catch (error) {
       console.error("Failed to mark as read", error);
