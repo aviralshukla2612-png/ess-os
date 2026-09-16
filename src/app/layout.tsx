@@ -7,6 +7,11 @@ import { AppShell } from "@/components/layout/AppShell";
 export const metadata = {
   title: "ESS OS — Master Business Operating System",
   description: "Centralized Operating System for ESS Company",
+  icons: {
+    icon: "/crmtesting/ess-logo.png",
+    shortcut: "/crmtesting/ess-logo.png",
+    apple: "/crmtesting/ess-logo.png",
+  },
 };
 
 import { PrototypeStoreProvider } from "@/lib/prototypeStore";
@@ -17,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="dark">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+        <link rel="icon" href="/crmtesting/ess-logo.png" type="image/png" />
       </head>
       <body>
         <ToastProvider>

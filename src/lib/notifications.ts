@@ -2,15 +2,29 @@ import { prisma } from "./prisma";
 import { firebaseAdmin } from "./firebaseAdmin";
 
 /**
- * Format any date into Indian Standard Time (IST - Asia/Kolkata)
+ * Format any date into Indian Standard Time (IST - UTC + 5:30)
+ * Uses explicit offset arithmetic so it is 100% fail-safe even on minimal UTC Linux/Docker servers.
  */
-export function formatToIST(date: Date = new Date()): string {
-  return date.toLocaleTimeString("en-US", {
-    timeZone: "Asia/Kolkata",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
+export function formatToIST(dateInput: Date | string | number = new Date()): string {
+  try {
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return "";
+
+    // Indian Standard Time is strictly UTC + 5 hours 30 minutes
+    const istOffsetMs = (5 * 60 + 30) * 60 * 1000;
+    const istTime = new Date(d.getTime() + istOffsetMs);
+
+    let hours = istTime.getUTCHours();
+    const minutes = istTime.getUTCMinutes();
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 hour should be 12
+    const minStr = minutes < 10 ? "0" + minutes : String(minutes);
+
+    return `${hours}:${minStr} ${ampm}`;
+  } catch {
+    return new Date().toLocaleTimeString("en-US", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit", hour12: true });
+  }
 }
 
 export async function createAndSendNotification({
