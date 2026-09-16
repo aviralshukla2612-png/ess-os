@@ -127,21 +127,46 @@ export async function notifyAdmins({
   metadata?: Record<string, any>;
 }) {
   try {
-    // 1. Find all active admins/owners
-    const adminUsers = await prisma.user.findMany({
+    // 1. Find all active admins/owners/sub-admins
+    const allAdmins = await prisma.user.findMany({
       where: {
         isActive: true,
         OR: [
           { activeRole: "OWNER" },
-          { userRoles: { some: { role: { code: "OWNER" } } } },
+          { activeRole: "ADMIN" },
+          { activeRole: "SUB_ADMIN" },
+          { userRoles: { some: { role: { code: { in: ["OWNER", "ADMIN"] } } } } },
         ],
       },
-      select: { id: true },
+      select: { id: true, activeRole: true, subAdminPermissions: true },
+    });
+
+    // Filter sub-admins based on relevant module permission
+    const adminUsers = allAdmins.filter((admin) => {
+      if (admin.activeRole !== "SUB_ADMIN") return true;
+      let perms: string[] = [];
+      try {
+        perms = typeof admin.subAdminPermissions === "string" ? JSON.parse(admin.subAdminPermissions) : (admin.subAdminPermissions || []);
+      } catch {
+        perms = [];
+      }
+      if (!Array.isArray(perms) || perms.length === 0) return true; // Full access if not restricted
+      const upperType = (type || "").toUpperCase();
+      if (upperType.includes("BREAK") || upperType.includes("PUNCH") || upperType === "ATTENDANCE") {
+        return perms.includes("attendance") || perms.includes("attendance-requests") || perms.includes("overview");
+      }
+      if (upperType.includes("LEAVE")) {
+        return perms.includes("leave-requests") || perms.includes("overview");
+      }
+      if (upperType.includes("LEAD")) {
+        return perms.includes("leads") || perms.includes("overview");
+      }
+      return true;
     });
 
     if (adminUsers.length === 0) return;
 
-    // 2. Create DB notifications for all admins
+    // 2. Create DB notifications for all eligible admins
     await prisma.notification.createMany({
       data: adminUsers.map((admin) => ({
         recipientId: admin.id,
