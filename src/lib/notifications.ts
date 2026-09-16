@@ -37,19 +37,40 @@ export async function createAndSendNotification({
   // 3. Send Push Notification if tokens exist
   if (fcmTokens.length > 0) {
     try {
+      const resolvedLink = linkUrl
+        ? linkUrl.startsWith("/crmtesting")
+          ? linkUrl
+          : `/crmtesting${linkUrl.startsWith("/") ? "" : "/"}${linkUrl}`
+        : "/crmtesting/attendance";
+
       await firebaseAdmin.messaging().sendEachForMulticast({
         tokens: fcmTokens,
         notification: {
           title,
           body: message,
-          imageUrl: "/crmtesting/ess-logo.png",
         },
         data: {
           title,
           message,
           type,
-          linkUrl: linkUrl || "/crmtesting/attendance",
+          linkUrl: resolvedLink,
           icon: "/crmtesting/ess-logo.png",
+        },
+        webpush: {
+          headers: {
+            Urgency: "high",
+          },
+          notification: {
+            title,
+            body: message,
+            icon: "/crmtesting/ess-logo.png",
+            badge: "/crmtesting/ess-logo.png",
+            requireInteraction: true,
+            tag: `ess-user-${Date.now()}`,
+          },
+          fcmOptions: {
+            link: resolvedLink,
+          },
         },
       });
     } catch (error) {
@@ -120,20 +141,41 @@ export async function notifyAdmins({
         Object.entries(metadata).map(([k, v]) => [k, String(v)])
       );
 
+      const resolvedLink = linkUrl
+        ? linkUrl.startsWith("/crmtesting")
+          ? linkUrl
+          : `/crmtesting${linkUrl.startsWith("/") ? "" : "/"}${linkUrl}`
+        : "/crmtesting/attendance";
+
       await firebaseAdmin.messaging().sendEachForMulticast({
         tokens: fcmTokens,
         notification: {
           title,
           body: message,
-          imageUrl: "/crmtesting/ess-logo.png",
         },
         data: {
           title,
           message,
           type,
-          linkUrl: linkUrl || "/crmtesting/attendance",
+          linkUrl: resolvedLink,
           icon: "/crmtesting/ess-logo.png",
           ...stringifiedMetadata,
+        },
+        webpush: {
+          headers: {
+            Urgency: "high",
+          },
+          notification: {
+            title,
+            body: message,
+            icon: "/crmtesting/ess-logo.png",
+            badge: "/crmtesting/ess-logo.png",
+            requireInteraction: true,
+            tag: `ess-admin-${Date.now()}`,
+          },
+          fcmOptions: {
+            link: resolvedLink,
+          },
         },
       });
     }

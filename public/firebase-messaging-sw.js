@@ -18,18 +18,51 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage(function(payload) {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
   const notificationTitle = payload.notification?.title || payload.data?.title || 'ESS OS Notification';
+  const iconUrl = self.location.origin + '/crmtesting/ess-logo.png';
+  const targetUrl = payload.data?.linkUrl || payload.fcmOptions?.link || '/crmtesting/attendance';
+
   const notificationOptions = {
     body: payload.notification?.body || payload.data?.message || '',
-    icon: payload.notification?.icon || payload.data?.icon || '/crmtesting/ess-logo.png',
-    badge: '/crmtesting/ess-logo.png',
+    icon: iconUrl,
+    badge: iconUrl,
     data: {
-      url: payload.data?.linkUrl || '/crmtesting/attendance',
+      url: targetUrl,
       ...payload.data
     },
+    requireInteraction: true,
+    tag: `ess-push-${Date.now()}`,
+    renotify: true,
     vibrate: [200, 100, 200]
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// Fallback listener for raw push events
+self.addEventListener('push', function(event) {
+  if (!event.data) return;
+  try {
+    const data = event.data.json();
+    const title = data.notification?.title || data.data?.title || 'ESS OS Alert';
+    const body = data.notification?.body || data.data?.message || '';
+    const iconUrl = self.location.origin + '/crmtesting/ess-logo.png';
+    const targetUrl = data.data?.linkUrl || '/crmtesting/attendance';
+
+    event.waitUntil(
+      self.registration.showNotification(title, {
+        body: body,
+        icon: iconUrl,
+        badge: iconUrl,
+        data: { url: targetUrl, ...data.data },
+        requireInteraction: true,
+        tag: `ess-raw-${Date.now()}`,
+        renotify: true,
+        vibrate: [200, 100, 200]
+      })
+    );
+  } catch (e) {
+    // Handled by messaging.onBackgroundMessage
+  }
 });
 
 self.addEventListener('notificationclick', function(event) {
