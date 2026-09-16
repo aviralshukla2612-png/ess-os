@@ -31,8 +31,8 @@ export async function GET() {
       employeeId: a.employee.employeeIdCode,
       name: a.employee.user.name,
       date: new Date(a.date).toLocaleDateString(),
-      punchIn: a.punchIn ? new Date(a.punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "09:00 AM",
-      punchOut: a.punchOut ? new Date(a.punchOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "06:00 PM",
+      punchIn: a.punchIn ? new Date(a.punchIn).toLocaleTimeString("en-US", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" }) : "09:00 AM",
+      punchOut: a.punchOut ? new Date(a.punchOut).toLocaleTimeString("en-US", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" }) : "06:00 PM",
       status: a.status,
       workHours: `${Math.floor((a.totalMinutes || 0) / 60)}h ${(a.totalMinutes || 0) % 60}m`,
     }));

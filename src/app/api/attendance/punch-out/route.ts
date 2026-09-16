@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { notifyAdmins } from "@/lib/notifications";
+import { notifyAdmins, formatToIST } from "@/lib/notifications";
 
 export async function POST(req: Request) {
   const authRes = await requireAuth();
@@ -89,11 +89,7 @@ export async function POST(req: Request) {
     const hours = Math.floor(workedMinutes / 60);
     const mins = workedMinutes % 60;
     const workDuration = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-    const timeFormatted = serverNow.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+    const timeFormatted = formatToIST(serverNow);
 
     notifyAdmins({
       title: `🛑 Punch-Out: ${empName}`,

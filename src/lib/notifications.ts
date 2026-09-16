@@ -1,6 +1,18 @@
 import { prisma } from "./prisma";
 import { firebaseAdmin } from "./firebaseAdmin";
 
+/**
+ * Format any date into Indian Standard Time (IST - Asia/Kolkata)
+ */
+export function formatToIST(date: Date = new Date()): string {
+  return date.toLocaleTimeString("en-US", {
+    timeZone: "Asia/Kolkata",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 export async function createAndSendNotification({
   recipientId,
   title,
