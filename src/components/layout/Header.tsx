@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search, ChevronDown, LogOut, Coffee, Play, Power, Sparkles, Clock, ShieldCheck } from "lucide-react";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { BottomSheet } from "../ui/BottomSheet";
+import { NotificationDropdown } from "./NotificationDropdown";
 import { useWorkClock } from "@/lib/workClockContext";
 import { useToast } from "@/components/ui/Toast";
 
@@ -258,7 +259,9 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
         </div>
         )}
 
-        {/* Global Notifications for Owner */}
+        {/* Global Notifications Bell (for both Employee and Owner/Admin) */}
+        <NotificationDropdown />
+
         <div className="hidden md:block shrink-0">
           <ThemeToggle />
         </div>
