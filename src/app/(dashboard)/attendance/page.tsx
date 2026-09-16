@@ -133,6 +133,25 @@ const CustomStaffDropdown = ({ employees, value, onChange }: any) => {
 export default function AttendanceWorkClockPage() {
   const { data: session } = useSession();
   const role = session?.user?.role;
+  const userPerms = (session?.user?.permissions as string[]) || [];
+  const hasTeamAttendance = role === "OWNER" || (role === "SUB_ADMIN" && userPerms.includes("attendance"));
+
+  const [activeTab, setActiveTab] = useState<"team" | "personal">(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("view");
+      if (p === "personal") return "personal";
+      if (p === "team" && hasTeamAttendance) return "team";
+    }
+    return hasTeamAttendance ? "team" : "personal";
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search).get("view");
+      if (p === "personal") setActiveTab("personal");
+      else if (p === "team" && hasTeamAttendance) setActiveTab("team");
+    }
+  }, [hasTeamAttendance]);
   const { showToast } = useToast();
   const {
     status,
@@ -199,10 +218,10 @@ export default function AttendanceWorkClockPage() {
   };
 
   useEffect(() => {
-    if ((role as string) === "OWNER") {
+    if (hasTeamAttendance) {
       fetchEmployees();
     }
-  }, [role]);
+  }, [hasTeamAttendance]);
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -387,14 +406,47 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
     }
   };
 
-  // Admin/Owner View for Attendance Page
-  if ((role as string) === "OWNER") {
+  const renderTabToggle = () => {
+    if (!hasTeamAttendance) return null;
+    return (
+      <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl w-fit border border-slate-200/80 dark:border-slate-700/80 shadow-xs mb-6">
+        <button
+          type="button"
+          onClick={() => setActiveTab("team")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            activeTab === "team"
+              ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+          }`}
+        >
+          <Users className="w-3.5 h-3.5" />
+          <span>👥 Team Attendance</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("personal")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            activeTab === "personal"
+              ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5" />
+          <span>⏱️ My Work Sessions & Clock</span>
+        </button>
+      </div>
+    );
+  };
+
+  // Team Attendance View
+  if (hasTeamAttendance && activeTab === "team") {
     return (
       <div className="space-y-8 pb-12">
+        {renderTabToggle()}
         <PageHeader
           title="Team Attendance & Activity"
           description="Live overview of team breaks and session statuses."
-          badge="OWNER VIEW"
+          badge={role === "OWNER" ? "OWNER VIEW" : "SUB-ADMIN VIEW"}
           icon={<Clock className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />}
           actions={
             <div className="flex items-center gap-3">
@@ -416,6 +468,7 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
 
   return (
     <div className="space-y-8 pb-20 max-w-4xl mx-auto">
+      {renderTabToggle()}
       {/* Module Header */}
       <PageHeader
         title="ESS Work Clock"

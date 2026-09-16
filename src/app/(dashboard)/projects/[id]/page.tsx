@@ -63,6 +63,8 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
           tmName: p.memberships?.find((m: any) => m.roleInProject === "TM")?.employee?.user?.name || "Unassigned",
           teamMembers: p.memberships?.map((m: any) => ({
             id: m.id,
+            membershipId: m.id,
+            employeeId: m.employeeId || m.employee?.id,
             name: m.employee?.user?.name || "Unknown",
             role: m.roleInProject,
             active: m.isActive,
@@ -70,6 +72,8 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
           })) || [],
           removalHistory: p.memberships?.filter((m: any) => !m.isActive).map((m: any) => ({
             id: m.id,
+            membershipId: m.id,
+            employeeId: m.employeeId || m.employee?.id,
             name: m.employee?.user?.name || "Unknown",
             role: m.roleInProject,
             removedDate: m.removedAt ? new Date(m.removedAt).toLocaleDateString() : "Unknown",
@@ -313,7 +317,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
               <h3 className="font-bold text-slate-900 dark:text-slate-100">Active Team Members</h3>
               {project.teamMembers?.slice(0, 3).map((m: any) => (
                 <div key={m.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                  <Link href={`/employees/${m.id}`} className="hover:underline">
+                  <Link href={`/employees/${m.employeeId || m.id}`} className="hover:underline">
                     <div className="font-bold text-slate-900 dark:text-slate-100">{m.name}</div>
                     <div className="text-[11px] text-slate-500">{m.role}</div>
                   </Link>
@@ -380,7 +384,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               {project.teamMembers?.map((m: any) => (
                 <div key={m.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-1">
-                  <Link href={`/employees/${m.id}`} className="font-bold text-slate-900 dark:text-slate-100 hover:underline block text-sm">
+                  <Link href={`/employees/${m.employeeId || m.id}`} className="font-bold text-slate-900 dark:text-slate-100 hover:underline block text-sm">
                     {m.name}
                   </Link>
                   <div className="text-indigo-600 dark:text-indigo-400 font-semibold">{m.role}</div>

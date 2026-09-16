@@ -8,7 +8,14 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
   try {
     const employee = await prisma.employee.findFirst({
-      where: { OR: [{ id: params.id }, { employeeIdCode: params.id }] },
+      where: {
+        OR: [
+          { id: params.id },
+          { employeeIdCode: params.id },
+          { userId: params.id },
+          { memberships: { some: { id: params.id } } },
+        ],
+      },
       include: {
         user: true,
         attendances: { orderBy: { date: 'desc' } },
@@ -21,8 +28,15 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ success: false, error: "Employee not found" }, { status: 404 });
     }
 
-    // IDOR Protection: Only OWNER or the employee themselves can access this profile
-    if (authRes.activeRole !== "OWNER" && authRes.employeeId !== employee.id) {
+    // Permission check: OWNER, the employee themselves, or SUB_ADMIN with relevant permissions
+    const isSubAdminAllowed = authRes.activeRole === "SUB_ADMIN" && (
+      authRes.subAdminPermissions?.includes("employees") ||
+      authRes.subAdminPermissions?.includes("attendance") ||
+      authRes.subAdminPermissions?.includes("projects") ||
+      false
+    );
+
+    if (authRes.activeRole !== "OWNER" && !isSubAdminAllowed && authRes.employeeId !== employee.id) {
       return NextResponse.json({ success: false, error: "Forbidden: You cannot access another employee's profile" }, { status: 403 });
     }
 
@@ -38,15 +52,29 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   try {
     const body = await req.json();
+
+    // Prevent non-owners from creating or modifying Sub-Admins
+    if ((body.role === "SUB_ADMIN" || body.subAdminPermissions !== undefined) && authRes.activeRole !== "OWNER") {
+      return NextResponse.json({ success: false, error: "Forbidden: Only the Owner can manage Sub-Admin privileges" }, { status: 403 });
+    }
     
-    const existing = await prisma.employee.findUnique({ where: { id: params.id } });
+    const existing = await prisma.employee.findFirst({
+      where: {
+        OR: [
+          { id: params.id },
+          { employeeIdCode: params.id },
+          { userId: params.id },
+          { memberships: { some: { id: params.id } } },
+        ],
+      },
+    });
     if (!existing) {
       return NextResponse.json({ success: false, error: "Employee not found" }, { status: 404 });
     }
 
     const updatedEmployee = await prisma.$transaction(async (tx) => {
       await tx.employee.update({
-        where: { id: params.id },
+        where: { id: existing.id },
         data: {
           salaryMonthly: body.salaryMonthly !== undefined ? Number(body.salaryMonthly) : undefined,
           status: body.status,
@@ -58,8 +86,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       if (body.designation) userUpdateData.designation = body.designation;
       if (body.department) userUpdateData.department = body.department;
       if (body.isActive !== undefined) userUpdateData.isActive = body.isActive;
-      if (body.role !== undefined) userUpdateData.activeRole = body.role;
-      if (body.subAdminPermissions !== undefined) {
+      if (body.role !== undefined && (body.role !== "SUB_ADMIN" || authRes.activeRole === "OWNER")) {
+        userUpdateData.activeRole = body.role;
+      }
+      if (body.subAdminPermissions !== undefined && authRes.activeRole === "OWNER") {
         userUpdateData.subAdminPermissions = Array.isArray(body.subAdminPermissions)
           ? JSON.stringify(body.subAdminPermissions)
           : (typeof body.subAdminPermissions === "string" ? body.subAdminPermissions : "[]");

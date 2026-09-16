@@ -35,11 +35,19 @@ interface NavItem {
   icon: React.ReactNode;
   badge?: string;
   badgeColor?: string;
+  sectionHeader?: string;
 }
 
 export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [searchStr, setSearchStr] = React.useState("");
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      setSearchStr(window.location.search);
+    }
+  }, [pathname]);
 
   const getNavItems = (): NavItem[] => {
     const ownerItems: NavItem[] = [
@@ -63,12 +71,39 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
 
       case "SUB_ADMIN": {
         const userPerms = (session?.user?.permissions as string[]) || [];
-        if (userPerms.length > 0) {
-          return ownerItems.filter((item) => item.id && userPerms.includes(item.id));
-        }
-        return [
-          { id: "attendance", title: "Attendance", href: "/attendance", icon: <Clock className="w-4 h-4" /> }
+
+        // Delegated Admin permissions granted by Owner
+        const delegatedAdminPerms: NavItem[] = [
+          { id: "overview", title: "Overview", href: "/owner", icon: <LayoutDashboard className="w-4 h-4" /> },
+          { id: "leads", title: "Sales & Leads", href: "/leads", icon: <Target className="w-4 h-4" /> },
+          { id: "quotes", title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
+          { id: "clients", title: "Clients", href: "/clients", icon: <Users className="w-4 h-4" /> },
+          { id: "employees", title: "Team", href: "/employees", icon: <UserCheck className="w-4 h-4" /> },
+          { id: "attendance", title: "Team Attendance", href: "/attendance?view=team", icon: <Clock className="w-4 h-4" /> },
+          { id: "attendance-requests", title: "Punch Out Requests", href: "/attendance-requests", icon: <Clock className="w-4 h-4" /> },
+          { id: "leave-requests", title: "Leave Approvals", href: "/leave-requests", icon: <UserCheck className="w-4 h-4" /> },
+          { id: "finance", title: "Finance", href: "/finance", icon: <IndianRupee className="w-4 h-4" /> },
+          { id: "audit", title: "Activity", href: "/audit", icon: <ShieldAlert className="w-4 h-4" /> },
         ];
+
+        const grantedAdminItems = delegatedAdminPerms.filter((item) => item.id && userPerms.includes(item.id));
+
+        const adminSection: NavItem[] = grantedAdminItems.map((item, idx) => ({
+          ...item,
+          sectionHeader: idx === 0 ? "DELEGATED CONTROLS" : undefined,
+        }));
+
+        // Personal employee tools (as requested: My Desk, My Projects, My Work Sessions, Leave Applications, Documentation, Settings)
+        const personalItems: NavItem[] = [
+          { title: "My Desk", href: "/employee", icon: <LayoutDashboard className="w-4 h-4" />, sectionHeader: grantedAdminItems.length > 0 ? "MY WORKSPACE" : undefined },
+          { title: "My Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" /> },
+          { title: "My Work Sessions", href: "/attendance?view=personal", icon: <Clock className="w-4 h-4" /> },
+          { title: "Leave Applications", href: "/attendance/leave", icon: <UserCheck className="w-4 h-4" /> },
+          { title: "Documentation", href: "/docs", icon: <BookOpen className="w-4 h-4" /> },
+          { title: "Settings", href: "/settings", icon: <Settings className="w-4 h-4" /> },
+        ];
+
+        return [...adminSection, ...personalItems];
       }
 
       case "SALES":
@@ -108,14 +143,18 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
 
   const navItems = getNavItems();
 
-  // Find the most specific active item to prevent multiple highlights (e.g. /attendance and /attendance/leave)
+  // Find the most specific active item
   const activeItem = navItems.reduce((best, item) => {
-    if (
-      pathname === item.href ||
-      (item.href !== "/" && item.href !== "/owner" && pathname.startsWith(item.href + "/"))
-    ) {
-      if (!best || item.href.length > best.href.length) {
-        return item;
+    const [itemPath, itemQuery] = item.href.split("?");
+    const isPathMatch =
+      pathname === itemPath ||
+      (itemPath !== "/" && itemPath !== "/owner" && pathname.startsWith(itemPath + "/"));
+
+    if (isPathMatch) {
+      if (itemQuery) {
+        if (searchStr.includes(itemQuery)) return item;
+      } else {
+        if (!best) return item;
       }
     }
     return best;
@@ -156,36 +195,44 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
 
           {/* Navigation Items with Active Indicator Bar */}
           <nav className="space-y-1.5">
-            {navItems.map((item) => {
+            {navItems.map((item, index) => {
               const isActive = activeItem?.href === item.href;
 
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => {
-                    if (onCloseMobile) onCloseMobile();
-                  }}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all relative ${
-                    isActive
-                      ? "bg-indigo-50 dark:bg-indigo-600/15 text-indigo-700 dark:text-indigo-300 font-bold shadow-xs dark:shadow-lg border border-indigo-200 dark:border-indigo-500/30 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-indigo-600 dark:before:bg-indigo-500 before:rounded-r-full"
-                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-400"}>{item.icon}</span>
-                    <span>{item.title}</span>
-                  </div>
-                  {item.badge && (
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        item.badgeColor || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
+                <React.Fragment key={item.href + index}>
+                  {item.sectionHeader && (
+                    <div className="pt-3 pb-1 px-3">
+                      <div className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase font-mono border-t border-slate-100 dark:border-slate-800/60 pt-2.5">
+                        {item.sectionHeader}
+                      </div>
+                    </div>
                   )}
-                </Link>
+                  <Link
+                    href={item.href}
+                    onClick={() => {
+                      if (onCloseMobile) onCloseMobile();
+                    }}
+                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all relative ${
+                      isActive
+                        ? "bg-indigo-50 dark:bg-indigo-600/15 text-indigo-700 dark:text-indigo-300 font-bold shadow-xs dark:shadow-lg border border-indigo-200 dark:border-indigo-500/30 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-indigo-600 dark:before:bg-indigo-500 before:rounded-r-full"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-400"}>{item.icon}</span>
+                      <span>{item.title}</span>
+                    </div>
+                    {item.badge && (
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          item.badgeColor || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                </React.Fragment>
               );
             })}
           </nav>

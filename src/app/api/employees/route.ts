@@ -96,7 +96,13 @@ export async function POST(req: Request) {
     const code = `EMP-${Math.floor(100 + Math.random() * 900)}`;
     const hashedPassword = await bcrypt.hash(body.password, 10);
 
-    const activeRole = body.role === "SUB_ADMIN" ? "SUB_ADMIN" : (body.role === "SALES" ? "SALES" : "EMPLOYEE");
+    if (body.role === "SUB_ADMIN" && authRes.activeRole !== "OWNER") {
+      return NextResponse.json({ success: false, error: "Forbidden: Only the Owner can create Sub-Admins" }, { status: 403 });
+    }
+
+    const activeRole = (body.role === "SUB_ADMIN" && authRes.activeRole === "OWNER")
+      ? "SUB_ADMIN"
+      : (body.role === "SALES" ? "SALES" : "EMPLOYEE");
     const permissionsJson = Array.isArray(body.subAdminPermissions)
       ? JSON.stringify(body.subAdminPermissions)
       : (typeof body.subAdminPermissions === "string" ? body.subAdminPermissions : "[]");

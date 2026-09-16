@@ -17,9 +17,12 @@ import {
   Shield,
   SlidersHorizontal,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { SubAdminPermissionSelector } from "@/components/admin/SubAdminPermissionSelector";
 
 export default function EmployeesPage() {
+  const { data: session } = useSession();
+  const isOwner = session?.user?.role === "OWNER";
   const { showToast } = useToast();
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,9 +82,13 @@ export default function EmployeesPage() {
 
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isOwner && role === "SUB_ADMIN") {
+      showToast("Only the Owner can create Sub-Admins", "error");
+      return;
+    }
     try {
-      const payload: any = { name: empName, email, password, designation, role };
-      if (role === "SUB_ADMIN") {
+      const payload: any = { name: empName, email, password, designation, role: isOwner ? role : (role === "SALES" ? "SALES" : "EMPLOYEE") };
+      if (role === "SUB_ADMIN" && isOwner) {
         payload.subAdminPermissions = subAdminPermissions;
       }
 
@@ -115,6 +122,10 @@ export default function EmployeesPage() {
 
   const handleSavePermissions = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isOwner) {
+      showToast("Only the Owner can manage Sub-Admin privileges", "error");
+      return;
+    }
     try {
       const res = await fetch(`/crmtesting/api/employees/${editPermissionsModal.employeeId}`, {
         method: "PATCH",
@@ -273,28 +284,30 @@ export default function EmployeesPage() {
               </span>
 
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setEditPermissionsModal({
-                      isOpen: true,
-                      employeeId: emp.id,
-                      name: emp.name,
-                      permissions: emp.subAdminPermissions || [],
-                      role: emp.role || "EMPLOYEE",
-                    });
-                  }}
-                  className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs ${
-                    emp.role === "SUB_ADMIN"
-                      ? "bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 dark:hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30"
-                      : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
-                  }`}
-                  title="Configure Sub-Admin Permissions & Sides"
-                >
-                  <Shield className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                  <span>{emp.role === "SUB_ADMIN" ? "Permissions" : "Sub-Admin"}</span>
-                </button>
+                {isOwner && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setEditPermissionsModal({
+                        isOpen: true,
+                        employeeId: emp.id,
+                        name: emp.name,
+                        permissions: emp.subAdminPermissions || [],
+                        role: emp.role || "EMPLOYEE",
+                      });
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs ${
+                      emp.role === "SUB_ADMIN"
+                        ? "bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 dark:hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30"
+                        : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
+                    }`}
+                    title="Configure Sub-Admin Permissions & Sides"
+                  >
+                    <Shield className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                    <span>{emp.role === "SUB_ADMIN" ? "Permissions" : "Sub-Admin"}</span>
+                  </button>
+                )}
 
                 <button
                   onClick={(e) => {
@@ -324,8 +337,8 @@ export default function EmployeesPage() {
       <BottomSheet
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
-        title="Add Team Member / Sub-Admin"
-        subtitle="Provision employee profile, role context, and administrative permissions."
+        title={isOwner ? "Add Team Member / Sub-Admin" : "Add Team Member"}
+        subtitle={isOwner ? "Provision employee profile, role context, and administrative permissions." : "Provision employee profile and assign system role."}
       >
         <form onSubmit={handleAddEmployee} className="space-y-4 text-xs">
           <div>
@@ -368,7 +381,7 @@ export default function EmployeesPage() {
               required
               value={designation}
               onChange={(e) => setDesignation(e.target.value)}
-              placeholder={role === "SUB_ADMIN" ? "Operations Manager / Sub Admin" : "Backend Developer"}
+              placeholder={role === "SUB_ADMIN" && isOwner ? "Operations Manager / Sub Admin" : "Backend Developer"}
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
             />
           </div>
@@ -381,12 +394,12 @@ export default function EmployeesPage() {
             >
               <option value="EMPLOYEE">Standard Employee</option>
               <option value="SALES">Sales Representative</option>
-              <option value="SUB_ADMIN">🛡️ Sub-Admin (Custom Admin Access)</option>
+              {isOwner && <option value="SUB_ADMIN">🛡️ Sub-Admin (Custom Admin Access)</option>}
             </select>
           </div>
 
           {/* Sub-Admin Module Permissions Selector */}
-          {role === "SUB_ADMIN" && (
+          {role === "SUB_ADMIN" && isOwner && (
             <div className="p-4 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/60">
               <SubAdminPermissionSelector
                 selectedPermissions={subAdminPermissions}
@@ -399,7 +412,7 @@ export default function EmployeesPage() {
             type="submit"
             className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all mt-2"
           >
-            {role === "SUB_ADMIN" ? "Create Sub-Admin Profile" : "Create Employee Profile"}
+            {role === "SUB_ADMIN" && isOwner ? "Create Sub-Admin Profile" : "Create Employee Profile"}
           </button>
         </form>
       </BottomSheet>

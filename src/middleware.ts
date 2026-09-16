@@ -32,20 +32,17 @@ export async function middleware(req: any) {
     return NextResponse.next();
   }
 
-  // Route-to-module mapping for SUB_ADMIN
+  // Route-to-module mapping for SUB_ADMIN administrative pages
   const subAdminRouteMap: Record<string, string> = {
     "/owner": "overview",
     "/leads": "leads",
     "/quotes": "quotes",
     "/clients": "clients",
-    "/projects": "projects",
     "/employees": "employees",
     "/attendance-requests": "attendance-requests",
     "/leave-requests": "leave-requests",
     "/finance": "finance",
     "/audit": "audit",
-    "/settings": "settings",
-    "/attendance": "attendance",
   };
 
   // Check SUB_ADMIN permissions
