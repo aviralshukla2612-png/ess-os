@@ -28,13 +28,21 @@ export async function GET() {
       const todayAtt = e.attendances.filter(a => isToday(a.date));
       const isPunchedIn = todayAtt.some((a) => a.punchIn && !a.punchOut);
       const isShiftCompleted = todayAtt.some((a) => a.punchIn && a.punchOut);
+      let permissions: string[] = [];
+      try {
+        if (e.user.subAdminPermissions) {
+          permissions = JSON.parse(e.user.subAdminPermissions);
+        }
+      } catch {}
 
       return {
       id: e.id,
+      userId: e.user.id,
       employeeId: e.employeeIdCode,
       name: e.user.name,
       email: e.user.email,
       role: e.user.activeRole,
+      subAdminPermissions: permissions,
       designation: e.user.designation,
       department: e.user.department,
       phone: "+91 98980 000" + (e.employeeIdCode.length > 3 ? e.employeeIdCode.slice(-2) : "01"),
@@ -69,7 +77,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const authRes = await requireRole(["OWNER"]);
+  const authRes = await requireRole(["OWNER"], "employees");
   if (authRes instanceof NextResponse) return authRes;
 
   try {
@@ -88,15 +96,21 @@ export async function POST(req: Request) {
     const code = `EMP-${Math.floor(100 + Math.random() * 900)}`;
     const hashedPassword = await bcrypt.hash(body.password, 10);
 
+    const activeRole = body.role === "SUB_ADMIN" ? "SUB_ADMIN" : (body.role === "SALES" ? "SALES" : "EMPLOYEE");
+    const permissionsJson = Array.isArray(body.subAdminPermissions)
+      ? JSON.stringify(body.subAdminPermissions)
+      : (typeof body.subAdminPermissions === "string" ? body.subAdminPermissions : "[]");
+
     const result = await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
           email: body.email,
           passwordHash: hashedPassword,
           name: body.name,
-          designation: body.designation || "Team Member",
-          department: body.department || "General",
-          activeRole: body.role === "SALES" ? "SALES" : "EMPLOYEE",
+          designation: body.designation || (activeRole === "SUB_ADMIN" ? "Sub Administrator" : "Team Member"),
+          department: body.department || (activeRole === "SUB_ADMIN" ? "Administration" : "General"),
+          activeRole,
+          subAdminPermissions: permissionsJson,
           avatarUrl: `https://images.unsplash.com/photo-${1500000000000 + count * 100}?w=150`,
         },
       });

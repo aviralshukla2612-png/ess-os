@@ -50,6 +50,7 @@ export function MobileBottomNav({ role, onOpenMoreMenu }: Props) {
           { label: "Clients", href: "/clients", icon: <Users className="w-5 h-5" /> },
         ];
       case "OWNER":
+      case "SUB_ADMIN":
         return [
           { label: "Overview", href: "/owner", icon: <LayoutDashboard className="w-5 h-5" /> },
           { label: "Sales", href: "/leads", icon: <Target className="w-5 h-5" /> },
@@ -62,6 +63,8 @@ export function MobileBottomNav({ role, onOpenMoreMenu }: Props) {
           { label: "Scope", href: "/portal/demo-token-abc", icon: <UserCheck className="w-5 h-5" /> },
           { label: "Invoices", href: "/portal/demo-token-abc", icon: <IndianRupee className="w-5 h-5" /> },
         ];
+      default:
+        return [];
     }
   };
 

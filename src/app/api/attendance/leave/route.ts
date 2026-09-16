@@ -33,8 +33,8 @@ export async function GET(req: Request) {
           paidLeaveTotal: true, paidLeaveUsed: true,
         }
       });
-    } else if (session.user.role === "OWNER") {
-      // Get all for owner
+    } else if (session.user.role === "OWNER" || (session.user.role === "SUB_ADMIN" && session.user.permissions?.includes("leave-requests"))) {
+      // Get all for owner or permitted sub-admin
       leaves = await prisma.leaveRequest.findMany({
         orderBy: { createdAt: 'desc' },
         include: {

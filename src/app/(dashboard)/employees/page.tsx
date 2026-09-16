@@ -14,7 +14,11 @@ import {
   Sparkles,
   Trash2,
   FileSpreadsheet,
+  Shield,
+  SlidersHorizontal,
 } from "lucide-react";
+import { SubAdminPermissionSelector } from "@/components/admin/SubAdminPermissionSelector";
+
 export default function EmployeesPage() {
   const { showToast } = useToast();
   const [employees, setEmployees] = useState<any[]>([]);
@@ -26,6 +30,26 @@ export default function EmployeesPage() {
   const [password, setPassword] = useState("");
   const [designation, setDesignation] = useState("");
   const [role, setRole] = useState("EMPLOYEE");
+  const [subAdminPermissions, setSubAdminPermissions] = useState<string[]>([
+    "attendance",
+    "projects",
+    "leads",
+    "clients",
+  ]);
+
+  const [editPermissionsModal, setEditPermissionsModal] = useState<{
+    isOpen: boolean;
+    employeeId: string;
+    name: string;
+    permissions: string[];
+    role: string;
+  }>({
+    isOpen: false,
+    employeeId: "",
+    name: "",
+    permissions: [],
+    role: "",
+  });
 
   const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; id: string; name: string }>({
     isOpen: false,
@@ -56,14 +80,19 @@ export default function EmployeesPage() {
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload: any = { name: empName, email, password, designation, role };
+      if (role === "SUB_ADMIN") {
+        payload.subAdminPermissions = subAdminPermissions;
+      }
+
       const res = await fetch("/crmtesting/api/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: empName, email, password, designation, role }),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (json.success) {
-        showToast(`✓ Employee profile for "${empName || 'New Employee'}" created`, "success");
+        showToast(`✓ Profile for "${empName || 'New User'}" created successfully`, "success");
         fetchEmployees();
         setIsAddOpen(false);
         setEmpName("");
@@ -71,6 +100,7 @@ export default function EmployeesPage() {
         setPassword("");
         setDesignation("");
         setRole("EMPLOYEE");
+        setSubAdminPermissions(["attendance", "projects", "leads", "clients"]);
       } else {
         if (res.status === 409) {
           showToast("Email already exists in the system", "error");
@@ -79,6 +109,30 @@ export default function EmployeesPage() {
         }
       }
     } catch (e) {
+      showToast("Network error", "error");
+    }
+  };
+
+  const handleSavePermissions = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/crmtesting/api/employees/${editPermissionsModal.employeeId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role: editPermissionsModal.role,
+          subAdminPermissions: editPermissionsModal.permissions,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(`✓ Access permissions updated for "${editPermissionsModal.name}"`, "success");
+        setEditPermissionsModal({ isOpen: false, employeeId: "", name: "", permissions: [], role: "" });
+        fetchEmployees();
+      } else {
+        showToast(json.error || "Failed to update permissions", "error");
+      }
+    } catch {
       showToast("Network error", "error");
     }
   };
@@ -174,6 +228,12 @@ export default function EmployeesPage() {
                       <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                         {emp.employeeId}
                       </span>
+                      {emp.role === "SUB_ADMIN" && (
+                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30 flex items-center gap-1">
+                          <Shield className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                          <span>SUB-ADMIN ({emp.subAdminPermissions?.length || 0})</span>
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mt-0.5">
                       {emp.designation} • {emp.department}
@@ -214,6 +274,29 @@ export default function EmployeesPage() {
 
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setEditPermissionsModal({
+                      isOpen: true,
+                      employeeId: emp.id,
+                      name: emp.name,
+                      permissions: emp.subAdminPermissions || [],
+                      role: emp.role || "EMPLOYEE",
+                    });
+                  }}
+                  className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs ${
+                    emp.role === "SUB_ADMIN"
+                      ? "bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 dark:hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30"
+                      : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
+                  }`}
+                  title="Configure Sub-Admin Permissions & Sides"
+                >
+                  <Shield className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                  <span>{emp.role === "SUB_ADMIN" ? "Permissions" : "Sub-Admin"}</span>
+                </button>
+
+                <button
                   onClick={(e) => {
                     e.preventDefault();
                     setConfirmDelete({ isOpen: true, id: emp.id, name: emp.name });
@@ -237,12 +320,12 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* Add Employee Bottom Sheet */}
+      {/* Add Employee / Sub-Admin Bottom Sheet */}
       <BottomSheet
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
-        title="Add Employee Profile"
-        subtitle="Provision employee ID and role context."
+        title="Add Team Member / Sub-Admin"
+        subtitle="Provision employee profile, role context, and administrative permissions."
       >
         <form onSubmit={handleAddEmployee} className="space-y-4 text-xs">
           <div>
@@ -285,7 +368,7 @@ export default function EmployeesPage() {
               required
               value={designation}
               onChange={(e) => setDesignation(e.target.value)}
-              placeholder="Backend Developer"
+              placeholder={role === "SUB_ADMIN" ? "Operations Manager / Sub Admin" : "Backend Developer"}
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
             />
           </div>
@@ -298,14 +381,78 @@ export default function EmployeesPage() {
             >
               <option value="EMPLOYEE">Standard Employee</option>
               <option value="SALES">Sales Representative</option>
+              <option value="SUB_ADMIN">🛡️ Sub-Admin (Custom Admin Access)</option>
             </select>
           </div>
+
+          {/* Sub-Admin Module Permissions Selector */}
+          {role === "SUB_ADMIN" && (
+            <div className="p-4 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/60">
+              <SubAdminPermissionSelector
+                selectedPermissions={subAdminPermissions}
+                onChange={setSubAdminPermissions}
+              />
+            </div>
+          )}
+
           <button
             type="submit"
             className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all mt-2"
           >
-            Create Employee Profile
+            {role === "SUB_ADMIN" ? "Create Sub-Admin Profile" : "Create Employee Profile"}
           </button>
+        </form>
+      </BottomSheet>
+
+      {/* Manage Sub-Admin Permissions Bottom Sheet */}
+      <BottomSheet
+        isOpen={editPermissionsModal.isOpen}
+        onClose={() => setEditPermissionsModal({ isOpen: false, employeeId: "", name: "", permissions: [], role: "" })}
+        title={`Access & Permissions: ${editPermissionsModal.name}`}
+        subtitle="Provision Sub-Admin privileges and select permitted admin sides."
+      >
+        <form onSubmit={handleSavePermissions} className="space-y-4 text-xs">
+          <div>
+            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">User System Role</label>
+            <select
+              value={editPermissionsModal.role}
+              onChange={(e) => setEditPermissionsModal(prev => ({ ...prev, role: e.target.value }))}
+              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all font-semibold"
+            >
+              <option value="EMPLOYEE">Standard Employee</option>
+              <option value="SALES">Sales Representative</option>
+              <option value="SUB_ADMIN">🛡️ Sub-Admin (Custom Admin Access)</option>
+            </select>
+          </div>
+
+          {editPermissionsModal.role === "SUB_ADMIN" ? (
+            <div className="p-4 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800/60">
+              <SubAdminPermissionSelector
+                selectedPermissions={editPermissionsModal.permissions}
+                onChange={(perms) => setEditPermissionsModal(prev => ({ ...prev, permissions: perms }))}
+              />
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400">
+              This user has standard {editPermissionsModal.role} access. Select <strong>Sub-Admin</strong> above to grant custom admin sides & tasks.
+            </div>
+          )}
+
+          <div className="pt-3 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setEditPermissionsModal({ isOpen: false, employeeId: "", name: "", permissions: [], role: "" })}
+              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold shadow-sm transition-all"
+            >
+              Save Changes
+            </button>
+          </div>
         </form>
       </BottomSheet>
 

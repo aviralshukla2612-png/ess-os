@@ -41,7 +41,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
   const initialFetchDone = React.useRef(false);
 
   React.useEffect(() => {
-    if (currentUser.role !== "OWNER") return;
+    if (currentUser.role !== "OWNER" && currentUser.role !== "SUB_ADMIN") return;
     const checkBreaks = async () => {
       try {
         const res = await fetch("/crmtesting/api/attendance/breaks/today");
@@ -285,7 +285,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{currentUser.email}</div>
                 <div className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 pt-0.5 flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
-                  {currentUser.role} ROLE
+                  {currentUser.role === "SUB_ADMIN" ? "SUB-ADMIN" : currentUser.role} ROLE
                 </div>
               </div>
 

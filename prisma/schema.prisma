@@ -15,6 +15,7 @@ model User {
   designation         String
   department          String
   activeRole          String              @default("EMPLOYEE")
+  subAdminPermissions String?             @default("[]")
   avatarUrl           String?
   isActive            Boolean             @default(true)
   createdAt           DateTime            @default(now())

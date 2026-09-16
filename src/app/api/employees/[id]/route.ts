@@ -33,7 +33,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 }
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const authRes = await requireRole(["OWNER"]);
+  const authRes = await requireRole(["OWNER"], "employees");
   if (authRes instanceof NextResponse) return authRes;
 
   try {
@@ -58,6 +58,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       if (body.designation) userUpdateData.designation = body.designation;
       if (body.department) userUpdateData.department = body.department;
       if (body.isActive !== undefined) userUpdateData.isActive = body.isActive;
+      if (body.role !== undefined) userUpdateData.activeRole = body.role;
+      if (body.subAdminPermissions !== undefined) {
+        userUpdateData.subAdminPermissions = Array.isArray(body.subAdminPermissions)
+          ? JSON.stringify(body.subAdminPermissions)
+          : (typeof body.subAdminPermissions === "string" ? body.subAdminPermissions : "[]");
+      }
 
       if (Object.keys(userUpdateData).length > 0) {
         await tx.user.update({

@@ -27,15 +27,54 @@ export async function middleware(req: any) {
     return NextResponse.redirect(new URL("/crmtesting/login", req.url));
   }
 
-  // OWNER only routes
+  // Universal access for OWNER
+  if (token?.role === "OWNER") {
+    return NextResponse.next();
+  }
+
+  // Route-to-module mapping for SUB_ADMIN
+  const subAdminRouteMap: Record<string, string> = {
+    "/owner": "overview",
+    "/leads": "leads",
+    "/quotes": "quotes",
+    "/clients": "clients",
+    "/projects": "projects",
+    "/employees": "employees",
+    "/attendance-requests": "attendance-requests",
+    "/leave-requests": "leave-requests",
+    "/finance": "finance",
+    "/audit": "audit",
+    "/settings": "settings",
+    "/attendance": "attendance",
+  };
+
+  // Check SUB_ADMIN permissions
+  if (token?.role === "SUB_ADMIN") {
+    const userPerms = (token?.permissions as string[]) || [];
+    
+    // Find matching module for current path
+    const matchedPrefix = Object.keys(subAdminRouteMap).find(prefix => pathname.startsWith(prefix));
+    if (matchedPrefix) {
+      const requiredModule = subAdminRouteMap[matchedPrefix];
+      if (userPerms.includes(requiredModule)) {
+        return NextResponse.next();
+      } else {
+        // If they don't have access to this module, redirect to attendance or first allowed page
+        return NextResponse.redirect(new URL("/crmtesting/attendance", req.url));
+      }
+    }
+    return NextResponse.next();
+  }
+
+  // OWNER only routes for other non-owner roles
   const ownerOnlyRoutes = ["/owner", "/finance", "/audit", "/attendance-requests", "/employees"];
-  if (ownerOnlyRoutes.some(r => pathname.startsWith(r)) && token?.role !== "OWNER") {
+  if (ownerOnlyRoutes.some(r => pathname.startsWith(r))) {
     return NextResponse.redirect(new URL("/crmtesting/login", req.url));
   }
 
-  // SALES or OWNER routes
+  // SALES routes
   const salesRoutes = ["/leads", "/clients", "/sales", "/quotes"];
-  if (salesRoutes.some(r => pathname.startsWith(r)) && token?.role !== "OWNER" && token?.role !== "SALES") {
+  if (salesRoutes.some(r => pathname.startsWith(r)) && token?.role !== "SALES") {
     return NextResponse.redirect(new URL("/crmtesting/login", req.url));
   }
 

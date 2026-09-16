@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { RoleContext } from "@/lib/auth";
 import {
   LayoutDashboard,
@@ -28,6 +29,7 @@ interface Props {
 }
 
 interface NavItem {
+  id?: string;
   title: string;
   href: string;
   icon: React.ReactNode;
@@ -37,25 +39,37 @@ interface NavItem {
 
 export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const getNavItems = (): NavItem[] => {
+    const ownerItems: NavItem[] = [
+      { id: "overview", title: "Overview", href: "/owner", icon: <LayoutDashboard className="w-4 h-4" /> },
+      { id: "leads", title: "Sales & Leads", href: "/leads", icon: <Target className="w-4 h-4" /> },
+      { id: "quotes", title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
+      { id: "clients", title: "Clients", href: "/clients", icon: <Users className="w-4 h-4" /> },
+      { id: "projects", title: "Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" /> },
+      { id: "employees", title: "Team", href: "/employees", icon: <UserCheck className="w-4 h-4" /> },
+      { id: "attendance", title: "Attendance", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
+      { id: "attendance-requests", title: "Punch Out Requests", href: "/attendance-requests", icon: <Clock className="w-4 h-4" /> },
+      { id: "leave-requests", title: "Leave Applications", href: "/leave-requests", icon: <UserCheck className="w-4 h-4" /> },
+      { id: "finance", title: "Finance", href: "/finance", icon: <IndianRupee className="w-4 h-4" /> },
+      { id: "audit", title: "Activity", href: "/audit", icon: <ShieldAlert className="w-4 h-4" /> },
+      { id: "settings", title: "Settings", href: "/settings", icon: <Settings className="w-4 h-4" /> },
+    ];
+
     switch (role) {
       case "OWNER":
-        return [
-          { title: "Overview", href: "/owner", icon: <LayoutDashboard className="w-4 h-4" /> },
-          { title: "Sales & Leads", href: "/leads", icon: <Target className="w-4 h-4" /> },
-          { title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
-          { title: "Clients", href: "/clients", icon: <Users className="w-4 h-4" /> },
-          { title: "Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" /> },
-          { title: "Team", href: "/employees", icon: <UserCheck className="w-4 h-4" /> },
-          { title: "Attendance", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
-          { title: "Punch Out Requests", href: "/attendance-requests", icon: <Clock className="w-4 h-4" /> },
-          { title: "Leave Applications", href: "/leave-requests", icon: <UserCheck className="w-4 h-4" /> },
+        return ownerItems;
 
-          { title: "Finance", href: "/finance", icon: <IndianRupee className="w-4 h-4" /> },
-          { title: "Activity", href: "/audit", icon: <ShieldAlert className="w-4 h-4" /> },
-          { title: "Settings", href: "/settings", icon: <Settings className="w-4 h-4" /> },
+      case "SUB_ADMIN": {
+        const userPerms = (session?.user?.permissions as string[]) || [];
+        if (userPerms.length > 0) {
+          return ownerItems.filter((item) => item.id && userPerms.includes(item.id));
+        }
+        return [
+          { id: "attendance", title: "Attendance", href: "/attendance", icon: <Clock className="w-4 h-4" /> }
         ];
+      }
 
       case "SALES":
         return [
@@ -128,7 +142,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           {/* Navigation Group Header */}
           <div className="px-3 py-1 flex items-center justify-between border-b border-slate-100 dark:border-slate-800/60 pb-3">
             <span className="text-[10px] font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase font-mono">
-              {role} WORKSPACE
+              {role === "SUB_ADMIN" ? "SUB-ADMIN" : role} WORKSPACE
             </span>
             {isMobileOpen && (
               <button

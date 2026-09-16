@@ -69,11 +69,19 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid password");
         }
 
+        let parsedPermissions: string[] = [];
+        try {
+          if (user.subAdminPermissions) {
+            parsedPermissions = JSON.parse(user.subAdminPermissions);
+          }
+        } catch {}
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.activeRole,
+          permissions: parsedPermissions,
           employeeId: user.employeeProfile?.id || undefined,
         };
       },
@@ -84,6 +92,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.permissions = user.permissions;
         token.employeeId = user.employeeId;
       }
       return token;
@@ -92,6 +101,7 @@ export const authOptions: NextAuthOptions = {
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.permissions = (token.permissions as string[]) || [];
         session.user.employeeId = token.employeeId as string | undefined;
       }
       return session;

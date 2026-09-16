@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { createAndSendNotification, formatToIST } from "@/lib/notifications";
 
 export async function POST(req: Request) {
-  const authRes = await requireRole(["OWNER"]);
+  const authRes = await requireRole(["OWNER"], "attendance-requests");
   if (authRes instanceof NextResponse) return authRes;
 
   try {

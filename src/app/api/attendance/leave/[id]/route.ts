@@ -7,7 +7,9 @@ import { createAndSendNotification } from "@/lib/notifications";
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== "OWNER") {
+    const isAllowed = session?.user?.role === "OWNER" || 
+      (session?.user?.role === "SUB_ADMIN" && (session?.user as any)?.permissions?.includes("leave-requests"));
+    if (!session?.user?.id || !isAllowed) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
