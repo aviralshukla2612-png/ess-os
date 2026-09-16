@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { createAndSendNotification } from "@/lib/notifications";
 
 export async function POST(req: NextRequest) {
   const authRes = await requireAuth();
@@ -55,6 +56,26 @@ export async function POST(req: NextRequest) {
         });
       });
 
+      // Dispatch real-time notifications to all affected employees
+      const empIds = activeWorkEvents.map(e => e.employeeId);
+      prisma.employee.findMany({
+        where: { id: { in: empIds } },
+        select: { userId: true }
+      }).then((emps) => {
+        for (const emp of emps) {
+          if (emp.userId) {
+            createAndSendNotification({
+              recipientId: emp.userId,
+              title: "🍱 Company Lunch Break",
+              message: "Admin has initiated lunch break for the team. Enjoy your lunch!",
+              linkUrl: "/attendance",
+              type: "MASS_LUNCH",
+              urgency: "HIGH",
+            }).catch(() => {});
+          }
+        }
+      }).catch(() => {});
+
       return NextResponse.json({ success: true, count: activeWorkEvents.length });
     }
 
@@ -101,6 +122,26 @@ export async function POST(req: NextRequest) {
           data: newWorkEvents
         });
       });
+
+      // Dispatch real-time notifications to all affected employees
+      const resumeEmpIds = activeBreakEvents.map(e => e.employeeId);
+      prisma.employee.findMany({
+        where: { id: { in: resumeEmpIds } },
+        select: { userId: true }
+      }).then((emps) => {
+        for (const emp of emps) {
+          if (emp.userId) {
+            createAndSendNotification({
+              recipientId: emp.userId,
+              title: "💼 Work Resumed",
+              message: "Lunch break has ended. Please resume your tasks.",
+              linkUrl: "/attendance",
+              type: "MASS_RESUME",
+              urgency: "HIGH",
+            }).catch(() => {});
+          }
+        }
+      }).catch(() => {});
 
       return NextResponse.json({ success: true, count: activeBreakEvents.length });
     }

@@ -1,7 +1,20 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coffee, LogOut, X, FolderKanban, LogIn, Play, AlertCircle, Sparkles } from "lucide-react";
-import Image from "next/image";
+import { 
+  Coffee, 
+  LogOut, 
+  X, 
+  FolderKanban, 
+  LogIn, 
+  Play, 
+  AlertCircle, 
+  Sparkles, 
+  CheckCircle2, 
+  XCircle, 
+  Calendar, 
+  Utensils, 
+  Briefcase 
+} from "lucide-react";
 
 export type ReminderType = 
   | "LUNCH" 
@@ -11,6 +24,14 @@ export type ReminderType =
   | "BREAK_START"
   | "BREAK_END"
   | "PUNCH_OUT_REQUEST"
+  | "PUNCH_OUT_APPROVED"
+  | "PUNCH_OUT_REJECTED"
+  | "LEAVE_REQUEST"
+  | "LEAVE_APPROVED"
+  | "LEAVE_REJECTED"
+  | "MASS_LUNCH"
+  | "MASS_RESUME"
+  | "LEAD_CREATED"
   | "GENERAL";
 
 interface PremiumReminderModalProps {
@@ -34,7 +55,15 @@ export function PremiumReminderModal({
   const isBreakEnd = type === "BREAK_END";
   const isPunchOut = type === "PUNCH_OUT";
   const isPunchOutReq = type === "PUNCH_OUT_REQUEST";
+  const isPunchOutApproved = type === "PUNCH_OUT_APPROVED";
+  const isPunchOutRejected = type === "PUNCH_OUT_REJECTED";
+  const isLeaveRequest = type === "LEAVE_REQUEST";
+  const isLeaveApproved = type === "LEAVE_APPROVED";
+  const isLeaveRejected = type === "LEAVE_REJECTED";
+  const isMassLunch = type === "MASS_LUNCH";
+  const isMassResume = type === "MASS_RESUME";
   const isProject = type === "PROJECT_ASSIGNMENT";
+  const isLead = type === "LEAD_CREATED";
 
   const getTheme = () => {
     if (isPunchIn) {
@@ -87,6 +116,56 @@ export function PremiumReminderModal({
         icon: <AlertCircle className="w-10 h-10 text-purple-600 dark:text-purple-400 relative z-10" strokeWidth={2} />,
       };
     }
+    if (isPunchOutApproved || isLeaveApproved) {
+      return {
+        bar: "bg-gradient-to-r from-emerald-400 via-green-500 to-teal-500",
+        iconBox: "bg-gradient-to-br from-emerald-100 to-green-100 dark:from-emerald-500/20 dark:to-green-500/20",
+        glow: "bg-emerald-400",
+        btn: "bg-gradient-to-r from-emerald-500 to-green-600 hover:shadow-emerald-500/25",
+        btnLabel: "Great!",
+        icon: <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400 relative z-10" strokeWidth={2} />,
+      };
+    }
+    if (isPunchOutRejected || isLeaveRejected) {
+      return {
+        bar: "bg-gradient-to-r from-rose-500 via-red-500 to-orange-500",
+        iconBox: "bg-gradient-to-br from-rose-100 to-red-100 dark:from-rose-500/20 dark:to-red-500/20",
+        glow: "bg-rose-400",
+        btn: "bg-gradient-to-r from-rose-600 to-red-600 hover:shadow-rose-500/25",
+        btnLabel: "Understood",
+        icon: <XCircle className="w-10 h-10 text-rose-600 dark:text-rose-400 relative z-10" strokeWidth={2} />,
+      };
+    }
+    if (isLeaveRequest) {
+      return {
+        bar: "bg-gradient-to-r from-violet-500 via-indigo-500 to-purple-500",
+        iconBox: "bg-gradient-to-br from-violet-100 to-indigo-100 dark:from-violet-500/20 dark:to-indigo-500/20",
+        glow: "bg-violet-400",
+        btn: "bg-gradient-to-r from-violet-600 to-indigo-600 hover:shadow-violet-500/25",
+        btnLabel: "Review Leave Request",
+        icon: <Calendar className="w-10 h-10 text-violet-600 dark:text-violet-400 relative z-10" strokeWidth={1.8} />,
+      };
+    }
+    if (isMassLunch) {
+      return {
+        bar: "bg-gradient-to-r from-amber-400 via-orange-500 to-yellow-500",
+        iconBox: "bg-gradient-to-br from-amber-100 to-yellow-100 dark:from-amber-500/20 dark:to-yellow-500/20",
+        glow: "bg-amber-400",
+        btn: "bg-gradient-to-r from-amber-500 to-orange-500 hover:shadow-amber-500/25",
+        btnLabel: "Enjoy Lunch!",
+        icon: <Utensils className="w-10 h-10 text-amber-600 dark:text-amber-400 relative z-10" strokeWidth={1.8} />,
+      };
+    }
+    if (isMassResume) {
+      return {
+        bar: "bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500",
+        iconBox: "bg-gradient-to-br from-sky-100 to-blue-100 dark:from-sky-500/20 dark:to-blue-500/20",
+        glow: "bg-sky-400",
+        btn: "bg-gradient-to-r from-sky-500 to-blue-600 hover:shadow-sky-500/25",
+        btnLabel: "Resume Work",
+        icon: <Briefcase className="w-10 h-10 text-sky-600 dark:text-sky-400 relative z-10" strokeWidth={1.8} />,
+      };
+    }
     if (isProject) {
       return {
         bar: "bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500",
@@ -95,6 +174,16 @@ export function PremiumReminderModal({
         btn: "bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-cyan-500/25",
         btnLabel: "Open Workspace",
         icon: <FolderKanban className="w-10 h-10 text-cyan-600 dark:text-cyan-400 relative z-10" strokeWidth={1.8} />,
+      };
+    }
+    if (isLead) {
+      return {
+        bar: "bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-500",
+        iconBox: "bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-500/20 dark:to-teal-500/20",
+        glow: "bg-teal-400",
+        btn: "bg-gradient-to-r from-emerald-600 to-teal-600 hover:shadow-teal-500/25",
+        btnLabel: "View Pipeline",
+        icon: <Sparkles className="w-10 h-10 text-teal-600 dark:text-teal-400 relative z-10" strokeWidth={1.8} />,
       };
     }
 

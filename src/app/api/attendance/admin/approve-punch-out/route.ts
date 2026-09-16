@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
+import { createAndSendNotification, formatToIST } from "@/lib/notifications";
 
 export async function POST(req: Request) {
   const authRes = await requireRole(["OWNER"]);
@@ -82,6 +83,23 @@ export async function POST(req: Request) {
         throw err;
       }
 
+      // Notify employee of approval
+      const emp = await prisma.employee.findUnique({
+        where: { id: attendance.employeeId },
+        include: { user: true }
+      });
+      if (emp?.userId) {
+        const timeFormatted = formatToIST(punchOutTime);
+        createAndSendNotification({
+          recipientId: emp.userId,
+          title: "✅ Early Punch-Out Approved",
+          message: `Your early punch-out request was approved by admin at ${timeFormatted}. Shift marked completed.`,
+          linkUrl: "/attendance",
+          type: "PUNCH_OUT_APPROVED",
+          urgency: "HIGH",
+        }).catch((err) => console.error("Notification error on punch out approval:", err));
+      }
+
       return NextResponse.json({ success: true, message: "Punch out approved" });
     } else if (action === "REJECT") {
       const { count } = await prisma.attendance.updateMany({
@@ -95,6 +113,22 @@ export async function POST(req: Request) {
 
       if (count === 0) {
         return NextResponse.json({ success: false, error: "Concurrency conflict: Request is no longer PENDING." }, { status: 409 });
+      }
+
+      // Notify employee of rejection
+      const emp = await prisma.employee.findUnique({
+        where: { id: attendance.employeeId },
+        include: { user: true }
+      });
+      if (emp?.userId) {
+        createAndSendNotification({
+          recipientId: emp.userId,
+          title: "❌ Early Punch-Out Declined",
+          message: "Your early punch-out request was declined by admin. Please continue your work shift.",
+          linkUrl: "/attendance",
+          type: "PUNCH_OUT_REJECTED",
+          urgency: "HIGH",
+        }).catch((err) => console.error("Notification error on punch out rejection:", err));
       }
       
       return NextResponse.json({ success: true, message: "Punch out rejected" });

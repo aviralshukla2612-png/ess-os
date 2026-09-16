@@ -236,9 +236,16 @@ export function NotificationListener() {
     if (title.includes("break start") || title.includes("coffee")) return "BREAK_START";
     if (title.includes("work resumed") || title.includes("break end")) return "BREAK_END";
     if (title.includes("punch-out request")) return "PUNCH_OUT_REQUEST";
+    if (title.includes("punch-out approved")) return "PUNCH_OUT_APPROVED";
+    if (title.includes("punch-out declined") || title.includes("punch-out rejected")) return "PUNCH_OUT_REJECTED";
     if (title.includes("punch-out")) return "PUNCH_OUT";
-    if (title.includes("project")) return "PROJECT_ASSIGNMENT";
+    if (title.includes("leave request approved") || title.includes("leave approved")) return "LEAVE_APPROVED";
+    if (title.includes("leave request rejected") || title.includes("leave rejected")) return "LEAVE_REJECTED";
+    if (title.includes("leave request") || title.includes("leave")) return "LEAVE_REQUEST";
+    if (title.includes("company lunch") || title.includes("lunch break")) return "MASS_LUNCH";
     if (title.includes("lunch")) return "LUNCH";
+    if (title.includes("lead")) return "LEAD_CREATED";
+    if (title.includes("project") || title.includes("task")) return "PROJECT_ASSIGNMENT";
     return "GENERAL";
   };
 

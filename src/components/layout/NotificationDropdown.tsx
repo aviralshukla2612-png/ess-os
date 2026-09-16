@@ -12,7 +12,12 @@ import {
   FolderKanban, 
   Sparkles,
   ExternalLink,
-  ShieldAlert
+  ShieldAlert,
+  CheckCircle2,
+  XCircle,
+  Calendar,
+  Utensils,
+  Briefcase
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { requestForToken } from "@/lib/firebase";
@@ -211,10 +216,17 @@ export function NotificationDropdown() {
         </div>
       );
     }
-    if (t.includes("break start") || t.includes("coffee") || t.includes("lunch")) {
+    if (t.includes("break start") || t.includes("coffee")) {
       return (
         <div className="w-8 h-8 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
           <Coffee className="w-4 h-4" />
+        </div>
+      );
+    }
+    if (t.includes("company lunch") || t.includes("lunch break") || t.includes("lunch")) {
+      return (
+        <div className="w-8 h-8 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+          <Utensils className="w-4 h-4" />
         </div>
       );
     }
@@ -229,6 +241,27 @@ export function NotificationDropdown() {
       return (
         <div className="w-8 h-8 rounded-xl bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
           <AlertCircle className="w-4 h-4" />
+        </div>
+      );
+    }
+    if (t.includes("approved")) {
+      return (
+        <div className="w-8 h-8 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+          <CheckCircle2 className="w-4 h-4" />
+        </div>
+      );
+    }
+    if (t.includes("declined") || t.includes("rejected")) {
+      return (
+        <div className="w-8 h-8 rounded-xl bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+          <XCircle className="w-4 h-4" />
+        </div>
+      );
+    }
+    if (t.includes("leave")) {
+      return (
+        <div className="w-8 h-8 rounded-xl bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+          <Calendar className="w-4 h-4" />
         </div>
       );
     }

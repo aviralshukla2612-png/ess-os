@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
+import { notifyAdmins } from "@/lib/notifications";
 
 export async function GET(req: Request) {
   try {
@@ -74,6 +75,26 @@ export async function POST(req: Request) {
         reason
       }
     });
+
+    // Notify all admins/owners about the new leave application
+    const employee = await prisma.employee.findUnique({
+      where: { id: employeeId },
+      include: { user: true }
+    });
+    const empName = employee?.user?.name || "An employee";
+    notifyAdmins({
+      title: `📅 New Leave Request: ${empName}`,
+      message: `${empName} applied for ${days} day(s) of ${leaveType} leave. Reason: "${reason}".`,
+      linkUrl: "/attendance",
+      type: "LEAVE_REQUEST",
+      urgency: "HIGH",
+      metadata: {
+        employeeId,
+        leaveType,
+        days: String(days),
+        reason,
+      }
+    }).catch((err) => console.error("Admin notification error on leave request:", err));
 
     return NextResponse.json({ success: true, data: newLeave });
   } catch (error: any) {

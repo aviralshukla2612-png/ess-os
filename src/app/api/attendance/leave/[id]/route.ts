@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
+import { createAndSendNotification } from "@/lib/notifications";
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -61,6 +62,19 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
           data: updateData
         })
       ]);
+
+      // Notify employee of approval
+      if (employee.userId) {
+        createAndSendNotification({
+          recipientId: employee.userId,
+          title: "✅ Leave Request Approved",
+          message: `Your ${leaveRequest.leaveType} leave request for ${leaveRequest.days} day(s) has been approved by admin.`,
+          linkUrl: "/attendance",
+          type: "LEAVE_APPROVED",
+          urgency: "HIGH",
+        }).catch((err) => console.error("Notification error on leave approval:", err));
+      }
+
     } else if (action === "REJECT") {
       await prisma.leaveRequest.update({
         where: { id: params.id },
@@ -71,6 +85,21 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
           approvedAt: new Date()
         }
       });
+
+      // Find employee to notify
+      const employee = await prisma.employee.findUnique({
+        where: { id: leaveRequest.employeeId }
+      });
+      if (employee?.userId) {
+        createAndSendNotification({
+          recipientId: employee.userId,
+          title: "❌ Leave Request Rejected",
+          message: `Your ${leaveRequest.leaveType} leave request for ${leaveRequest.days} day(s) was declined.${rejectionReason ? ` Reason: "${rejectionReason}"` : ""}`,
+          linkUrl: "/attendance",
+          type: "LEAVE_REJECTED",
+          urgency: "HIGH",
+        }).catch((err) => console.error("Notification error on leave rejection:", err));
+      }
     }
 
     return NextResponse.json({ success: true, message: `Leave request ${action.toLowerCase()}d` });

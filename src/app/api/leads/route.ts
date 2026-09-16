@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
 import { leadSchema } from "@/lib/validations";
+import { notifyAdmins } from "@/lib/notifications";
 
 export async function GET() {
   const authRes = await requireRole(["OWNER", "SALES"]);
@@ -95,6 +96,19 @@ export async function POST(req: Request) {
         createdById: authRes.id,
       },
     });
+
+    // Notify admins & sales team about new lead
+    notifyAdmins({
+      title: `💼 New Lead: ${newLead.companyName || newLead.contactPerson}`,
+      message: `${validData.contactPerson} - interested in ${validData.projectScope} (Est: ₹${validData.leadValue.toLocaleString("en-IN")}).`,
+      linkUrl: "/leads",
+      type: "LEAD_CREATED",
+      urgency: validData.leadPriority === "HIGH" ? "HIGH" : "MEDIUM",
+      metadata: {
+        leadId: newLead.id,
+        leadNumber: newLead.leadNumber,
+      }
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,

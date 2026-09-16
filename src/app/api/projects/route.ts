@@ -168,8 +168,9 @@ export async function POST(req: Request) {
       if (emp && emp.userId) {
         await createAndSendNotification({
           recipientId: emp.userId,
-          title: "New Project Assignment",
-          message: `Admin has assigned you to a new project: ${newProject.name}`,
+          title: `📁 Project Assigned: ${newProject.name}`,
+          message: `Admin has assigned you to new project: "${newProject.name}". Check project scope and tasks.`,
+          type: "PROJECT_ASSIGNMENT",
           urgency: "HIGH",
           linkUrl: `/projects/${newProject.id}`,
         });
