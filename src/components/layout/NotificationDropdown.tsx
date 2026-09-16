@@ -32,13 +32,17 @@ export function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [permissionStatus, setPermissionStatus] = useState<string>("default");
   const [hasPushPermission, setHasPushPermission] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isEnabling, setIsEnabling] = useState(false);
+  const [permissionMessage, setPermissionMessage] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Check browser push notification permission status
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
+      setPermissionStatus(Notification.permission);
       setHasPushPermission(Notification.permission === "granted");
     }
   }, []);
@@ -77,20 +81,63 @@ export function NotificationDropdown() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
-  // Request browser permission
-  const handleEnablePush = async () => {
+  // Request browser permission directly on user gesture
+  const handleEnablePush = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setPermissionMessage(null);
+
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setPermissionMessage("Notifications are not supported in this browser.");
+      return;
+    }
+
+    if (Notification.permission === "denied") {
+      setPermissionMessage(
+        "Notifications are blocked in your browser settings (or you are in Incognito mode). Please click the lock 🔒 or site settings icon in the address bar above, set Notifications to 'Allow', and refresh."
+      );
+      return;
+    }
+
     try {
-      const token = await requestForToken();
-      if (token) {
+      setIsEnabling(true);
+      // Direct browser prompt call immediately on user click
+      const permission = await Notification.requestPermission();
+      setPermissionStatus(permission);
+
+      if (permission === "granted") {
         setHasPushPermission(true);
-        await fetch("/crmtesting/api/users/fcm-token", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token }),
-        });
+        setPermissionMessage(null);
+
+        // Fetch FCM token and register in backend
+        try {
+          const token = await requestForToken();
+          if (token) {
+            await fetch("/crmtesting/api/users/fcm-token", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ token }),
+            }).catch(() => {
+              return fetch("/api/users/fcm-token", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token }),
+              });
+            });
+          }
+        } catch (fcmErr) {
+          console.warn("FCM token registration warning:", fcmErr);
+        }
+      } else if (permission === "denied") {
+        setPermissionMessage(
+          "Permission was denied. Click the lock 🔒 icon next to the URL in your address bar, allow Notifications, and reload."
+        );
       }
-    } catch (e) {
-      console.error("Push permission request failed", e);
+    } catch (err: any) {
+      console.error("Push permission request error:", err);
+      setPermissionMessage(err?.message || "Could not trigger permission prompt.");
+    } finally {
+      setIsEnabling(false);
     }
   };
 
@@ -268,19 +315,38 @@ export function NotificationDropdown() {
 
           {/* Push permission callout if not granted */}
           {!hasPushPermission && (
-            <div className="px-4 py-2.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                <span className="text-[11px] font-semibold text-amber-800 dark:text-amber-300 truncate">
-                  Desktop alerts disabled
-                </span>
+            <div className="px-4 py-3 bg-amber-500/10 border-b border-amber-500/20 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span className="text-[11px] font-bold text-amber-900 dark:text-amber-300 truncate">
+                    {permissionStatus === "denied" ? "Alerts Blocked in Browser" : "Desktop alerts disabled"}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleEnablePush}
+                  disabled={isEnabling}
+                  className="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 active:scale-95 disabled:opacity-50 text-white text-[10px] font-black shrink-0 transition-all shadow-xs flex items-center gap-1 cursor-pointer"
+                >
+                  {isEnabling ? (
+                    <>
+                      <span className="w-2.5 h-2.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Requesting...</span>
+                    </>
+                  ) : permissionStatus === "denied" ? (
+                    "How to Allow"
+                  ) : (
+                    "Enable"
+                  )}
+                </button>
               </div>
-              <button
-                onClick={handleEnablePush}
-                className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold shrink-0 transition-colors shadow-xs"
-              >
-                Enable
-              </button>
+
+              {permissionMessage && (
+                <div className="text-[10px] text-amber-900 dark:text-amber-200 bg-amber-500/15 dark:bg-amber-950/40 border border-amber-500/30 rounded-xl p-2.5 leading-relaxed font-medium">
+                  {permissionMessage}
+                </div>
+              )}
             </div>
           )}
 
