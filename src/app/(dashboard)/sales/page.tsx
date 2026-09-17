@@ -22,6 +22,7 @@ export default function SalesDashboardPage() {
   const [gstNo, setGstNo] = useState("");
   const [projectScope, setProjectScope] = useState("");
   const [remarks, setRemarks] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isImportOpen, setIsImportOpen] = useState(false);
 
@@ -94,49 +95,51 @@ export default function SalesDashboardPage() {
     }
   };
 
-  const handleCreateLead = (e: React.FormEvent) => {
+  const handleCreateLead = async (e: React.FormEvent) => {
     e.preventDefault();
-    const createApi = async () => {
-      try {
-        const res = await fetch("/crmtesting/api/leads", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            clientName: clientName,
-            contactPerson: contactPerson,
-            phone: phone || "+91 00000 00000",
-            email: email || "contact@prospect.com",
-            projectScope: projectScope || "General inquiry",
-            leadValue: Number(leadValue) || 250000,
-            expectedRevenue: Number(leadValue) || 250000,
-            gstNo: gstNo.trim() || undefined,
-            remarks: remarks.trim() || undefined,
-            stage: "NEW",
-            leadPriority: "HIGH",
-          }),
-        });
-        const json = await res.json();
-        if (json.success) {
-          showToast(`✓ Lead "${clientName || "New Lead"}" added to Pipeline`, "success");
-          fetchLeads();
-        } else {
-          showToast("Failed to add lead", "error");
-        }
-      } catch (e) {
-        showToast("Network error", "error");
-      }
-    };
-    createApi();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    setIsAddLeadOpen(false);
-    setClientName("");
-    setContactPerson("");
-    setEmail("");
-    setPhone("");
-    setLeadValue("");
-    setGstNo("");
-    setProjectScope("");
-    setRemarks("");
+    try {
+      const res = await fetch("/crmtesting/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientName: clientName.trim() || "New Prospect",
+          contactPerson: contactPerson.trim() || "Lead Contact",
+          phone: phone.trim() || "+91 00000 00000",
+          email: email.trim() || "contact@prospect.com",
+          projectScope: projectScope.trim() || "General inquiry",
+          leadValue: Number(leadValue) || 250000,
+          expectedRevenue: Number(leadValue) || 250000,
+          gstNo: gstNo.trim() || undefined,
+          remarks: remarks.trim() || undefined,
+          stage: "NEW",
+          leadPriority: "HIGH",
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(`✓ Lead "${clientName.trim() || "New Lead"}" added to Pipeline`, "success");
+        setIsAddLeadOpen(false);
+        setClientName("");
+        setContactPerson("");
+        setEmail("");
+        setPhone("");
+        setLeadValue("");
+        setGstNo("");
+        setProjectScope("");
+        setRemarks("");
+        fetchLeads();
+      } else {
+        const errorMsg = json.error || (json.details ? "Invalid lead details" : "Failed to add lead");
+        showToast(errorMsg, "error");
+      }
+    } catch (e) {
+      showToast("Network error creating lead", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleImportData = async (data: any[]) => {
@@ -321,9 +324,10 @@ export default function SalesDashboardPage() {
           </div>
           <button
             type="submit"
-            className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all mt-2"
+            disabled={isSubmitting}
+            className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 disabled:opacity-50 text-white font-bold text-xs shadow-sm transition-all mt-2 flex items-center justify-center gap-2"
           >
-            Create Prospect Lead
+            {isSubmitting ? "Creating Prospect Lead..." : "Create Prospect Lead"}
           </button>
         </form>
       </BottomSheet>

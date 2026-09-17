@@ -78,10 +78,15 @@ export async function POST(req: Request) {
     
     const validData = parsed.data;
     const leadCount = await prisma.lead.count();
+    let leadNumber = `LEAD-2026-${String(leadCount + 1).padStart(4, "0")}`;
+    const existingLead = await prisma.lead.findUnique({ where: { leadNumber } });
+    if (existingLead) {
+      leadNumber = `LEAD-2026-${Date.now().toString().slice(-4)}${Math.floor(10 + Math.random() * 90)}`;
+    }
 
     const newLead = await prisma.lead.create({
       data: {
-        leadNumber: `LEAD-2026-00${leadCount + 1}`,
+        leadNumber,
         contactPerson: validData.contactPerson,
         companyName: validData.clientName,
         mobile: validData.phone,
@@ -133,7 +138,8 @@ export async function POST(req: Request) {
         activityHistory: [{ id: Date.now().toString(), time: "Just now", text: "Lead created in CRM pipeline." }],
       },
     });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: "Failed to create lead" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Failed to create lead:", error);
+    return NextResponse.json({ success: false, error: error?.message || "Failed to create lead" }, { status: 500 });
   }
 }

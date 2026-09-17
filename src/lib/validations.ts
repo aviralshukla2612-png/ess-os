@@ -1,13 +1,21 @@
 import { z } from "zod";
 
 export const leadSchema = z.object({
-  contactPerson: z.string().min(2, "Contact person is required"),
-  clientName: z.string().min(2, "Company name is required"),
-  phone: z.string().min(10, "Valid phone number is required"),
-  email: z.string().email("Valid email is required"),
-  projectScope: z.string().min(5, "Project scope is required"),
-  leadValue: z.number().positive("Lead value must be positive"),
-  expectedRevenue: z.number().positive("Expected revenue must be positive"),
+  contactPerson: z.preprocess((val) => (typeof val === "string" && val.trim() ? val.trim() : "Lead Contact"), z.string().default("Lead Contact")),
+  clientName: z.preprocess((val) => (typeof val === "string" && val.trim() ? val.trim() : "New Prospect"), z.string().default("New Prospect")),
+  phone: z.preprocess((val) => (typeof val === "string" && val.trim() ? val.trim() : "+91 00000 00000"), z.string().default("+91 00000 00000")),
+  email: z.preprocess((val) => (typeof val === "string" && val.trim() ? val.trim() : "contact@prospect.com"), z.string().default("contact@prospect.com")),
+  projectScope: z.preprocess((val) => (typeof val === "string" && val.trim() ? val.trim() : "General inquiry"), z.string().default("General inquiry")),
+  leadValue: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) return 0;
+    const num = Number(val);
+    return isNaN(num) ? 0 : Math.max(0, num);
+  }, z.number().nonnegative().default(0)),
+  expectedRevenue: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) return 0;
+    const num = Number(val);
+    return isNaN(num) ? 0 : Math.max(0, num);
+  }, z.number().nonnegative().default(0)),
   leadPriority: z.enum(["HOT", "HIGH", "MEDIUM", "LOW"]).default("MEDIUM"),
   stage: z.enum(["NEW", "CONTACTED", "REQUIREMENTS", "PROPOSAL", "NEGOTIATION", "WON", "LOST"]).default("NEW"),
   gstNo: z.string().optional(),
