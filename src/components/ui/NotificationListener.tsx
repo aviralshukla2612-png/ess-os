@@ -230,7 +230,7 @@ export function NotificationListener() {
           }
         }
       } catch (error) {
-        console.error("Failed to check notifications", error);
+        // Silently ignore network interruptions/offline states
       }
     };
 

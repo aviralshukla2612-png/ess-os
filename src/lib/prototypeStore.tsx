@@ -147,24 +147,32 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
         canViewEmployees ? fetch("/crmtesting/api/employees").catch(() => null) : Promise.resolve(null),
       ]);
 
-      if (leadsRes) {
-        const d = await leadsRes.json();
-        if (d.success) setLeads(d.data);
+      if (leadsRes && leadsRes.ok) {
+        try {
+          const d = await leadsRes.json();
+          if (d.success) setLeads(d.data);
+        } catch {}
       }
-      if (clientsRes) {
-        const d = await clientsRes.json();
-        if (d.success) setClients(d.data);
+      if (clientsRes && clientsRes.ok) {
+        try {
+          const d = await clientsRes.json();
+          if (d.success) setClients(d.data);
+        } catch {}
       }
-      if (projectsRes) {
-        const d = await projectsRes.json();
-        if (d.success) setProjects(d.data);
+      if (projectsRes && projectsRes.ok) {
+        try {
+          const d = await projectsRes.json();
+          if (d.success) setProjects(d.data);
+        } catch {}
       }
-      if (employeesRes) {
-        const d = await employeesRes.json();
-        if (d.success) setEmployees(d.data);
+      if (employeesRes && employeesRes.ok) {
+        try {
+          const d = await employeesRes.json();
+          if (d.success) setEmployees(d.data);
+        } catch {}
       }
     } catch (e) {
-      console.error("Fetch Data Error:", e);
+      // Silently ignore network drop errors
     }
   };
 
