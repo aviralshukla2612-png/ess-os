@@ -59,6 +59,9 @@ export async function GET(req: NextRequest) {
     // Calculate exact work and break seconds for today
     let serverWorkSeconds = 0;
     let serverBreakSeconds = 0;
+    let usedLunchSeconds = 0;
+    let usedTeaSeconds = 0;
+    let usedCallSeconds = 0;
 
     const events = await prisma.employeeStatusEvent.findMany({
       where: {
@@ -75,6 +78,7 @@ export async function GET(req: NextRequest) {
     events.forEach(ev => {
       const start = new Date(ev.startedAt).getTime();
       const end = ev.endedAt ? new Date(ev.endedAt).getTime() : nowMs;
+      const durationSec = Math.max(0, Math.floor((end - start) / 1000));
 
       if (ev.statusType === "WORKING") {
         const effectiveStart = Math.max(start, lastWorkingEnd);
@@ -87,6 +91,15 @@ export async function GET(req: NextRequest) {
         if (end > effectiveStart) {
           serverBreakSeconds += Math.floor((end - effectiveStart) / 1000);
           lastBreakEnd = end;
+        }
+
+        const notesOrType = `${ev.notes || ""} ${ev.statusType || ""}`.toLowerCase();
+        if (notesOrType.includes("lunch") || ev.statusType === "LUNCH") {
+          usedLunchSeconds += durationSec;
+        } else if (notesOrType.includes("tea") || ev.statusType === "TEA") {
+          usedTeaSeconds += durationSec;
+        } else if (notesOrType.includes("call") || ev.statusType === "CLIENT_CALL") {
+          usedCallSeconds += durationSec;
         }
       }
     });
@@ -122,6 +135,9 @@ export async function GET(req: NextRequest) {
         punchIn: attendance.punchIn,
         workSeconds: serverWorkSeconds,
         breakSeconds: serverBreakSeconds,
+        usedLunchSeconds,
+        usedTeaSeconds,
+        usedCallSeconds,
         todayEvents, // Full event list for timeline rebuild
       } 
     });

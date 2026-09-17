@@ -151,6 +151,21 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
                 Math.abs(prev - json.data.breakSeconds) > 10 ? json.data.breakSeconds : prev
               );
             }
+            if (json.data.usedLunchSeconds !== undefined) {
+              setUsedLunchSeconds((prev) => 
+                Math.abs(prev - json.data.usedLunchSeconds) > 10 ? json.data.usedLunchSeconds : prev
+              );
+            }
+            if (json.data.usedTeaSeconds !== undefined) {
+              setUsedTeaSeconds((prev) => 
+                Math.abs(prev - json.data.usedTeaSeconds) > 10 ? json.data.usedTeaSeconds : prev
+              );
+            }
+            if (json.data.usedCallSeconds !== undefined) {
+              setUsedCallSeconds((prev) => 
+                Math.abs(prev - json.data.usedCallSeconds) > 10 ? json.data.usedCallSeconds : prev
+              );
+            }
 
             // Always sync punch-in time from server — this prevents stale localStorage
             // times (e.g. yesterday's 07:02 PM) from showing on a fresh day
@@ -383,6 +398,9 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     setPunchInTime(formatted);
     setWorkSeconds(0);
     setBreakSeconds(0);
+    setUsedLunchSeconds(0);
+    setUsedTeaSeconds(0);
+    setUsedCallSeconds(0);
     setStatus("WORKING");
 
     setTimeline([
@@ -401,7 +419,6 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     setBreakType(type);
     setBreakReason(reason || "");
-    setBreakSeconds(0);
     setStatus("ON_BREAK");
 
     setTimeline((prev) => [
