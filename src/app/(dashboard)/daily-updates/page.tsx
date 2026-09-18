@@ -135,12 +135,18 @@ export default function MasterDailyUpdatesPage() {
     setSelectedHealthStatus("ALL");
   };
 
+  const isEmployee = (session?.user as any)?.role === "EMPLOYEE";
+
   return (
     <div className="space-y-8 pb-16">
       <PageHeader
-        title="Daily Progress Reports & Review Feed"
-        description="Master live feed of daily engineering, design, and sales updates posted across all company projects."
-        badge={`${updates.length} REPORTS LOADED`}
+        title={isEmployee ? "My Daily Progress Reports" : "Daily Progress Reports & Review Feed"}
+        description={
+          isEmployee
+            ? "View and track your submitted daily progress reports, completed task logs, and blockers."
+            : "Master live feed of daily engineering, design, and sales updates posted across all company projects."
+        }
+        badge={isEmployee ? "EMPLOYEE PORTAL" : `${updates.length} REPORTS LOADED`}
         icon={<MessageSquare className="w-7 h-7 text-indigo-600 dark:text-indigo-400 animate-pulse" />}
         actions={
           <button
@@ -158,7 +164,7 @@ export default function MasterDailyUpdatesPage() {
         {/* Total Today */}
         <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
           <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center justify-between">
-            <span>SUBMISSIONS TODAY</span>
+            <span>{isEmployee ? "MY SUBMISSIONS" : "SUBMISSIONS TODAY"}</span>
             <CheckCircle2 className="w-4 h-4 text-indigo-500" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-slate-100 font-mono mt-1">
@@ -169,7 +175,7 @@ export default function MasterDailyUpdatesPage() {
         {/* Projects Updated */}
         <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
           <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center justify-between">
-            <span>PROJECTS ACTIVE</span>
+            <span>{isEmployee ? "MY ACTIVE PROJECTS" : "PROJECTS ACTIVE"}</span>
             <FolderKanban className="w-4 h-4 text-emerald-500" />
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-slate-100 font-mono mt-1">
@@ -180,7 +186,7 @@ export default function MasterDailyUpdatesPage() {
         {/* Blockers Flagged */}
         <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
           <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center justify-between">
-            <span>BLOCKERS REPORTED</span>
+            <span>{isEmployee ? "MY REPORTED BLOCKERS" : "BLOCKERS REPORTED"}</span>
             <AlertTriangle className="w-4 h-4 text-amber-500" />
           </div>
           <div className="text-2xl font-black text-amber-600 dark:text-amber-400 font-mono mt-1">
@@ -205,7 +211,7 @@ export default function MasterDailyUpdatesPage() {
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
             <Filter className="w-4 h-4 text-indigo-500" />
-            <span>Filter Feed by Date, Member & Health:</span>
+            <span>{isEmployee ? "Filter My Progress Reports:" : "Filter Feed by Date, Member & Health:"}</span>
           </div>
 
           {(selectedDate || selectedEmployeeId !== "ALL" || selectedProjectId !== "ALL" || selectedHealthStatus !== "ALL") && (
@@ -218,7 +224,7 @@ export default function MasterDailyUpdatesPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${isEmployee ? "lg:grid-cols-3" : "lg:grid-cols-4"} gap-3 text-xs`}>
           {/* Calendar Date Picker */}
           <div>
             <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-1">
@@ -232,24 +238,26 @@ export default function MasterDailyUpdatesPage() {
             />
           </div>
 
-          {/* Employee Filter */}
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-1">
-              Team Member
-            </label>
-            <select
-              value={selectedEmployeeId}
-              onChange={(e) => setSelectedEmployeeId(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
-            >
-              <option value="ALL">All Team Members</option>
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>
-                  👤 {emp.name} ({emp.designation || "Staff"})
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Employee Filter - only shown to Admin / Sub-Admin */}
+          {!isEmployee && (
+            <div>
+              <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-1">
+                Team Member
+              </label>
+              <select
+                value={selectedEmployeeId}
+                onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+              >
+                <option value="ALL">All Team Members</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    👤 {emp.name} ({emp.designation || "Staff"})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Project Filter */}
           <div>

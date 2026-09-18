@@ -15,7 +15,27 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "50", 10);
     const page = parseInt(searchParams.get("page") || "1", 10);
 
+    const isEmployee = authRes.activeRole === "EMPLOYEE";
     const whereClause: any = {};
+
+    // Strict Role Privacy:
+    // If EMPLOYEE, restrict strictly to their own submitted daily updates
+    if (isEmployee) {
+      whereClause.authorId = authRes.id;
+    } else {
+      // Admin / Sub-Admin can filter by any employee
+      if (employeeId && employeeId !== "ALL") {
+        const emp = await prisma.employee.findUnique({
+          where: { id: employeeId },
+          select: { userId: true },
+        });
+        if (emp?.userId) {
+          whereClause.authorId = emp.userId;
+        } else {
+          whereClause.authorId = employeeId;
+        }
+      }
+    }
 
     // Date filtering: defaults to all or filtered by start/end of chosen day
     if (dateParam) {
@@ -33,19 +53,6 @@ export async function GET(req: Request) {
 
     if (healthStatus && healthStatus !== "ALL") {
       whereClause.healthStatus = healthStatus;
-    }
-
-    if (employeeId && employeeId !== "ALL") {
-      // Find the user ID for this employee
-      const emp = await prisma.employee.findUnique({
-        where: { id: employeeId },
-        select: { userId: true },
-      });
-      if (emp?.userId) {
-        whereClause.authorId = emp.userId;
-      } else {
-        whereClause.authorId = employeeId;
-      }
     }
 
     const [totalCount, rawUpdates] = await Promise.all([
@@ -90,27 +97,32 @@ export async function GET(req: Request) {
       }),
     ]);
 
-    // Calculate Summary Stats for Today
+    // Calculate Summary Stats (Scoped to user permissions)
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
+    const statsWhere: any = { createdAt: { gte: todayStart } };
+    if (isEmployee) {
+      statsWhere.authorId = authRes.id;
+    }
+
     const [todayUpdatesCount, distinctProjectsCount, blockersCount, criticalCount] = await Promise.all([
       prisma.clientUpdate.count({
-        where: { createdAt: { gte: todayStart } },
+        where: statsWhere,
       }),
       prisma.clientUpdate.groupBy({
         by: ["projectId"],
-        where: { createdAt: { gte: todayStart } },
+        where: statsWhere,
       }),
       prisma.clientUpdate.count({
         where: {
-          createdAt: { gte: todayStart },
+          ...statsWhere,
           blockers: { not: null },
         },
       }),
       prisma.clientUpdate.count({
         where: {
-          createdAt: { gte: todayStart },
+          ...statsWhere,
           healthStatus: { in: ["AT_RISK", "BLOCKED"] },
         },
       }),
@@ -153,6 +165,7 @@ export async function GET(req: Request) {
       success: true,
       data: {
         updates: formattedUpdates,
+        isEmployeeView: isEmployee,
         pagination: {
           total: totalCount,
           page,

@@ -93,7 +93,10 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
           removedDate: m.removedAt ? new Date(m.removedAt).toLocaleDateString() : "Recently",
           reason: m.removalReason || "Reassigned",
         })),
-      tasks: project.tasks.map((t) => ({
+      tasks: (isEmployee
+        ? project.tasks.filter((t) => t.assignedToId === authRes.id || !t.assignedToId)
+        : project.tasks
+      ).map((t) => ({
         id: t.id,
         title: t.title,
         description: t.description,

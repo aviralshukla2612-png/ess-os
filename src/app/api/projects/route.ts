@@ -100,7 +100,10 @@ export async function GET() {
             removedDate: m.removedAt ? new Date(m.removedAt).toLocaleDateString() : "Recently",
             reason: m.removalReason || "Reassigned",
           })),
-        tasks: p.tasks.map((t) => ({
+        tasks: (isEmployee
+          ? p.tasks.filter((t) => t.assignedToId === authRes.id || !t.assignedToId)
+          : p.tasks
+        ).map((t) => ({
           id: t.id,
           title: t.title,
           description: t.description,
