@@ -20,6 +20,7 @@ import {
   PhoneCall,
   FileText,
   Sparkles,
+  MessageSquare,
 } from "lucide-react";
 
 interface Props {
@@ -56,6 +57,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
       { id: "quotes", title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
       { id: "clients", title: "Clients", href: "/clients", icon: <Users className="w-4 h-4" /> },
       { id: "projects", title: "Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" /> },
+      { id: "daily-updates", title: "Daily Updates", href: "/daily-updates", icon: <MessageSquare className="w-4 h-4" /> },
       { id: "employees", title: "Team", href: "/employees", icon: <UserCheck className="w-4 h-4" /> },
       { id: "attendance", title: "Attendance", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
       { id: "attendance-requests", title: "Punch Out Requests", href: "/attendance-requests", icon: <Clock className="w-4 h-4" /> },
@@ -78,6 +80,8 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           { id: "leads", title: "Sales & Leads", href: "/leads", icon: <Target className="w-4 h-4" /> },
           { id: "quotes", title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
           { id: "clients", title: "Clients", href: "/clients", icon: <Users className="w-4 h-4" /> },
+          { id: "projects", title: "Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" /> },
+          { id: "daily-updates", title: "Daily Updates Feed", href: "/daily-updates", icon: <MessageSquare className="w-4 h-4" /> },
           { id: "employees", title: "Team", href: "/employees", icon: <UserCheck className="w-4 h-4" /> },
           { id: "attendance", title: "Team Attendance", href: "/attendance?view=team", icon: <Clock className="w-4 h-4" /> },
           { id: "attendance-requests", title: "Punch Out Requests", href: "/attendance-requests", icon: <Clock className="w-4 h-4" /> },
@@ -93,10 +97,11 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           sectionHeader: idx === 0 ? "DELEGATED CONTROLS" : undefined,
         }));
 
-        // Personal employee tools (as requested: My Desk, My Projects, My Work Sessions, Leave Applications, Documentation, Settings)
+        // Personal employee tools (as requested: My Desk, My Projects, Daily Updates, My Work Sessions, Leave Applications, Documentation, Settings)
         const personalItems: NavItem[] = [
           { title: "My Desk", href: "/employee", icon: <LayoutDashboard className="w-4 h-4" />, sectionHeader: grantedAdminItems.length > 0 ? "MY WORKSPACE" : undefined },
           { title: "My Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" /> },
+          { title: "Daily Updates", href: "/daily-updates", icon: <MessageSquare className="w-4 h-4" /> },
           { title: "My Work Sessions", href: "/attendance?view=personal", icon: <Clock className="w-4 h-4" /> },
           { title: "Leave Applications", href: "/attendance/leave", icon: <UserCheck className="w-4 h-4" /> },
           { title: "Documentation", href: "/docs", icon: <BookOpen className="w-4 h-4" /> },
@@ -109,6 +114,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
       case "SALES":
         return [
           { title: "Sales Overview", href: "/sales", icon: <LayoutDashboard className="w-4 h-4" /> },
+          { title: "Projects & Feed", href: "/daily-updates", icon: <MessageSquare className="w-4 h-4" /> },
           { title: "My Work Sessions", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
           { title: "Leave Applications", href: "/attendance/leave", icon: <UserCheck className="w-4 h-4" /> },
           { title: "Lead Pipeline", href: "/leads", icon: <Target className="w-4 h-4" /> },
@@ -122,6 +128,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
         return [
           { title: "My Desk", href: "/employee", icon: <LayoutDashboard className="w-4 h-4" /> },
           { title: "My Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" /> },
+          { title: "Daily Updates", href: "/daily-updates", icon: <MessageSquare className="w-4 h-4" /> },
           { title: "My Work Sessions", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
           { title: "Leave Applications", href: "/attendance/leave", icon: <UserCheck className="w-4 h-4" /> },
           { title: "Documentation", href: "/docs", icon: <BookOpen className="w-4 h-4" /> },

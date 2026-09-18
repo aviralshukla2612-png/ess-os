@@ -37,6 +37,8 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { DailyProgressEntryModal } from "@/components/projects/DailyProgressEntryModal";
+import { ProjectUpdatesTimeline } from "@/components/projects/ProjectUpdatesTimeline";
 
 export default function ProjectWorkspacePage({ params }: { params: { id: string } }) {
   const { data: session } = useSession();
@@ -876,71 +878,10 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
 
       {/* TAB 3: DAILY UPDATES */}
       {activeTab === "updates" && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
-            <div>
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100">
-                Daily Progress Timeline
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Chronological updates posted by developers and project managers for client visibility.
-              </p>
-            </div>
-            <button
-              onClick={() => setIsUpdateSheetOpen(true)}
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 self-start sm:self-auto"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Post Daily Update</span>
-            </button>
-          </div>
-
-          {clientUpdates.length === 0 ? (
-            <div className="p-12 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl space-y-2">
-              <p>No daily progress updates posted yet for this project.</p>
-              <button
-                onClick={() => setIsUpdateSheetOpen(true)}
-                className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
-              >
-                + Post today's progress
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {clientUpdates.map((update: any) => (
-                <div
-                  key={update.id}
-                  className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 space-y-2.5"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">
-                        {update.authorName ? update.authorName.charAt(0) : "U"}
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100">{update.title}</h4>
-                        <div className="text-[10px] text-slate-400">
-                          Posted by <strong className="text-slate-600 dark:text-slate-300">{update.authorName}</strong>
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-mono text-slate-400 bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
-                      {new Date(update.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap pl-9">
-                    {update.content}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <ProjectUpdatesTimeline
+          updates={clientUpdates}
+          onOpenPostModal={() => setIsUpdateSheetOpen(true)}
+        />
       )}
 
       {/* TAB 4: TEAM & REMOVAL HISTORY */}
@@ -1334,51 +1275,22 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
         </form>
       </BottomSheet>
 
-      {/* Post Daily Update BottomSheet */}
-      <BottomSheet
+      {/* Post Daily Update Modal */}
+      <DailyProgressEntryModal
         isOpen={isUpdateSheetOpen}
         onClose={() => setIsUpdateSheetOpen(false)}
-        title="Post Daily Progress Update"
-        subtitle="Submit a summary of today's work for team and client visibility."
-      >
-        <form onSubmit={handlePostUpdate} className="space-y-4 text-xs">
-          <div>
-            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">
-              Update Title *
-            </label>
-            <input
-              type="text"
-              required
-              value={updateTitle}
-              onChange={(e) => setUpdateTitle(e.target.value)}
-              placeholder="e.g. Completed Stripe Checkout Webhooks & Auth Middleware"
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">
-              Progress Summary / Content *
-            </label>
-            <textarea
-              rows={4}
-              required
-              value={updateContent}
-              onChange={(e) => setUpdateContent(e.target.value)}
-              placeholder="Detail what was built, tested, or unblocked today..."
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isPostingUpdate}
-            className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-sm transition-all disabled:opacity-50"
-          >
-            {isPostingUpdate ? "Posting..." : "Publish Progress Update"}
-          </button>
-        </form>
-      </BottomSheet>
+        onSuccess={fetchProject}
+        fixedProject={
+          project
+            ? {
+                id: project.id,
+                name: project.name,
+                projectCode: project.projectCode,
+                clientName: project.clientName,
+              }
+            : undefined
+        }
+      />
 
       {/* Add Team Member BottomSheet */}
       <BottomSheet
