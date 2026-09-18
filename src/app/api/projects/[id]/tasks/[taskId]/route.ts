@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { recalculateProjectProgress } from "../route";
+import { recalculateProjectProgress } from "@/lib/projectUtils";
 
 export async function PATCH(req: Request, { params }: { params: { id: string; taskId: string } }) {
   const authRes = await requireAuth();

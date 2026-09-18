@@ -1,23 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-
-// Helper function to recalculate project progress
-export async function recalculateProjectProgress(projectId: string) {
-  const allTasks = await prisma.task.findMany({
-    where: { projectId },
-  });
-  const activeTasks = allTasks.filter((t) => t.status !== "ARCHIVED");
-  const completedTasks = activeTasks.filter((t) => t.status === "COMPLETED" || t.status === "DONE");
-  const progressPercentage = activeTasks.length > 0 ? Math.round((completedTasks.length / activeTasks.length) * 100) : 0;
-
-  await prisma.project.update({
-    where: { id: projectId },
-    data: { progressPercentage },
-  });
-
-  return progressPercentage;
-}
+import { recalculateProjectProgress } from "@/lib/projectUtils";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const authRes = await requireAuth();
