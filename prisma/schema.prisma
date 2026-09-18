@@ -238,20 +238,21 @@ model Project {
 }
 
 model ProjectMembership {
-  id            String    @id @default(uuid())
-  projectId     String
-  employeeId    String
-  roleInProject String    @default("MEMBER")
-  assignedAt    DateTime  @default(now())
-  removedAt     DateTime?
-  assignedById  String
-  removedById   String?
-  removalReason String?
-  isActive      Boolean   @default(true)
-  removedBy     User?     @relation("MembershipRemover", fields: [removedById], references: [id])
-  assignedBy    User      @relation("MembershipAssigner", fields: [assignedById], references: [id])
-  employee      Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id                 String    @id @default(uuid())
+  projectId          String
+  employeeId         String
+  roleInProject      String    @default("MEMBER")
+  assignedAt         DateTime  @default(now())
+  compensationAmount Float?
+  removedAt          DateTime?
+  assignedById       String
+  removedById        String?
+  removalReason      String?
+  isActive           Boolean   @default(true)
+  removedBy          User?     @relation("MembershipRemover", fields: [removedById], references: [id])
+  assignedBy         User      @relation("MembershipAssigner", fields: [assignedById], references: [id])
+  employee           Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  project            Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model ProjectStage {
@@ -293,26 +294,28 @@ model ProjectChecklist {
 }
 
 model Task {
-  id             String        @id @default(uuid())
-  projectId      String
-  stageId        String?
-  title          String
-  description    String?
-  assignedToId   String?
-  createdById    String
-  priority       String        @default("MEDIUM")
-  status         String        @default("TODO")
-  startDate      DateTime?
-  deadline       DateTime?
-  estimatedHours Float         @default(0)
-  actualHours    Float         @default(0)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  createdBy      User          @relation("TaskCreator", fields: [createdById], references: [id])
-  assignedTo     User?         @relation("TaskAssignee", fields: [assignedToId], references: [id])
-  stage          ProjectStage? @relation(fields: [stageId], references: [id])
-  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  workSessions   WorkSession[]
+  id              String        @id @default(uuid())
+  projectId       String
+  stageId         String?
+  title           String
+  description     String?
+  assignedToId    String?
+  createdById     String
+  priority        String        @default("MEDIUM")
+  status          String        @default("PLANNING")
+  isMostImportant Boolean       @default(false)
+  startDate       DateTime?
+  deadline        DateTime?
+  completedAt     DateTime?
+  estimatedHours  Float         @default(0)
+  actualHours     Float         @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  createdBy       User          @relation("TaskCreator", fields: [createdById], references: [id])
+  assignedTo      User?         @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  stage           ProjectStage? @relation(fields: [stageId], references: [id])
+  project         Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workSessions    WorkSession[]
 
   @@index([projectId])
   @@index([assignedToId])
