@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     const filePath = path.join(uploadDir, filename);
     fs.writeFileSync(filePath, buffer);
 
-    const fileUrl = `/crmtesting/uploads/kyc/${filename}`;
+    const fileUrl = `/crmtesting/api/uploads/kyc/${filename}`;
 
     return NextResponse.json({
       success: true,

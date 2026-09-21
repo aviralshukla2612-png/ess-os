@@ -10,6 +10,7 @@ services:
       - "3040:3040"
     volumes:
       - ./production-data:/app/prisma/data
+      - ./uploads:/app/public/uploads
     env_file:
       - .env
     environment:

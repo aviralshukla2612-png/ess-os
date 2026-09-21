@@ -93,6 +93,10 @@ export default function AdminKycPage() {
     if (url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("http://") || url.startsWith("https://")) {
       return url;
     }
+    if (url.includes("/uploads/")) {
+      const relativePath = url.substring(url.indexOf("/uploads/") + "/uploads/".length);
+      return `/crmtesting/api/uploads/${relativePath}`;
+    }
     if (url.startsWith("/crmtesting")) {
       return url;
     }
