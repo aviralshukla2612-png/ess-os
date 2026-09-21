@@ -520,7 +520,7 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
               <span>Client Portal Preview</span>
             </Link>
 
-            {userRole === "OWNER" && (
+            {(userRole === "OWNER" || userRole === "SUB_ADMIN") && (
               <button
                 onClick={() => setIsDeleteModalOpen(true)}
                 disabled={isDeleting}

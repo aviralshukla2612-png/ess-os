@@ -244,7 +244,7 @@ export default function ProjectsDirectoryPage() {
                     >
                       {p.health || "ON_TRACK"}
                     </span>
-                    {userRole === "OWNER" && (
+                    {(userRole === "OWNER" || userRole === "SUB_ADMIN") && (
                       <button
                         onClick={(e) => {
                           e.preventDefault();
