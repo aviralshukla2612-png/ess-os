@@ -84,6 +84,7 @@ export default function AdminKycPage() {
   const [rejectionModalOpen, setRejectionModalOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
+  const [broadcasting, setBroadcasting] = useState(false);
 
   useEffect(() => {
     fetchKycRecords();
@@ -150,24 +151,6 @@ export default function AdminKycPage() {
     }
   };
 
-  // Restrict view if user is not OWNER
-  if (session && session.user?.role !== "OWNER") {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center p-6">
-        <div className="p-4 rounded-3xl bg-rose-500/10 text-rose-500 border border-rose-500/20">
-          <ShieldAlert className="w-12 h-12" />
-        </div>
-        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Access Restricted</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
-          Only the organization Owner / Primary Administrator has permissions to view and verify employee KYC and financial documents.
-        </p>
-      </div>
-    );
-  }
-
-  const [broadcasting, setBroadcasting] = useState(false);
-  const departments = Array.from(new Set(employees.map((e) => e.department))).filter(Boolean);
-
   const handleBroadcastReminder = async () => {
     try {
       setBroadcasting(true);
@@ -189,6 +172,23 @@ export default function AdminKycPage() {
       setBroadcasting(false);
     }
   };
+
+  // Restrict view if user is not OWNER
+  if (session && session.user?.role !== "OWNER") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center p-6">
+        <div className="p-4 rounded-3xl bg-rose-500/10 text-rose-500 border border-rose-500/20">
+          <ShieldAlert className="w-12 h-12" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Access Restricted</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
+          Only the organization Owner / Primary Administrator has permissions to view and verify employee KYC and financial documents.
+        </p>
+      </div>
+    );
+  }
+
+  const departments = Array.from(new Set(employees.map((e) => e.department))).filter(Boolean);
 
   return (
     <div className="space-y-8 pb-16 max-w-7xl mx-auto">
