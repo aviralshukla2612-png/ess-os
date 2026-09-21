@@ -140,9 +140,13 @@ export default function ProjectsDirectoryPage() {
   return (
     <div className="space-y-8 pb-16">
       <PageHeader
-        title="Project Management & Tracking"
-        description="Master directory of client projects, multi-employee assignments, 5-stage Kanban board, and daily progress."
-        badge={`${projectsList.length} ACTIVE PROJECTS`}
+        title={userRole === "EMPLOYEE" ? "My Assigned Projects" : "Project Management & Tracking"}
+        description={
+          userRole === "EMPLOYEE"
+            ? "Master directory of your allocated client projects, deliverables, stages, and tasks."
+            : "Master directory of client projects, multi-employee assignments, 5-stage Kanban board, and daily progress."
+        }
+        badge={`${projectsList.length} ${userRole === "EMPLOYEE" ? "ASSIGNED PROJECTS" : "ACTIVE PROJECTS"}`}
         icon={<FolderKanban className="w-7 h-7 text-indigo-600 dark:text-indigo-400 animate-pulse" />}
         actions={
           <div className="flex items-center gap-3">
@@ -172,14 +176,16 @@ export default function ProjectsDirectoryPage() {
               </button>
             </div>
 
-            {/* Create Project Button */}
-            <button
-              onClick={() => setIsAddOpen(true)}
-              className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>New Project</span>
-            </button>
+            {/* Create Project Button - only for OWNER, SUB_ADMIN, SALES */}
+            {userRole !== "EMPLOYEE" && (
+              <button
+                onClick={() => setIsAddOpen(true)}
+                className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs shadow-sm transition-all flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>New Project</span>
+              </button>
+            )}
           </div>
         }
       />

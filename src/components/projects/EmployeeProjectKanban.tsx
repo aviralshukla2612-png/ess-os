@@ -256,40 +256,44 @@ export function EmployeeProjectKanban({
           </div>
           <div>
             <h2 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
-              Employee Project Workload
+              {currentRole === "EMPLOYEE" ? "My Assigned Projects" : "Employee Project Workload"}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Interactive 5-stage drag & drop workspace with multi-member allocation
+              {currentRole === "EMPLOYEE"
+                ? "Your active project deliverables and stage progression board"
+                : "Interactive 5-stage drag & drop workspace with multi-member allocation"}
             </p>
           </div>
         </div>
 
-        {/* Developer Selector Filter */}
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">
-            Filter Assignee:
-          </span>
-          <div className="relative w-full sm:w-64">
-            <select
-              value={selectedEmployeeId}
-              onChange={(e) => setSelectedEmployeeId(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer pr-8"
-            >
-              <option value="ALL">🌐 All Company Projects ({projects.length})</option>
-              {employees.map((emp) => {
-                const count = projects.filter((p) =>
-                  p.teamMembers.some((m) => m.employeeId === emp.id && m.active)
-                ).length;
-                return (
-                  <option key={emp.id} value={emp.id}>
-                    👤 {emp.name} ({count} projects)
-                  </option>
-                );
-              })}
-            </select>
-            <ChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+        {/* Developer Selector Filter - only shown to Admin / Sub-Admin */}
+        {currentRole !== "EMPLOYEE" && (
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap">
+              Filter Assignee:
+            </span>
+            <div className="relative w-full sm:w-64">
+              <select
+                value={selectedEmployeeId}
+                onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all appearance-none cursor-pointer pr-8"
+              >
+                <option value="ALL">🌐 All Company Projects ({projects.length})</option>
+                {employees.map((emp) => {
+                  const count = projects.filter((p) =>
+                    p.teamMembers.some((m) => m.employeeId === emp.id && m.active)
+                  ).length;
+                  return (
+                    <option key={emp.id} value={emp.id}>
+                      👤 {emp.name} ({count} projects)
+                    </option>
+                  );
+                })}
+              </select>
+              <ChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Kanban Board Columns */}
