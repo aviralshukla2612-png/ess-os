@@ -39,7 +39,21 @@ export async function GET(req: Request) {
 
     let results = employees.map((emp) => {
       const kyc = emp.kyc;
-      const status = kyc ? kyc.status : "NOT_SUBMITTED";
+      const hasAnyData = !!(
+        kyc && (
+          (kyc.aadharNumber && kyc.aadharNumber.trim()) ||
+          kyc.aadharFrontUrl ||
+          kyc.aadharBackUrl ||
+          (kyc.panNumber && kyc.panNumber.trim()) ||
+          kyc.panCardUrl ||
+          kyc.passportPhotoUrl ||
+          kyc.selfieUrl ||
+          (kyc.accountNumber && kyc.accountNumber.trim()) ||
+          kyc.bankProofUrl
+        )
+      );
+
+      const status = (kyc && hasAnyData) ? (kyc.status || "NOT_SUBMITTED") : "NOT_SUBMITTED";
 
       return {
         id: emp.id,
@@ -52,7 +66,7 @@ export async function GET(req: Request) {
         avatarUrl: emp.user?.avatarUrl,
         activeRole: emp.user?.activeRole,
         joiningDate: emp.joiningDate,
-        kyc: kyc || {
+        kyc: (kyc && hasAnyData) ? kyc : {
           status: "NOT_SUBMITTED",
           aadharNumber: null,
           aadharFrontUrl: null,
@@ -73,6 +87,13 @@ export async function GET(req: Request) {
         status,
       };
     });
+
+    // Calculate metrics before applying user search/status filters
+    const totalCount = results.length;
+    const pendingCount = results.filter((r) => r.status === "PENDING").length;
+    const approvedCount = results.filter((r) => r.status === "APPROVED").length;
+    const rejectedCount = results.filter((r) => r.status === "REJECTED").length;
+    const notSubmittedCount = results.filter((r) => r.status === "NOT_SUBMITTED").length;
 
     // Apply filters
     if (statusFilter !== "ALL") {
@@ -95,13 +116,6 @@ export async function GET(req: Request) {
           (r.kyc.accountNumber && r.kyc.accountNumber.includes(q))
       );
     }
-
-    // Calculate metrics
-    const totalCount = employees.length;
-    const pendingCount = employees.filter((e) => e.kyc?.status === "PENDING").length;
-    const approvedCount = employees.filter((e) => e.kyc?.status === "APPROVED").length;
-    const rejectedCount = employees.filter((e) => e.kyc?.status === "REJECTED").length;
-    const notSubmittedCount = employees.filter((e) => !e.kyc || e.kyc.status === "NOT_SUBMITTED").length;
 
     return NextResponse.json({
       success: true,

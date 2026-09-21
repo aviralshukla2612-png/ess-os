@@ -111,6 +111,22 @@ export async function POST(req: Request) {
       isNotified: false,
     };
 
+    const hasAnyData = !!(
+      (kycData.aadharNumber && kycData.aadharNumber.trim()) ||
+      kycData.aadharFrontUrl ||
+      kycData.aadharBackUrl ||
+      (kycData.panNumber && kycData.panNumber.trim()) ||
+      kycData.panCardUrl ||
+      kycData.passportPhotoUrl ||
+      kycData.selfieUrl ||
+      (kycData.accountNumber && kycData.accountNumber.trim()) ||
+      kycData.bankProofUrl
+    );
+
+    if (!hasAnyData) {
+      kycData.status = "NOT_SUBMITTED";
+    }
+
     const updatedKyc = await prisma.employeeKyc.upsert({
       where: { employeeId: employee.id },
       create: {
@@ -185,6 +201,31 @@ export async function PATCH(req: Request) {
 
     if (body.markNotified) {
       patchData.isNotified = true;
+    }
+
+    const existingKyc = await prisma.employeeKyc.findUnique({
+      where: { employeeId: employee.id },
+    });
+
+    const merged = {
+      ...existingKyc,
+      ...patchData,
+    };
+
+    const hasAnyData = !!(
+      (merged.aadharNumber && merged.aadharNumber.trim()) ||
+      merged.aadharFrontUrl ||
+      merged.aadharBackUrl ||
+      (merged.panNumber && merged.panNumber.trim()) ||
+      merged.panCardUrl ||
+      merged.passportPhotoUrl ||
+      merged.selfieUrl ||
+      (merged.accountNumber && merged.accountNumber.trim()) ||
+      merged.bankProofUrl
+    );
+
+    if (!hasAnyData && merged.status !== "APPROVED") {
+      patchData.status = "NOT_SUBMITTED";
     }
 
     const updatedKyc = await prisma.employeeKyc.upsert({
