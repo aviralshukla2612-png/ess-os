@@ -80,7 +80,7 @@ async function runMigrations() {
       )
     `).catch(() => {});
 
-    // 2. ClientUpdate table columns (Fixes missing blockers/healthStatus/visibility)
+    // 2. ClientUpdate table columns (Fixes missing blockers/healthStatus/visibility/updatedAt)
     await tryAddCol("ClientUpdate", "blockers", "TEXT");
     await tryAddCol("ClientUpdate", "healthStatus", "TEXT DEFAULT 'ON_TRACK'");
     await tryAddCol("ClientUpdate", "visibility", "TEXT DEFAULT 'CLIENT_VISIBLE'");
@@ -88,6 +88,8 @@ async function runMigrations() {
     await tryAddCol("ClientUpdate", "content", "TEXT");
     await tryAddCol("ClientUpdate", "authorId", "TEXT");
     await tryAddCol("ClientUpdate", "projectId", "TEXT");
+    await tryAddCol("ClientUpdate", "createdAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
+    await tryAddCol("ClientUpdate", "updatedAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
 
     // 3. Task table columns
     await tryAddCol("Task", "completedAt", "DATETIME");
@@ -100,6 +102,8 @@ async function runMigrations() {
     await tryAddCol("Task", "assignedToId", "TEXT");
     await tryAddCol("Task", "priority", "TEXT DEFAULT 'MEDIUM'");
     await tryAddCol("Task", "status", "TEXT DEFAULT 'PLANNING'");
+    await tryAddCol("Task", "createdAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
+    await tryAddCol("Task", "updatedAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
 
     // 4. ProjectMembership table columns
     await tryAddCol("ProjectMembership", "compensationAmount", "REAL");
@@ -108,6 +112,7 @@ async function runMigrations() {
     await tryAddCol("ProjectMembership", "removalReason", "TEXT");
     await tryAddCol("ProjectMembership", "isActive", "BOOLEAN DEFAULT 1");
     await tryAddCol("ProjectMembership", "roleInProject", "TEXT DEFAULT 'MEMBER'");
+    await tryAddCol("ProjectMembership", "assignedAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
 
     // 5. Project table columns
     await tryAddCol("Project", "designUrl", "TEXT");
@@ -122,6 +127,8 @@ async function runMigrations() {
     await tryAddCol("Project", "projectTypeId", "TEXT");
     await tryAddCol("Project", "status", "TEXT DEFAULT 'DRAFT'");
     await tryAddCol("Project", "priority", "TEXT DEFAULT 'MEDIUM'");
+    await tryAddCol("Project", "createdAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
+    await tryAddCol("Project", "updatedAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
 
     // 6. ChangeRequest table columns
     await tryAddCol("ChangeRequest", "requestNumber", "TEXT");
@@ -137,12 +144,19 @@ async function runMigrations() {
     await tryAddCol("ChangeRequest", "status", "TEXT DEFAULT 'DRAFT'");
     await tryAddCol("ChangeRequest", "approvedById", "TEXT");
     await tryAddCol("ChangeRequest", "approvedAt", "DATETIME");
+    await tryAddCol("ChangeRequest", "createdAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
 
     // 7. ProjectDocument & DocumentVersion table columns
     await tryAddCol("ProjectDocument", "category", "TEXT DEFAULT 'GENERAL'");
     await tryAddCol("ProjectDocument", "version", "INTEGER DEFAULT 1");
     await tryAddCol("ProjectDocument", "createdById", "TEXT");
     await tryAddCol("ProjectDocument", "updatedById", "TEXT");
+    await tryAddCol("ProjectDocument", "createdAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
+    await tryAddCol("ProjectDocument", "updatedAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
+
+    await tryAddCol("DocumentVersion", "changeReason", "TEXT");
+    await tryAddCol("DocumentVersion", "updatedById", "TEXT");
+    await tryAddCol("DocumentVersion", "createdAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
 
     // 8. Employee table columns
     await tryAddCol("Employee", "sickLeaveTotal", "INTEGER DEFAULT 10");
@@ -155,12 +169,15 @@ async function runMigrations() {
     await tryAddCol("Employee", "skillsJson", "TEXT DEFAULT '[]'");
     await tryAddCol("Employee", "status", "TEXT DEFAULT 'ACTIVE'");
     await tryAddCol("Employee", "salaryMonthly", "REAL DEFAULT 0");
+    await tryAddCol("Employee", "createdAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
 
     // 9. User table columns
     await tryAddCol("User", "subAdminPermissions", "TEXT DEFAULT '[]'");
     await tryAddCol("User", "activeRole", "TEXT DEFAULT 'EMPLOYEE'");
     await tryAddCol("User", "avatarUrl", "TEXT");
     await tryAddCol("User", "isActive", "BOOLEAN DEFAULT 1");
+    await tryAddCol("User", "createdAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
+    await tryAddCol("User", "updatedAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
 
     // 10. Attendance table columns
     await tryAddCol("Attendance", "punchOutReason", "TEXT");
@@ -175,6 +192,8 @@ async function runMigrations() {
     await tryAddCol("Client", "billingAddress", "TEXT");
     await tryAddCol("Client", "taxId", "TEXT");
     await tryAddCol("Client", "notes", "TEXT");
+    await tryAddCol("Client", "createdAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
+    await tryAddCol("Client", "updatedAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
 
     console.log("[DB Migration] Schema synchronization complete.");
   } catch (err) {
