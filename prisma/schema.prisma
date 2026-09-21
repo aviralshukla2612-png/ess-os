@@ -423,6 +423,32 @@ model Employee {
   memberships        ProjectMembership[]
   workSessions       WorkSession[]
   leaveRequests      LeaveRequest[]
+  kyc                EmployeeKyc?
+}
+
+model EmployeeKyc {
+  id                String    @id @default(uuid())
+  employeeId        String    @unique
+  aadharNumber      String?
+  aadharFrontUrl    String?
+  aadharBackUrl     String?
+  panNumber         String?
+  panCardUrl        String?
+  passportPhotoUrl  String?
+  bankName          String?
+  accountHolderName String?
+  accountNumber     String?
+  ifscCode          String?
+  bankProofUrl      String?
+  status            String    @default("PENDING")
+  rejectionReason   String?
+  submittedAt       DateTime?
+  reviewedAt        DateTime?
+  reviewedById      String?
+  isNotified        Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  employee          Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
 model Attendance {

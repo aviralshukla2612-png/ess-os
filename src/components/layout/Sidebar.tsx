@@ -21,6 +21,8 @@ import {
   FileText,
   Sparkles,
   MessageSquare,
+  FileCheck,
+  ShieldCheck,
 } from "lucide-react";
 
 interface Props {
@@ -62,6 +64,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
       { id: "attendance", title: "Attendance", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
       { id: "attendance-requests", title: "Punch Out Requests", href: "/attendance-requests", icon: <Clock className="w-4 h-4" /> },
       { id: "leave-requests", title: "Leave Applications", href: "/leave-requests", icon: <UserCheck className="w-4 h-4" /> },
+      { id: "kyc", title: "Employee KYC", href: "/admin/kyc", icon: <FileCheck className="w-4 h-4" /> },
       { id: "finance", title: "Finance", href: "/finance", icon: <IndianRupee className="w-4 h-4" /> },
       { id: "audit", title: "Activity", href: "/audit", icon: <ShieldAlert className="w-4 h-4" /> },
       { id: "settings", title: "Settings", href: "/settings", icon: <Settings className="w-4 h-4" /> },
@@ -104,6 +107,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           { title: "Daily Updates", href: "/daily-updates", icon: <MessageSquare className="w-4 h-4" /> },
           { title: "My Work Sessions", href: "/attendance?view=personal", icon: <Clock className="w-4 h-4" /> },
           { title: "Leave Applications", href: "/attendance/leave", icon: <UserCheck className="w-4 h-4" /> },
+          { title: "My KYC Documents", href: "/kyc", icon: <ShieldCheck className="w-4 h-4" /> },
           { title: "Settings", href: "/settings", icon: <Settings className="w-4 h-4" /> },
         ];
 
@@ -116,6 +120,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           { title: "Projects & Feed", href: "/daily-updates", icon: <MessageSquare className="w-4 h-4" /> },
           { title: "My Work Sessions", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
           { title: "Leave Applications", href: "/attendance/leave", icon: <UserCheck className="w-4 h-4" /> },
+          { title: "My KYC Documents", href: "/kyc", icon: <ShieldCheck className="w-4 h-4" /> },
           { title: "Lead Pipeline", href: "/leads", icon: <Target className="w-4 h-4" /> },
           { title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
           { title: "Follow-ups Today", href: "/sales/followups", icon: <PhoneCall className="w-4 h-4" /> },
@@ -130,6 +135,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           { title: "Daily Updates", href: "/daily-updates", icon: <MessageSquare className="w-4 h-4" /> },
           { title: "My Work Sessions", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
           { title: "Leave Applications", href: "/attendance/leave", icon: <UserCheck className="w-4 h-4" /> },
+          { title: "My KYC Documents", href: "/kyc", icon: <ShieldCheck className="w-4 h-4" /> },
           { title: "Settings", href: "/settings", icon: <Settings className="w-4 h-4" /> },
         ];
 

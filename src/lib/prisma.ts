@@ -80,7 +80,55 @@ async function runMigrations() {
       )
     `).catch(() => {});
 
-    // 2. ClientUpdate table columns (Fixes missing blockers/healthStatus/visibility/updatedAt)
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "EmployeeKyc" (
+        "id" TEXT PRIMARY KEY,
+        "employeeId" TEXT NOT NULL UNIQUE,
+        "aadharNumber" TEXT,
+        "aadharFrontUrl" TEXT,
+        "aadharBackUrl" TEXT,
+        "panNumber" TEXT,
+        "panCardUrl" TEXT,
+        "passportPhotoUrl" TEXT,
+        "bankName" TEXT,
+        "accountHolderName" TEXT,
+        "accountNumber" TEXT,
+        "ifscCode" TEXT,
+        "bankProofUrl" TEXT,
+        "status" TEXT NOT NULL DEFAULT 'PENDING',
+        "rejectionReason" TEXT,
+        "submittedAt" DATETIME,
+        "reviewedAt" DATETIME,
+        "reviewedById" TEXT,
+        "isNotified" BOOLEAN NOT NULL DEFAULT 0,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY ("employeeId") REFERENCES "Employee" ("id") ON DELETE CASCADE
+      )
+    `).catch(() => {});
+
+    // 2. EmployeeKyc columns
+    await tryAddCol("EmployeeKyc", "aadharNumber", "TEXT");
+    await tryAddCol("EmployeeKyc", "aadharFrontUrl", "TEXT");
+    await tryAddCol("EmployeeKyc", "aadharBackUrl", "TEXT");
+    await tryAddCol("EmployeeKyc", "panNumber", "TEXT");
+    await tryAddCol("EmployeeKyc", "panCardUrl", "TEXT");
+    await tryAddCol("EmployeeKyc", "passportPhotoUrl", "TEXT");
+    await tryAddCol("EmployeeKyc", "bankName", "TEXT");
+    await tryAddCol("EmployeeKyc", "accountHolderName", "TEXT");
+    await tryAddCol("EmployeeKyc", "accountNumber", "TEXT");
+    await tryAddCol("EmployeeKyc", "ifscCode", "TEXT");
+    await tryAddCol("EmployeeKyc", "bankProofUrl", "TEXT");
+    await tryAddCol("EmployeeKyc", "status", "TEXT DEFAULT 'PENDING'");
+    await tryAddCol("EmployeeKyc", "rejectionReason", "TEXT");
+    await tryAddCol("EmployeeKyc", "submittedAt", "DATETIME");
+    await tryAddCol("EmployeeKyc", "reviewedAt", "DATETIME");
+    await tryAddCol("EmployeeKyc", "reviewedById", "TEXT");
+    await tryAddCol("EmployeeKyc", "isNotified", "BOOLEAN DEFAULT 0");
+    await tryAddCol("EmployeeKyc", "createdAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
+    await tryAddCol("EmployeeKyc", "updatedAt", "DATETIME DEFAULT CURRENT_TIMESTAMP");
+
+    // 3. ClientUpdate table columns
     await tryAddCol("ClientUpdate", "blockers", "TEXT");
     await tryAddCol("ClientUpdate", "healthStatus", "TEXT DEFAULT 'ON_TRACK'");
     await tryAddCol("ClientUpdate", "visibility", "TEXT DEFAULT 'CLIENT_VISIBLE'");
