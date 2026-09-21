@@ -435,6 +435,7 @@ model EmployeeKyc {
   panNumber         String?
   panCardUrl        String?
   passportPhotoUrl  String?
+  selfieUrl         String?
   bankName          String?
   accountHolderName String?
   accountNumber     String?

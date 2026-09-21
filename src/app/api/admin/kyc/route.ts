@@ -60,6 +60,7 @@ export async function GET(req: Request) {
           panNumber: null,
           panCardUrl: null,
           passportPhotoUrl: null,
+          selfieUrl: null,
           bankName: null,
           accountHolderName: null,
           accountNumber: null,

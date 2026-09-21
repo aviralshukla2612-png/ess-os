@@ -15,6 +15,7 @@ import {
   CreditCard,
   Building2,
   User,
+  Camera,
   FileText,
   Sparkles,
   PartyPopper,
@@ -33,6 +34,7 @@ interface KycData {
   panNumber?: string;
   panCardUrl?: string;
   passportPhotoUrl?: string;
+  selfieUrl?: string;
   bankName?: string;
   accountHolderName?: string;
   accountNumber?: string;
@@ -58,6 +60,7 @@ export default function KycPage() {
     panNumber: "",
     panCardUrl: "",
     passportPhotoUrl: "",
+    selfieUrl: "",
     bankName: "",
     accountHolderName: "",
     accountNumber: "",
@@ -73,6 +76,7 @@ export default function KycPage() {
     panNumber: "",
     panCardUrl: "",
     passportPhotoUrl: "",
+    selfieUrl: "",
     bankName: "",
     accountHolderName: "",
     accountNumber: "",
@@ -85,6 +89,7 @@ export default function KycPage() {
     aadhar: false,
     pan: false,
     photo: false,
+    selfie: false,
     bank: false,
   });
 
@@ -112,7 +117,7 @@ export default function KycPage() {
 
         // Auto open edit mode if not submitted or rejected
         if (json.data.status === "NOT_SUBMITTED" || json.data.status === "REJECTED") {
-          setEditSection({ aadhar: true, pan: true, photo: true, bank: true });
+          setEditSection({ aadhar: true, pan: true, photo: true, selfie: true, bank: true });
         }
       }
     } catch (err) {
@@ -196,7 +201,7 @@ export default function KycPage() {
         showToast("KYC documents submitted to Admin for approval!", "success");
         setKyc(json.data);
         setFormData(json.data);
-        setEditSection({ aadhar: false, pan: false, photo: false, bank: false });
+        setEditSection({ aadhar: false, pan: false, photo: false, selfie: false, bank: false });
       } else {
         showToast(json.error || "Failed to submit KYC", "error");
       }
@@ -575,7 +580,72 @@ export default function KycPage() {
           </div>
         </div>
 
-        {/* SECTION 4: BANK DETAILS */}
+        {/* SECTION 4: LIVE SELFIE PHOTO */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-5">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                <Camera className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">4. Live Selfie Photo</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Identity Verification Selfie with Face Match</p>
+              </div>
+            </div>
+            <button
+              onClick={() => toggleSectionEdit("selfie")}
+              className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 transition-all"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>{editSection.selfie ? "Done" : "Edit"}</span>
+            </button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            {formData.selfieUrl ? (
+              <div className="relative group rounded-3xl overflow-hidden border-2 border-cyan-500/40 w-36 h-44 flex-shrink-0 bg-slate-950">
+                <img src={formData.selfieUrl} alt="Selfie Verification" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => setPreviewImage({ url: formData.selfieUrl!, title: "Live Selfie Photo" })}
+                    className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  {editSection.selfie && (
+                    <label className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md cursor-pointer">
+                      <Camera className="w-4 h-4" />
+                      <input type="file" accept="image/*" capture="user" className="hidden" onChange={(e) => handleFileUpload(e, "selfieUrl")} />
+                    </label>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <label className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl w-36 h-44 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-cyan-500 hover:bg-cyan-500/5 transition-all flex-shrink-0">
+                {uploadingField === "selfieUrl" ? (
+                  <RefreshCw className="w-6 h-6 text-cyan-500 animate-spin" />
+                ) : (
+                  <>
+                    <Camera className="w-6 h-6 text-slate-400" />
+                    <span className="text-xs font-semibold text-slate-500 text-center px-2">Take / Upload Selfie</span>
+                  </>
+                )}
+                <input type="file" accept="image/*" capture="user" className="hidden" onChange={(e) => handleFileUpload(e, "selfieUrl")} />
+              </label>
+            )}
+
+            <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1.5 leading-relaxed">
+              <p className="font-semibold text-slate-700 dark:text-slate-300">Selfie Guidelines:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Take a direct selfie facing your front camera</li>
+                <li>Ensure face is centered with clear neutral expression</li>
+                <li>Remove cap, mask, or sunglasses during capture</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 5: BANK DETAILS */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-5">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-4">
             <div className="flex items-center gap-3">
@@ -583,7 +653,7 @@ export default function KycPage() {
                 <Building2 className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">4. Bank Account Details</h3>
+                <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">5. Bank Account Details</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">For Payroll & Salary Disbursements</p>
               </div>
             </div>

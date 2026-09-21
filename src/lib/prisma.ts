@@ -90,6 +90,7 @@ async function runMigrations() {
         "panNumber" TEXT,
         "panCardUrl" TEXT,
         "passportPhotoUrl" TEXT,
+        "selfieUrl" TEXT,
         "bankName" TEXT,
         "accountHolderName" TEXT,
         "accountNumber" TEXT,
@@ -114,6 +115,7 @@ async function runMigrations() {
     await tryAddCol("EmployeeKyc", "panNumber", "TEXT");
     await tryAddCol("EmployeeKyc", "panCardUrl", "TEXT");
     await tryAddCol("EmployeeKyc", "passportPhotoUrl", "TEXT");
+    await tryAddCol("EmployeeKyc", "selfieUrl", "TEXT");
     await tryAddCol("EmployeeKyc", "bankName", "TEXT");
     await tryAddCol("EmployeeKyc", "accountHolderName", "TEXT");
     await tryAddCol("EmployeeKyc", "accountNumber", "TEXT");

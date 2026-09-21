@@ -16,6 +16,7 @@ import {
   CreditCard,
   Building2,
   User,
+  Camera,
   FileText,
   ShieldCheck,
   ThumbsUp,
@@ -48,6 +49,7 @@ interface EmployeeKycItem {
     panNumber?: string | null;
     panCardUrl?: string | null;
     passportPhotoUrl?: string | null;
+    selfieUrl?: string | null;
     bankName?: string | null;
     accountHolderName?: string | null;
     accountNumber?: string | null;
@@ -524,7 +526,61 @@ export default function AdminKycPage() {
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-6 flex-1">
               {/* Documents Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Live Selfie Verification */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5 text-cyan-500" />
+                      Live Selfie Photo
+                    </span>
+                    <span className="text-[11px] font-mono text-cyan-600 dark:text-cyan-400">Face Match</span>
+                  </div>
+                  {selectedEmp.kyc.selfieUrl ? (
+                    <div
+                      onClick={() => setPreviewImage({ url: selectedEmp.kyc.selfieUrl!, title: `Live Selfie - ${selectedEmp.name}` })}
+                      className="relative group rounded-xl overflow-hidden aspect-video bg-black cursor-pointer border border-slate-300 dark:border-slate-700"
+                    >
+                      <img src={selectedEmp.kyc.selfieUrl} alt="Live Selfie" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-bold">
+                        <Eye className="w-4 h-4" />
+                        <span>Click to Enlarge</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="aspect-video rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-xs text-slate-400 italic">
+                      No Selfie Uploaded
+                    </div>
+                  )}
+                </div>
+
+                {/* Passport Photo */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-purple-500" />
+                      Passport Photo
+                    </span>
+                    <span className="text-[11px] font-mono text-purple-600 dark:text-purple-400">Profile ID</span>
+                  </div>
+                  {selectedEmp.kyc.passportPhotoUrl ? (
+                    <div
+                      onClick={() => setPreviewImage({ url: selectedEmp.kyc.passportPhotoUrl!, title: `Passport Photo - ${selectedEmp.name}` })}
+                      className="relative group rounded-xl overflow-hidden aspect-video bg-black cursor-pointer border border-slate-300 dark:border-slate-700"
+                    >
+                      <img src={selectedEmp.kyc.passportPhotoUrl} alt="Passport Photo" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-bold">
+                        <Eye className="w-4 h-4" />
+                        <span>Click to Enlarge</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="aspect-video rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-xs text-slate-400 italic">
+                      No Photo Uploaded
+                    </div>
+                  )}
+                </div>
+
                 {/* Aadhaar Front */}
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
                   <div className="flex items-center justify-between">
@@ -600,8 +656,8 @@ export default function AdminKycPage() {
                 {/* Passbook Proof */}
                 <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Bank Passbook / Cheque Proof</span>
-                    <span className="text-[11px] font-mono text-amber-600 dark:text-amber-400">Account Verification</span>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Bank Passbook Proof</span>
+                    <span className="text-[11px] font-mono text-amber-600 dark:text-amber-400">Account Proof</span>
                   </div>
                   {selectedEmp.kyc.bankProofUrl ? (
                     <div
