@@ -88,6 +88,20 @@ export default function AdminKycPage() {
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
   const [broadcasting, setBroadcasting] = useState(false);
 
+  const getImgSrc = (url?: string | null) => {
+    if (!url) return "";
+    if (url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    if (url.startsWith("/crmtesting")) {
+      return url;
+    }
+    if (url.startsWith("/")) {
+      return `/crmtesting${url}`;
+    }
+    return `/crmtesting/${url}`;
+  };
+
   useEffect(() => {
     fetchKycRecords();
   }, [statusFilter, departmentFilter]);
@@ -389,7 +403,9 @@ export default function AdminKycPage() {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black flex items-center justify-center border border-indigo-200 dark:border-indigo-500/20 overflow-hidden flex-shrink-0">
                             {emp.kyc.passportPhotoUrl ? (
-                              <img src={emp.kyc.passportPhotoUrl} alt={emp.name} className="w-full h-full object-cover" />
+                              <img src={getImgSrc(emp.kyc.passportPhotoUrl)} alt={emp.name} className="w-full h-full object-cover" />
+                            ) : emp.kyc.selfieUrl ? (
+                              <img src={getImgSrc(emp.kyc.selfieUrl)} alt={emp.name} className="w-full h-full object-cover" />
                             ) : (
                               emp.name.charAt(0).toUpperCase()
                             )}
@@ -498,7 +514,9 @@ export default function AdminKycPage() {
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold flex items-center justify-center overflow-hidden border border-indigo-200 dark:border-indigo-500/20">
                   {selectedEmp.kyc.passportPhotoUrl ? (
-                    <img src={selectedEmp.kyc.passportPhotoUrl} alt={selectedEmp.name} className="w-full h-full object-cover" />
+                    <img src={getImgSrc(selectedEmp.kyc.passportPhotoUrl)} alt={selectedEmp.name} className="w-full h-full object-cover" />
+                  ) : selectedEmp.kyc.selfieUrl ? (
+                    <img src={getImgSrc(selectedEmp.kyc.selfieUrl)} alt={selectedEmp.name} className="w-full h-full object-cover" />
                   ) : (
                     selectedEmp.name.charAt(0).toUpperCase()
                   )}
@@ -541,7 +559,7 @@ export default function AdminKycPage() {
                       onClick={() => setPreviewImage({ url: selectedEmp.kyc.selfieUrl!, title: `Live Selfie - ${selectedEmp.name}` })}
                       className="relative group rounded-xl overflow-hidden aspect-video bg-black cursor-pointer border border-slate-300 dark:border-slate-700"
                     >
-                      <img src={selectedEmp.kyc.selfieUrl} alt="Live Selfie" className="w-full h-full object-cover" />
+                      <img src={getImgSrc(selectedEmp.kyc.selfieUrl)} alt="Live Selfie" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-bold">
                         <Eye className="w-4 h-4" />
                         <span>Click to Enlarge</span>
@@ -568,7 +586,7 @@ export default function AdminKycPage() {
                       onClick={() => setPreviewImage({ url: selectedEmp.kyc.passportPhotoUrl!, title: `Passport Photo - ${selectedEmp.name}` })}
                       className="relative group rounded-xl overflow-hidden aspect-video bg-black cursor-pointer border border-slate-300 dark:border-slate-700"
                     >
-                      <img src={selectedEmp.kyc.passportPhotoUrl} alt="Passport Photo" className="w-full h-full object-cover" />
+                      <img src={getImgSrc(selectedEmp.kyc.passportPhotoUrl)} alt="Passport Photo" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-bold">
                         <Eye className="w-4 h-4" />
                         <span>Click to Enlarge</span>
@@ -592,7 +610,7 @@ export default function AdminKycPage() {
                       onClick={() => setPreviewImage({ url: selectedEmp.kyc.aadharFrontUrl!, title: `Aadhaar Front - ${selectedEmp.name}` })}
                       className="relative group rounded-xl overflow-hidden aspect-video bg-black cursor-pointer border border-slate-300 dark:border-slate-700"
                     >
-                      <img src={selectedEmp.kyc.aadharFrontUrl} alt="Aadhaar Front" className="w-full h-full object-cover" />
+                      <img src={getImgSrc(selectedEmp.kyc.aadharFrontUrl)} alt="Aadhaar Front" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-bold">
                         <Eye className="w-4 h-4" />
                         <span>Click to Enlarge</span>
@@ -616,7 +634,7 @@ export default function AdminKycPage() {
                       onClick={() => setPreviewImage({ url: selectedEmp.kyc.aadharBackUrl!, title: `Aadhaar Back - ${selectedEmp.name}` })}
                       className="relative group rounded-xl overflow-hidden aspect-video bg-black cursor-pointer border border-slate-300 dark:border-slate-700"
                     >
-                      <img src={selectedEmp.kyc.aadharBackUrl} alt="Aadhaar Back" className="w-full h-full object-cover" />
+                      <img src={getImgSrc(selectedEmp.kyc.aadharBackUrl)} alt="Aadhaar Back" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-bold">
                         <Eye className="w-4 h-4" />
                         <span>Click to Enlarge</span>
@@ -640,7 +658,7 @@ export default function AdminKycPage() {
                       onClick={() => setPreviewImage({ url: selectedEmp.kyc.panCardUrl!, title: `PAN Card - ${selectedEmp.name}` })}
                       className="relative group rounded-xl overflow-hidden aspect-video bg-black cursor-pointer border border-slate-300 dark:border-slate-700"
                     >
-                      <img src={selectedEmp.kyc.panCardUrl} alt="PAN Card" className="w-full h-full object-cover" />
+                      <img src={getImgSrc(selectedEmp.kyc.panCardUrl)} alt="PAN Card" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-bold">
                         <Eye className="w-4 h-4" />
                         <span>Click to Enlarge</span>
@@ -664,7 +682,7 @@ export default function AdminKycPage() {
                       onClick={() => setPreviewImage({ url: selectedEmp.kyc.bankProofUrl!, title: `Bank Proof - ${selectedEmp.name}` })}
                       className="relative group rounded-xl overflow-hidden aspect-video bg-black cursor-pointer border border-slate-300 dark:border-slate-700"
                     >
-                      <img src={selectedEmp.kyc.bankProofUrl} alt="Bank Proof" className="w-full h-full object-cover" />
+                      <img src={getImgSrc(selectedEmp.kyc.bankProofUrl)} alt="Bank Proof" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-bold">
                         <Eye className="w-4 h-4" />
                         <span>Click to Enlarge</span>
@@ -788,7 +806,7 @@ export default function AdminKycPage() {
               </button>
             </div>
             <div className="p-4 flex items-center justify-center max-h-[80vh] overflow-auto">
-              <img src={previewImage.url} alt={previewImage.title} className="max-w-full max-h-[75vh] object-contain rounded-xl" />
+              <img src={getImgSrc(previewImage.url)} alt={previewImage.title} className="max-w-full max-h-[75vh] object-contain rounded-xl" />
             </div>
           </div>
         </div>
