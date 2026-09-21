@@ -565,22 +565,18 @@ export default function KycPage() {
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      {editSection.aadhar && (
-                        <>
-                          <label className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md cursor-pointer" title="Replace Photo">
-                            <Upload className="w-4 h-4" />
-                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "aadharFrontUrl")} />
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteField("aadharFrontUrl", "Aadhaar Front")}
-                            className="p-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white backdrop-blur-md transition-colors"
-                            title="Delete Photo"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
+                      <label className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md cursor-pointer" title="Replace Photo">
+                        <Upload className="w-4 h-4" />
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "aadharFrontUrl")} />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteField("aadharFrontUrl", "Aadhaar Front")}
+                        className="p-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white backdrop-blur-md transition-colors"
+                        title="Delete Photo"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -612,22 +608,18 @@ export default function KycPage() {
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      {editSection.aadhar && (
-                        <>
-                          <label className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md cursor-pointer" title="Replace Photo">
-                            <Upload className="w-4 h-4" />
-                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "aadharBackUrl")} />
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteField("aadharBackUrl", "Aadhaar Back")}
-                            className="p-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white backdrop-blur-md transition-colors"
-                            title="Delete Photo"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
+                      <label className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md cursor-pointer" title="Replace Photo">
+                        <Upload className="w-4 h-4" />
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "aadharBackUrl")} />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteField("aadharBackUrl", "Aadhaar Back")}
+                        className="p-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white backdrop-blur-md transition-colors"
+                        title="Delete Photo"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -703,22 +695,18 @@ export default function KycPage() {
                     >
                       <Eye className="w-4 h-4" />
                     </button>
-                    {editSection.pan && (
-                      <>
-                        <label className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md cursor-pointer" title="Replace Photo">
-                          <Upload className="w-4 h-4" />
-                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "panCardUrl")} />
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteField("panCardUrl", "PAN Card Photo")}
-                          className="p-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white backdrop-blur-md transition-colors"
-                          title="Delete Photo"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
+                    <label className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md cursor-pointer" title="Replace Photo">
+                      <Upload className="w-4 h-4" />
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "panCardUrl")} />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteField("panCardUrl", "PAN Card Photo")}
+                      className="p-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white backdrop-blur-md transition-colors"
+                      title="Delete Photo"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -761,32 +749,30 @@ export default function KycPage() {
 
           <div className="flex flex-col sm:flex-row items-center gap-6">
             {formData.passportPhotoUrl ? (
-              <div className="relative group rounded-3xl overflow-hidden border-2 border-indigo-500/40 w-36 h-44 flex-shrink-0 bg-slate-950">
-                <img src={getImgSrc(formData.passportPhotoUrl)} alt="Passport Photo" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                  <button
-                    onClick={() => setPreviewImage({ url: formData.passportPhotoUrl!, title: "Passport Photo" })}
-                    className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md"
-                    title="View Photo"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  {editSection.photo && (
-                    <>
-                      <label className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md cursor-pointer" title="Replace Photo">
-                        <Upload className="w-4 h-4" />
-                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "passportPhotoUrl")} />
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteField("passportPhotoUrl", "Passport Photo")}
-                        className="p-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white backdrop-blur-md transition-colors"
-                        title="Delete Photo"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
+              <div className="flex flex-col items-center gap-2 flex-shrink-0">
+                <div className="relative group rounded-3xl overflow-hidden border-2 border-indigo-500/40 w-36 h-44 flex-shrink-0 bg-slate-950">
+                  <img src={getImgSrc(formData.passportPhotoUrl)} alt="Passport Photo" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => setPreviewImage({ url: formData.passportPhotoUrl!, title: "Passport Photo" })}
+                      className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md"
+                      title="View Photo"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <label className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md cursor-pointer" title="Replace Photo">
+                      <Upload className="w-4 h-4" />
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "passportPhotoUrl")} />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteField("passportPhotoUrl", "Passport Photo")}
+                      className="p-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white backdrop-blur-md transition-colors"
+                      title="Delete Photo"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -847,25 +833,21 @@ export default function KycPage() {
                   >
                     <Eye className="w-4 h-4" />
                   </button>
-                  {editSection.selfie && (
-                    <>
-                      <button
-                        onClick={openCameraModal}
-                        className="p-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-white backdrop-blur-md transition-all shadow-lg shadow-cyan-500/30"
-                        title="Retake with Live Camera"
-                      >
-                        <Camera className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteField("selfieUrl", "Live Selfie")}
-                        className="p-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white backdrop-blur-md transition-colors"
-                        title="Delete Selfie"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
+                  <button
+                    onClick={openCameraModal}
+                    className="p-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-white backdrop-blur-md transition-all shadow-lg shadow-cyan-500/30"
+                    title="Retake with Live Camera"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteField("selfieUrl", "Live Selfie")}
+                    className="p-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white backdrop-blur-md transition-colors"
+                    title="Delete Selfie"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             ) : (
@@ -901,7 +883,7 @@ export default function KycPage() {
                 <li>Ensure face is centered with good lighting and clear neutral expression.</li>
                 <li>Remove cap, face mask, or sunglasses during capture.</li>
               </ul>
-              {formData.selfieUrl && editSection.selfie && (
+              {formData.selfieUrl && (
                 <div className="pt-2 flex items-center gap-2">
                   <button
                     type="button"
@@ -1023,22 +1005,18 @@ export default function KycPage() {
                     >
                       <Eye className="w-4 h-4" />
                     </button>
-                    {editSection.bank && (
-                      <>
-                        <label className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md cursor-pointer" title="Replace Photo">
-                          <Upload className="w-4 h-4" />
-                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "bankProofUrl")} />
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteField("bankProofUrl", "Bank Proof Photo")}
-                          className="p-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white backdrop-blur-md transition-colors"
-                          title="Delete Photo"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
+                    <label className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md cursor-pointer" title="Replace Photo">
+                      <Upload className="w-4 h-4" />
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "bankProofUrl")} />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteField("bankProofUrl", "Bank Proof Photo")}
+                      className="p-2 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white backdrop-blur-md transition-colors"
+                      title="Delete Photo"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ) : (
