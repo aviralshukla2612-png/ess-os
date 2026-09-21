@@ -50,6 +50,7 @@ export function LeadPipelineBoard({
     { id: "PROPOSAL", title: "Proposal Sent" },
     { id: "NEGOTIATION", title: "Negotiation" },
     { id: "WON", title: "Won / Closing" },
+    { id: "LOST", title: "Deal Lost" },
   ];
   
   const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
@@ -83,10 +84,22 @@ export function LeadPipelineBoard({
               }}
             >
               <div className="flex items-center justify-between px-1">
-                <span className="font-bold text-xs text-slate-800 dark:text-slate-200 font-mono uppercase">
+                <span className={`font-bold text-xs font-mono uppercase ${
+                  stage.id === "WON" 
+                    ? "text-emerald-600 dark:text-emerald-400" 
+                    : stage.id === "LOST" 
+                    ? "text-rose-600 dark:text-rose-400" 
+                    : "text-slate-800 dark:text-slate-200"
+                }`}>
                   {stage.title}
                 </span>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-250 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                  stage.id === "WON"
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                    : stage.id === "LOST"
+                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                    : "bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                }`}>
                   {stageLeads.length}
                 </span>
               </div>
@@ -109,7 +122,11 @@ export function LeadPipelineBoard({
                         router.push(`/leads/${lead.id}`);
                       }
                     }}
-                    className="p-3.5 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800/80 shadow-xs hover:border-indigo-500/50 dark:hover:border-indigo-500/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/90 hover:scale-[1.01] hover:shadow-sm transition-all duration-200 space-y-2 group cursor-grab active:cursor-grabbing"
+                    className={`p-3.5 rounded-xl border shadow-xs hover:scale-[1.01] hover:shadow-sm transition-all duration-200 space-y-2 group cursor-grab active:cursor-grabbing ${
+                      lead.stage === "LOST"
+                        ? "bg-slate-50/70 dark:bg-slate-900/50 border-slate-200/70 dark:border-slate-800/60 opacity-85 hover:opacity-100"
+                        : "bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-800/80 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/90"
+                    }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-[10px] font-bold text-slate-400">{lead.leadNumber}</span>
@@ -204,6 +221,24 @@ export function LeadPipelineBoard({
                         <span>Convert to Client</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
+                    )}
+
+                    {lead.stage === "LOST" && (
+                      <div className="w-full mt-2 py-1.5 px-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 font-bold text-[10.5px] flex items-center justify-between">
+                        <span>Deal Lost</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            updateLeadStageApi(lead.id, "NEGOTIATION");
+                          }}
+                          className="hover:underline text-[10px] text-indigo-600 dark:text-indigo-400 cursor-pointer font-semibold"
+                          title="Move back to Negotiation stage"
+                        >
+                          Reopen ↺
+                        </button>
+                      </div>
                     )}
                   </div>
                 ))}
