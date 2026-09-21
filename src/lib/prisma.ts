@@ -80,7 +80,16 @@ async function runMigrations() {
       )
     `).catch(() => {});
 
-    // 2. Task table columns (Fixes the GET /api/projects 500 error)
+    // 2. ClientUpdate table columns (Fixes missing blockers/healthStatus/visibility)
+    await tryAddCol("ClientUpdate", "blockers", "TEXT");
+    await tryAddCol("ClientUpdate", "healthStatus", "TEXT DEFAULT 'ON_TRACK'");
+    await tryAddCol("ClientUpdate", "visibility", "TEXT DEFAULT 'CLIENT_VISIBLE'");
+    await tryAddCol("ClientUpdate", "title", "TEXT");
+    await tryAddCol("ClientUpdate", "content", "TEXT");
+    await tryAddCol("ClientUpdate", "authorId", "TEXT");
+    await tryAddCol("ClientUpdate", "projectId", "TEXT");
+
+    // 3. Task table columns
     await tryAddCol("Task", "completedAt", "DATETIME");
     await tryAddCol("Task", "startDate", "DATETIME");
     await tryAddCol("Task", "deadline", "DATETIME");
@@ -88,15 +97,19 @@ async function runMigrations() {
     await tryAddCol("Task", "estimatedHours", "REAL DEFAULT 0");
     await tryAddCol("Task", "actualHours", "REAL DEFAULT 0");
     await tryAddCol("Task", "isMostImportant", "BOOLEAN DEFAULT 0");
+    await tryAddCol("Task", "assignedToId", "TEXT");
+    await tryAddCol("Task", "priority", "TEXT DEFAULT 'MEDIUM'");
+    await tryAddCol("Task", "status", "TEXT DEFAULT 'PLANNING'");
 
-    // 3. ProjectMembership table columns
+    // 4. ProjectMembership table columns
     await tryAddCol("ProjectMembership", "compensationAmount", "REAL");
     await tryAddCol("ProjectMembership", "removedAt", "DATETIME");
     await tryAddCol("ProjectMembership", "removedById", "TEXT");
     await tryAddCol("ProjectMembership", "removalReason", "TEXT");
     await tryAddCol("ProjectMembership", "isActive", "BOOLEAN DEFAULT 1");
+    await tryAddCol("ProjectMembership", "roleInProject", "TEXT DEFAULT 'MEMBER'");
 
-    // 4. Project table columns
+    // 5. Project table columns
     await tryAddCol("Project", "designUrl", "TEXT");
     await tryAddCol("Project", "stagingUrl", "TEXT");
     await tryAddCol("Project", "liveUrl", "TEXT");
@@ -106,8 +119,32 @@ async function runMigrations() {
     await tryAddCol("Project", "startDate", "DATETIME");
     await tryAddCol("Project", "targetDeadline", "DATETIME");
     await tryAddCol("Project", "actualCompletionDate", "DATETIME");
+    await tryAddCol("Project", "projectTypeId", "TEXT");
+    await tryAddCol("Project", "status", "TEXT DEFAULT 'DRAFT'");
+    await tryAddCol("Project", "priority", "TEXT DEFAULT 'MEDIUM'");
 
-    // 5. Employee table columns
+    // 6. ChangeRequest table columns
+    await tryAddCol("ChangeRequest", "requestNumber", "TEXT");
+    await tryAddCol("ChangeRequest", "requestedBy", "TEXT");
+    await tryAddCol("ChangeRequest", "source", "TEXT DEFAULT 'CLIENT'");
+    await tryAddCol("ChangeRequest", "originalRequirement", "TEXT");
+    await tryAddCol("ChangeRequest", "requestedChange", "TEXT");
+    await tryAddCol("ChangeRequest", "reason", "TEXT");
+    await tryAddCol("ChangeRequest", "technicalImpact", "TEXT");
+    await tryAddCol("ChangeRequest", "timelineImpactDays", "INTEGER DEFAULT 0");
+    await tryAddCol("ChangeRequest", "costImpactAmount", "REAL DEFAULT 0");
+    await tryAddCol("ChangeRequest", "estimatedHours", "REAL DEFAULT 0");
+    await tryAddCol("ChangeRequest", "status", "TEXT DEFAULT 'DRAFT'");
+    await tryAddCol("ChangeRequest", "approvedById", "TEXT");
+    await tryAddCol("ChangeRequest", "approvedAt", "DATETIME");
+
+    // 7. ProjectDocument & DocumentVersion table columns
+    await tryAddCol("ProjectDocument", "category", "TEXT DEFAULT 'GENERAL'");
+    await tryAddCol("ProjectDocument", "version", "INTEGER DEFAULT 1");
+    await tryAddCol("ProjectDocument", "createdById", "TEXT");
+    await tryAddCol("ProjectDocument", "updatedById", "TEXT");
+
+    // 8. Employee table columns
     await tryAddCol("Employee", "sickLeaveTotal", "INTEGER DEFAULT 10");
     await tryAddCol("Employee", "sickLeaveUsed", "REAL DEFAULT 0");
     await tryAddCol("Employee", "casualLeaveTotal", "INTEGER DEFAULT 15");
@@ -116,19 +153,28 @@ async function runMigrations() {
     await tryAddCol("Employee", "paidLeaveUsed", "REAL DEFAULT 0");
     await tryAddCol("Employee", "reportingManagerId", "TEXT");
     await tryAddCol("Employee", "skillsJson", "TEXT DEFAULT '[]'");
+    await tryAddCol("Employee", "status", "TEXT DEFAULT 'ACTIVE'");
+    await tryAddCol("Employee", "salaryMonthly", "REAL DEFAULT 0");
 
-    // 6. User table columns
+    // 9. User table columns
     await tryAddCol("User", "subAdminPermissions", "TEXT DEFAULT '[]'");
     await tryAddCol("User", "activeRole", "TEXT DEFAULT 'EMPLOYEE'");
     await tryAddCol("User", "avatarUrl", "TEXT");
     await tryAddCol("User", "isActive", "BOOLEAN DEFAULT 1");
 
-    // 7. Attendance table columns
+    // 10. Attendance table columns
     await tryAddCol("Attendance", "punchOutReason", "TEXT");
     await tryAddCol("Attendance", "punchOutRequestStatus", "TEXT");
     await tryAddCol("Attendance", "punchOutRequestedAt", "DATETIME");
     await tryAddCol("Attendance", "punchOutApprovedById", "TEXT");
     await tryAddCol("Attendance", "totalMinutes", "INTEGER DEFAULT 0");
+
+    // 11. Client table columns
+    await tryAddCol("Client", "totalBusiness", "REAL DEFAULT 0");
+    await tryAddCol("Client", "outstandingBalance", "REAL DEFAULT 0");
+    await tryAddCol("Client", "billingAddress", "TEXT");
+    await tryAddCol("Client", "taxId", "TEXT");
+    await tryAddCol("Client", "notes", "TEXT");
 
     console.log("[DB Migration] Schema synchronization complete.");
   } catch (err) {
