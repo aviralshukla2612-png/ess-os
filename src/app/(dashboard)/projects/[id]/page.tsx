@@ -1152,12 +1152,26 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
             <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">
               Target Deadline
             </label>
-            <input
-              type="date"
-              value={editDeadline}
-              onChange={(e) => setEditDeadline(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
-            />
+            <div className="relative flex items-center">
+              <input
+                type="date"
+                value={editDeadline}
+                onChange={(e) => setEditDeadline(e.target.value)}
+                onClick={(e) => (e.currentTarget as any).showPicker?.()}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 pl-10 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all dark:[color-scheme:dark] cursor-pointer"
+              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  const input = e.currentTarget.parentElement?.querySelector('input[type="date"]') as HTMLInputElement;
+                  input?.showPicker?.();
+                }}
+                className="absolute left-3 text-slate-400 hover:text-indigo-500 transition-colors p-1"
+                title="Open Calendar Date Picker"
+              >
+                <Calendar className="w-4 h-4 text-indigo-500" />
+              </button>
+            </div>
           </div>
 
           <button
@@ -1244,12 +1258,26 @@ export default function ProjectWorkspacePage({ params }: { params: { id: string 
             <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">
               Task Deadline
             </label>
-            <input
-              type="date"
-              value={taskDeadline}
-              onChange={(e) => setTaskDeadline(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
-            />
+            <div className="relative flex items-center">
+              <input
+                type="date"
+                value={taskDeadline}
+                onChange={(e) => setTaskDeadline(e.target.value)}
+                onClick={(e) => (e.currentTarget as any).showPicker?.()}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 pl-10 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all dark:[color-scheme:dark] cursor-pointer"
+              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  const input = e.currentTarget.parentElement?.querySelector('input[type="date"]') as HTMLInputElement;
+                  input?.showPicker?.();
+                }}
+                className="absolute left-3 text-slate-400 hover:text-indigo-500 transition-colors p-1"
+                title="Open Calendar Date Picker"
+              >
+                <Calendar className="w-4 h-4 text-indigo-500" />
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 pt-1">

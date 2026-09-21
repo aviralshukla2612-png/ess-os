@@ -230,12 +230,26 @@ export default function MasterDailyUpdatesPage() {
             <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-1">
               Inspection Date
             </label>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
-            />
+            <div className="relative flex items-center">
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                onClick={(e) => (e.currentTarget as any).showPicker?.()}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 pl-9 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 dark:[color-scheme:dark] cursor-pointer text-xs"
+              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  const input = e.currentTarget.parentElement?.querySelector('input[type="date"]') as HTMLInputElement;
+                  input?.showPicker?.();
+                }}
+                className="absolute left-2.5 text-slate-400 hover:text-indigo-500 transition-colors"
+                title="Open Calendar"
+              >
+                <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+              </button>
+            </div>
           </div>
 
           {/* Employee Filter - only shown to Admin / Sub-Admin */}

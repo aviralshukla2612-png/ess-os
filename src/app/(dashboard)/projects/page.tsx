@@ -363,12 +363,46 @@ export default function ProjectsDirectoryPage() {
               <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">
                 Target Deadline
               </label>
-              <input
-                type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
-              />
+              <div className="relative flex items-center">
+                <input
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                  onClick={(e) => (e.currentTarget as any).showPicker?.()}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 pl-10 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all dark:[color-scheme:dark] cursor-pointer font-medium"
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    const input = e.currentTarget.parentElement?.querySelector('input[type="date"]') as HTMLInputElement;
+                    input?.showPicker?.();
+                  }}
+                  className="absolute left-3 text-slate-400 hover:text-indigo-500 transition-colors p-1"
+                  title="Open Calendar Date Picker"
+                >
+                  <Calendar className="w-4 h-4 text-indigo-500" />
+                </button>
+              </div>
+              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                {[
+                  { label: "+7 Days", days: 7 },
+                  { label: "+14 Days", days: 14 },
+                  { label: "+30 Days", days: 30 },
+                ].map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => {
+                      const d = new Date();
+                      d.setDate(d.getDate() + preset.days);
+                      setDeadline(d.toISOString().split("T")[0]);
+                    }}
+                    className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 text-[10px] font-semibold transition-all border border-slate-200 dark:border-slate-700"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

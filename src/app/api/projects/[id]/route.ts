@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 
+const safeFormatDate = (dateVal: any, fallback = "TBD") => {
+  if (!dateVal) return fallback;
+  try {
+    const d = new Date(dateVal);
+    return isNaN(d.getTime()) ? fallback : d.toLocaleDateString();
+  } catch {
+    return fallback;
+  }
+};
+
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const authRes = await requireAuth();
   if (authRes instanceof NextResponse) return authRes;
@@ -35,43 +45,49 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 });
     }
 
+    const memberships = project.memberships || [];
+    const tasks = project.tasks || [];
+    const documents = project.documents || [];
+    const changeRequests = project.changeRequests || [];
+    const clientUpdates = project.clientUpdates || [];
+
     const isEmployee = authRes.activeRole === "EMPLOYEE";
 
     if (isEmployee) {
-      const isAssigned = project.memberships.some((m) => m.employeeId === authRes.employeeId && m.isActive);
+      const isAssigned = memberships.some((m) => m.employeeId === authRes.employeeId && m.isActive);
       if (!isAssigned) {
         return NextResponse.json({ success: false, error: "Forbidden: You are not assigned to this project workspace" }, { status: 403 });
       }
     }
 
-    const tmMembership = project.memberships.find((m) => (m.roleInProject === "TM" || m.roleInProject === "Tech Lead") && m.isActive);
-    const activeTasks = project.tasks.filter((t) => t.status !== "ARCHIVED");
+    const tmMembership = memberships.find((m) => (m.roleInProject === "TM" || m.roleInProject === "Tech Lead") && m.isActive);
+    const activeTasks = tasks.filter((t) => t.status !== "ARCHIVED");
     const completedTasks = activeTasks.filter((t) => t.status === "COMPLETED" || t.status === "DONE");
     const calculatedProgress = activeTasks.length > 0 ? Math.round((completedTasks.length / activeTasks.length) * 100) : (project.progressPercentage || 0);
 
     const formatted = {
       id: project.id,
-      projectCode: project.projectNumber,
-      name: project.name,
+      projectCode: project.projectNumber || project.id,
+      name: project.name || "Untitled Project",
       clientId: project.clientId,
       clientName: project.client ? project.client.companyName : "Client Account",
       tmId: tmMembership?.employee?.id || "UNASSIGNED",
       tmName: tmMembership?.employee?.user?.name ? `${tmMembership.employee.user.name} (Tech Lead)` : "Unassigned",
       progress: calculatedProgress,
-      currentStage: project.status,
-      status: project.status,
-      priority: project.priority,
+      currentStage: project.status || "PLANNING",
+      status: project.status || "PLANNING",
+      priority: project.priority || "MEDIUM",
       health: project.priority === "URGENT" || project.priority === "HIGH" ? "AT_RISK" : "ON_TRACK",
-      contractValue: isEmployee ? null : project.contractValue,
+      contractValue: isEmployee ? null : (project.contractValue || 0),
       paidValue: isEmployee ? null : 0,
       overdueValue: isEmployee ? null : 0,
-      deadline: project.targetDeadline ? new Date(project.targetDeadline).toLocaleDateString() : "TBD",
+      deadline: safeFormatDate(project.targetDeadline, "TBD"),
       targetDeadline: project.targetDeadline,
       stagingUrl: project.stagingUrl || null,
       liveUrl: project.liveUrl || null,
       designUrl: project.designUrl || null,
       scopeItems: project.scopeText ? project.scopeText.split("\n").filter(Boolean) : [],
-      teamMembers: project.memberships.map((m) => ({
+      teamMembers: memberships.map((m) => ({
         id: m.id,
         membershipId: m.id,
         employeeId: m.employee?.id || m.employeeId,
@@ -79,64 +95,64 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         email: m.employee?.user?.email || "",
         role: m.roleInProject || "Member",
         active: m.isActive,
-        assignedDate: new Date(m.assignedAt).toLocaleDateString(),
+        assignedDate: safeFormatDate(m.assignedAt, "Recently"),
         compensationAmount: isEmployee ? null : m.compensationAmount,
       })),
-      removalHistory: project.memberships
+      removalHistory: memberships
         .filter((m) => !m.isActive)
         .map((m) => ({
           id: m.id,
           membershipId: m.id,
           employeeId: m.employee?.id || m.employeeId,
           name: m.employee?.user?.name || "Former Member",
-          role: m.roleInProject,
-          removedDate: m.removedAt ? new Date(m.removedAt).toLocaleDateString() : "Recently",
+          role: m.roleInProject || "Member",
+          removedDate: safeFormatDate(m.removedAt, "Recently"),
           reason: m.removalReason || "Reassigned",
         })),
       tasks: (isEmployee
-        ? project.tasks.filter((t) => t.assignedToId === authRes.id || !t.assignedToId)
-        : project.tasks
+        ? tasks.filter((t) => t.assignedToId === authRes.id || !t.assignedToId)
+        : tasks
       ).map((t) => ({
         id: t.id,
-        title: t.title,
-        description: t.description,
+        title: t.title || "Task",
+        description: t.description || "",
         assignee: t.assignedTo?.name || "Unassigned",
         assigneeId: t.assignedToId,
-        status: t.status,
-        priority: t.priority,
+        status: t.status || "PLANNING",
+        priority: t.priority || "MEDIUM",
         isMostImportant: t.isMostImportant || false,
-        deadline: t.deadline ? new Date(t.deadline).toLocaleDateString() : null,
+        deadline: safeFormatDate(t.deadline, null as any),
         targetDeadline: t.deadline,
         completedAt: t.completedAt,
       })),
-      livingDocs: project.documents.map((d) => ({
+      livingDocs: documents.map((d) => ({
         id: d.id,
-        title: d.title,
-        version: `v${d.version}.0`,
-        lastUpdated: new Date(d.updatedAt).toLocaleDateString(),
+        title: d.title || "Document",
+        version: `v${d.version || 1}.0`,
+        lastUpdated: safeFormatDate(d.updatedAt, "Recently"),
         author: "Admin",
-        content: d.content,
+        content: d.content || "",
       })),
-      changeRequests: project.changeRequests.map((cr) => ({
-        id: cr.requestNumber,
+      changeRequests: changeRequests.map((cr) => ({
+        id: cr.requestNumber || cr.id,
         title: cr.requestedChange,
         value: isEmployee ? null : cr.costImpactAmount,
-        status: cr.status,
-        date: new Date(cr.createdAt).toLocaleDateString(),
+        status: cr.status || "PENDING",
+        date: safeFormatDate(cr.createdAt, "Recently"),
       })),
-      clientUpdates: project.clientUpdates.map((u) => ({
+      clientUpdates: clientUpdates.map((u) => ({
         id: u.id,
-        title: u.title,
-        content: u.content,
+        title: u.title || "Update",
+        content: u.content || "",
         authorName: u.author?.name || "Team Member",
         createdAt: u.createdAt,
       })),
     };
 
     return NextResponse.json({ success: true, data: formatted });
-  } catch (error) {
-    console.error("GET /api/projects/[id] error:", error);
-    return NextResponse.json({ success: false, error: "Failed to fetch project" }, { status: 500 });
+  } catch (error: any) {
+    console.error("GET /api/projects/[id] error:", error?.message || error, error?.stack);
+    return NextResponse.json({ success: false, error: error?.message || "Failed to fetch project" }, { status: 500 });
   }
 }
 
