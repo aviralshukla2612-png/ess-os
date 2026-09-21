@@ -178,78 +178,89 @@ export default function AdminKycPage() {
 
       {/* METRIC CARDS */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        {/* ALL STAFF */}
         <div
           onClick={() => setStatusFilter("ALL")}
-          className={`p-5 rounded-3xl border cursor-pointer transition-all ${
+          className={`p-5 rounded-3xl border cursor-pointer transition-all duration-200 ${
             statusFilter === "ALL"
-              ? "bg-slate-900 text-white border-slate-900 dark:bg-slate-800 dark:border-slate-700 shadow-lg"
-              : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
-          }`}
-        >
-          <span className="text-xs font-semibold opacity-75">All Staff</span>
-          <p className="text-2xl font-black mt-1">{metrics.total}</p>
-          <span className="text-[10px] opacity-60">Total Roster</span>
-        </div>
-
-        <div
-          onClick={() => setStatusFilter("PENDING")}
-          className={`p-5 rounded-3xl border cursor-pointer transition-all ${
-            statusFilter === "PENDING"
-              ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20"
-              : "bg-white dark:bg-slate-900 border-amber-500/30 hover:border-amber-500/60"
+              ? "bg-indigo-500/10 dark:bg-indigo-500/15 border-indigo-500/60 ring-2 ring-indigo-500/40 shadow-lg shadow-indigo-500/10"
+              : "bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-800 dark:text-amber-400">Pending Review</span>
-            <Clock className="w-4 h-4 text-amber-500 animate-pulse" />
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">All Staff</span>
+            {statusFilter === "ALL" && <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />}
           </div>
-          <p className="text-2xl font-black text-amber-900 dark:text-amber-300 mt-1">{metrics.pending}</p>
+          <p className="text-3xl font-black text-slate-900 dark:text-slate-100 mt-2">{metrics.total}</p>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Total Roster</span>
+        </div>
+
+        {/* PENDING REVIEW */}
+        <div
+          onClick={() => setStatusFilter("PENDING")}
+          className={`p-5 rounded-3xl border cursor-pointer transition-all duration-200 ${
+            statusFilter === "PENDING"
+              ? "bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/60 ring-2 ring-amber-500/50 shadow-lg shadow-amber-500/15"
+              : "bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 hover:border-amber-500/40"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">Pending Review</span>
+            <Clock className={`w-4 h-4 text-amber-500 ${statusFilter === "PENDING" ? "animate-spin" : ""}`} />
+          </div>
+          <p className="text-3xl font-black text-amber-600 dark:text-amber-300 mt-2">{metrics.pending}</p>
           <span className="text-[10px] text-amber-700 dark:text-amber-400/80 font-medium">Action Required</span>
         </div>
 
+        {/* APPROVED */}
         <div
           onClick={() => setStatusFilter("APPROVED")}
-          className={`p-5 rounded-3xl border cursor-pointer transition-all ${
+          className={`p-5 rounded-3xl border cursor-pointer transition-all duration-200 ${
             statusFilter === "APPROVED"
-              ? "bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-600/20"
-              : "bg-white dark:bg-slate-900 border-emerald-500/30 hover:border-emerald-500/60"
+              ? "bg-emerald-500/10 dark:bg-emerald-500/15 border-emerald-500/60 ring-2 ring-emerald-500/50 shadow-lg shadow-emerald-500/15"
+              : "bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 hover:border-emerald-500/40"
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-400">Approved</span>
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Approved</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
           </div>
-          <p className="text-2xl font-black text-emerald-900 dark:text-emerald-300 mt-1">{metrics.approved}</p>
+          <p className="text-3xl font-black text-emerald-600 dark:text-emerald-300 mt-2">{metrics.approved}</p>
           <span className="text-[10px] text-emerald-700 dark:text-emerald-400/80 font-medium">Verified Identity</span>
         </div>
 
+        {/* REJECTED */}
         <div
           onClick={() => setStatusFilter("REJECTED")}
-          className={`p-5 rounded-3xl border cursor-pointer transition-all ${
+          className={`p-5 rounded-3xl border cursor-pointer transition-all duration-200 ${
             statusFilter === "REJECTED"
-              ? "bg-rose-600 text-white border-rose-600 shadow-lg shadow-rose-600/20"
-              : "bg-white dark:bg-slate-900 border-rose-500/30 hover:border-rose-500/60"
+              ? "bg-rose-500/10 dark:bg-rose-500/15 border-rose-500/60 ring-2 ring-rose-500/50 shadow-lg shadow-rose-500/15"
+              : "bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 hover:border-rose-500/40"
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-rose-800 dark:text-rose-400">Rejected</span>
+            <span className="text-xs font-bold text-rose-600 dark:text-rose-400">Rejected</span>
             <AlertCircle className="w-4 h-4 text-rose-500" />
           </div>
-          <p className="text-2xl font-black text-rose-900 dark:text-rose-300 mt-1">{metrics.rejected}</p>
-          <span className="text-[10px] text-rose-700 dark:text-rose-400/80 font-medium">Needs Re-upload</span>
+          <p className="text-3xl font-black text-rose-600 dark:text-rose-300 mt-2">{metrics.rejected}</p>
+          <span className="text-[10px] text-rose-700 dark:text-rose-400/80 font-medium">Needs Correction</span>
         </div>
 
+        {/* NOT SUBMITTED */}
         <div
           onClick={() => setStatusFilter("NOT_SUBMITTED")}
-          className={`p-5 rounded-3xl border cursor-pointer transition-all ${
+          className={`p-5 rounded-3xl border cursor-pointer transition-all duration-200 ${
             statusFilter === "NOT_SUBMITTED"
-              ? "bg-slate-700 text-white border-slate-700 shadow-lg"
-              : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300"
+              ? "bg-slate-800/60 dark:bg-slate-800/90 border-slate-500 ring-2 ring-slate-500/40 shadow-lg"
+              : "bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 hover:border-slate-700"
           }`}
         >
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Not Submitted</span>
-          <p className="text-2xl font-black text-slate-700 dark:text-slate-200 mt-1">{metrics.notSubmitted}</p>
-          <span className="text-[10px] text-slate-400">Uninitialized</span>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Not Submitted</span>
+            {statusFilter === "NOT_SUBMITTED" && <span className="w-2 h-2 rounded-full bg-slate-400" />}
+          </div>
+          <p className="text-3xl font-black text-slate-700 dark:text-slate-300 mt-2">{metrics.notSubmitted}</p>
+          <span className="text-[10px] text-slate-400 font-medium">Uninitialized</span>
         </div>
       </div>
 
