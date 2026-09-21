@@ -97,14 +97,13 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           sectionHeader: idx === 0 ? "DELEGATED CONTROLS" : undefined,
         }));
 
-        // Personal employee tools (as requested: My Desk, My Projects, Daily Updates, My Work Sessions, Leave Applications, Documentation, Settings)
+        // Personal employee tools (as requested: My Desk, My Projects, Daily Updates, My Work Sessions, Leave Applications, Settings)
         const personalItems: NavItem[] = [
           { title: "My Desk", href: "/employee", icon: <LayoutDashboard className="w-4 h-4" />, sectionHeader: grantedAdminItems.length > 0 ? "MY WORKSPACE" : undefined },
           { title: "My Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" /> },
           { title: "Daily Updates", href: "/daily-updates", icon: <MessageSquare className="w-4 h-4" /> },
           { title: "My Work Sessions", href: "/attendance?view=personal", icon: <Clock className="w-4 h-4" /> },
           { title: "Leave Applications", href: "/attendance/leave", icon: <UserCheck className="w-4 h-4" /> },
-          { title: "Documentation", href: "/docs", icon: <BookOpen className="w-4 h-4" /> },
           { title: "Settings", href: "/settings", icon: <Settings className="w-4 h-4" /> },
         ];
 
@@ -131,7 +130,6 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
           { title: "Daily Updates", href: "/daily-updates", icon: <MessageSquare className="w-4 h-4" /> },
           { title: "My Work Sessions", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
           { title: "Leave Applications", href: "/attendance/leave", icon: <UserCheck className="w-4 h-4" /> },
-          { title: "Documentation", href: "/docs", icon: <BookOpen className="w-4 h-4" /> },
           { title: "Settings", href: "/settings", icon: <Settings className="w-4 h-4" /> },
         ];
 
