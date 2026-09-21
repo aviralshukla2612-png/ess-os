@@ -8,14 +8,9 @@ export async function GET(req: Request) {
   const authRes = await requireAuth();
   if (authRes instanceof NextResponse) return authRes;
 
-  // STRICT PRIVACY: ONLY OWNER (Admin) or authorized SUB_ADMIN can access all employee KYC data
-  const isSubAdminWithKyc = authRes.activeRole === "SUB_ADMIN" && (
-    authRes.subAdminPermissions?.includes("kyc") || 
-    authRes.subAdminPermissions?.includes("employees") || 
-    false
-  );
-  if (authRes.activeRole !== "OWNER" && !isSubAdminWithKyc) {
-    return NextResponse.json({ success: false, error: "Forbidden: Only Admin or authorized Sub-Admin has access to employee KYC data" }, { status: 403 });
+  // STRICT PRIVACY: ONLY OWNER (Super Admin) can access all employee KYC data
+  if (authRes.activeRole !== "OWNER") {
+    return NextResponse.json({ success: false, error: "Forbidden: Only Owner (Super Admin) has access to employee KYC data" }, { status: 403 });
   }
 
   try {
@@ -130,14 +125,9 @@ export async function PATCH(req: Request) {
   const authRes = await requireAuth();
   if (authRes instanceof NextResponse) return authRes;
 
-  // STRICT PRIVACY: ONLY OWNER (Admin) or authorized SUB_ADMIN can approve/reject KYC data
-  const isSubAdminWithKyc = authRes.activeRole === "SUB_ADMIN" && (
-    authRes.subAdminPermissions?.includes("kyc") || 
-    authRes.subAdminPermissions?.includes("employees") || 
-    false
-  );
-  if (authRes.activeRole !== "OWNER" && !isSubAdminWithKyc) {
-    return NextResponse.json({ success: false, error: "Forbidden: Only Admin or authorized Sub-Admin can review KYC documents" }, { status: 403 });
+  // STRICT PRIVACY: ONLY OWNER (Super Admin) can approve/reject KYC data
+  if (authRes.activeRole !== "OWNER") {
+    return NextResponse.json({ success: false, error: "Forbidden: Only Owner (Super Admin) can review KYC documents" }, { status: 403 });
   }
 
   try {
