@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, ensureDbReady } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { createAndSendNotification } from "@/lib/notifications";
 
@@ -24,6 +24,7 @@ const safeParseDate = (dateVal: any): Date | null => {
 };
 
 export async function GET() {
+  await ensureDbReady();
   const authRes = await requireAuth();
   if (authRes instanceof NextResponse) return authRes;
 
@@ -179,6 +180,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  await ensureDbReady();
   const authRes = await requireAuth();
   if (authRes instanceof NextResponse) return authRes;
 

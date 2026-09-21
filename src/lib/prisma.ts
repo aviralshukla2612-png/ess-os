@@ -13,27 +13,20 @@ export const prisma =
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-async function ensureSchema() {
-  if (globalForPrisma.dbInitialized) return;
-  globalForPrisma.dbInitialized = true;
+let dbInitPromise: Promise<void> | null = null;
+
+async function runMigrations() {
+  const tryAddCol = async (table: string, col: string, def: string) => {
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "${col}" ${def}`);
+      console.log(`[DB Migration] Added column ${table}.${col}`);
+    } catch {
+      // Column already exists or table not yet created
+    }
+  };
 
   try {
-    const helperAddColumn = async (tableName: string, colName: string, colDef: string) => {
-      try {
-        const cols: any = await prisma.$queryRawUnsafe(`PRAGMA table_info("${tableName}")`);
-        if (Array.isArray(cols) && cols.length > 0) {
-          const names = cols.map((c: any) => c.name);
-          if (!names.includes(colName)) {
-            await prisma.$executeRawUnsafe(`ALTER TABLE "${tableName}" ADD COLUMN "${colName}" ${colDef}`);
-            console.log(`Auto-migrated: Added ${colName} to ${tableName}`);
-          }
-        }
-      } catch (e) {
-        // Table may not exist yet or column already exists
-      }
-    };
-
-    // 1. Create missing tables if needed
+    // 1. Create missing tables if they don't exist
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "UserFcmToken" (
         "id" TEXT PRIMARY KEY,
@@ -87,60 +80,68 @@ async function ensureSchema() {
       )
     `).catch(() => {});
 
-    // 2. ProjectMembership columns
-    await helperAddColumn("ProjectMembership", "compensationAmount", "REAL");
-    await helperAddColumn("ProjectMembership", "removedAt", "DATETIME");
-    await helperAddColumn("ProjectMembership", "removedById", "TEXT");
-    await helperAddColumn("ProjectMembership", "removalReason", "TEXT");
-    await helperAddColumn("ProjectMembership", "isActive", "BOOLEAN DEFAULT 1");
+    // 2. Task table columns (Fixes the GET /api/projects 500 error)
+    await tryAddCol("Task", "completedAt", "DATETIME");
+    await tryAddCol("Task", "startDate", "DATETIME");
+    await tryAddCol("Task", "deadline", "DATETIME");
+    await tryAddCol("Task", "stageId", "TEXT");
+    await tryAddCol("Task", "estimatedHours", "REAL DEFAULT 0");
+    await tryAddCol("Task", "actualHours", "REAL DEFAULT 0");
+    await tryAddCol("Task", "isMostImportant", "BOOLEAN DEFAULT 0");
 
-    // 3. Project columns
-    await helperAddColumn("Project", "designUrl", "TEXT");
-    await helperAddColumn("Project", "stagingUrl", "TEXT");
-    await helperAddColumn("Project", "liveUrl", "TEXT");
-    await helperAddColumn("Project", "scopeText", "TEXT");
-    await helperAddColumn("Project", "progressPercentage", "REAL DEFAULT 0");
-    await helperAddColumn("Project", "contractValue", "REAL DEFAULT 0");
-    await helperAddColumn("Project", "startDate", "DATETIME");
-    await helperAddColumn("Project", "targetDeadline", "DATETIME");
-    await helperAddColumn("Project", "actualCompletionDate", "DATETIME");
+    // 3. ProjectMembership table columns
+    await tryAddCol("ProjectMembership", "compensationAmount", "REAL");
+    await tryAddCol("ProjectMembership", "removedAt", "DATETIME");
+    await tryAddCol("ProjectMembership", "removedById", "TEXT");
+    await tryAddCol("ProjectMembership", "removalReason", "TEXT");
+    await tryAddCol("ProjectMembership", "isActive", "BOOLEAN DEFAULT 1");
 
-    // 4. Task columns
-    await helperAddColumn("Task", "completedAt", "DATETIME");
-    await helperAddColumn("Task", "startDate", "DATETIME");
-    await helperAddColumn("Task", "deadline", "DATETIME");
-    await helperAddColumn("Task", "stageId", "TEXT");
-    await helperAddColumn("Task", "estimatedHours", "REAL DEFAULT 0");
-    await helperAddColumn("Task", "actualHours", "REAL DEFAULT 0");
-    await helperAddColumn("Task", "isMostImportant", "BOOLEAN DEFAULT 0");
+    // 4. Project table columns
+    await tryAddCol("Project", "designUrl", "TEXT");
+    await tryAddCol("Project", "stagingUrl", "TEXT");
+    await tryAddCol("Project", "liveUrl", "TEXT");
+    await tryAddCol("Project", "scopeText", "TEXT");
+    await tryAddCol("Project", "progressPercentage", "REAL DEFAULT 0");
+    await tryAddCol("Project", "contractValue", "REAL DEFAULT 0");
+    await tryAddCol("Project", "startDate", "DATETIME");
+    await tryAddCol("Project", "targetDeadline", "DATETIME");
+    await tryAddCol("Project", "actualCompletionDate", "DATETIME");
 
-    // 5. Employee columns
-    await helperAddColumn("Employee", "sickLeaveTotal", "INTEGER DEFAULT 10");
-    await helperAddColumn("Employee", "sickLeaveUsed", "REAL DEFAULT 0");
-    await helperAddColumn("Employee", "casualLeaveTotal", "INTEGER DEFAULT 15");
-    await helperAddColumn("Employee", "casualLeaveUsed", "REAL DEFAULT 0");
-    await helperAddColumn("Employee", "paidLeaveTotal", "INTEGER DEFAULT 15");
-    await helperAddColumn("Employee", "paidLeaveUsed", "REAL DEFAULT 0");
-    await helperAddColumn("Employee", "reportingManagerId", "TEXT");
-    await helperAddColumn("Employee", "skillsJson", "TEXT DEFAULT '[]'");
+    // 5. Employee table columns
+    await tryAddCol("Employee", "sickLeaveTotal", "INTEGER DEFAULT 10");
+    await tryAddCol("Employee", "sickLeaveUsed", "REAL DEFAULT 0");
+    await tryAddCol("Employee", "casualLeaveTotal", "INTEGER DEFAULT 15");
+    await tryAddCol("Employee", "casualLeaveUsed", "REAL DEFAULT 0");
+    await tryAddCol("Employee", "paidLeaveTotal", "INTEGER DEFAULT 15");
+    await tryAddCol("Employee", "paidLeaveUsed", "REAL DEFAULT 0");
+    await tryAddCol("Employee", "reportingManagerId", "TEXT");
+    await tryAddCol("Employee", "skillsJson", "TEXT DEFAULT '[]'");
 
-    // 6. User columns
-    await helperAddColumn("User", "subAdminPermissions", "TEXT DEFAULT '[]'");
-    await helperAddColumn("User", "activeRole", "TEXT DEFAULT 'EMPLOYEE'");
-    await helperAddColumn("User", "avatarUrl", "TEXT");
-    await helperAddColumn("User", "isActive", "BOOLEAN DEFAULT 1");
+    // 6. User table columns
+    await tryAddCol("User", "subAdminPermissions", "TEXT DEFAULT '[]'");
+    await tryAddCol("User", "activeRole", "TEXT DEFAULT 'EMPLOYEE'");
+    await tryAddCol("User", "avatarUrl", "TEXT");
+    await tryAddCol("User", "isActive", "BOOLEAN DEFAULT 1");
 
-    // 7. Attendance columns
-    await helperAddColumn("Attendance", "punchOutReason", "TEXT");
-    await helperAddColumn("Attendance", "punchOutRequestStatus", "TEXT");
-    await helperAddColumn("Attendance", "punchOutRequestedAt", "DATETIME");
-    await helperAddColumn("Attendance", "punchOutApprovedById", "TEXT");
-    await helperAddColumn("Attendance", "totalMinutes", "INTEGER DEFAULT 0");
+    // 7. Attendance table columns
+    await tryAddCol("Attendance", "punchOutReason", "TEXT");
+    await tryAddCol("Attendance", "punchOutRequestStatus", "TEXT");
+    await tryAddCol("Attendance", "punchOutRequestedAt", "DATETIME");
+    await tryAddCol("Attendance", "punchOutApprovedById", "TEXT");
+    await tryAddCol("Attendance", "totalMinutes", "INTEGER DEFAULT 0");
 
+    console.log("[DB Migration] Schema synchronization complete.");
   } catch (err) {
-    console.warn("Auto-schema migration notice:", err);
+    console.warn("[DB Migration] Schema synchronization notice:", err);
   }
 }
 
-// Run auto-migration on server load
-ensureSchema().catch((e) => console.warn("Schema initialization warning:", e));
+export async function ensureDbReady(): Promise<void> {
+  if (!dbInitPromise) {
+    dbInitPromise = runMigrations();
+  }
+  return dbInitPromise;
+}
+
+// Trigger background migration on startup as well
+ensureDbReady().catch(() => {});

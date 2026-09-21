@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, ensureDbReady } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 
 const safeFormatDate = (dateVal: any, fallback = "TBD") => {
@@ -13,6 +13,7 @@ const safeFormatDate = (dateVal: any, fallback = "TBD") => {
 };
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
+  await ensureDbReady();
   const authRes = await requireAuth();
   if (authRes instanceof NextResponse) return authRes;
 
