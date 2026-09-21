@@ -10,6 +10,7 @@ import { TopLoadingBar } from "@/components/ui/TopLoadingBar";
 import { RoleContext } from "@/lib/auth";
 import { TimeReminders } from "@/components/ui/TimeReminders";
 import { NotificationListener } from "@/components/ui/NotificationListener";
+import { KycReminderPopup } from "@/components/ui/KycReminderPopup";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -28,6 +29,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="bg-slate-50 dark:bg-[#090E18] text-slate-900 dark:text-slate-100 h-screen overflow-hidden flex flex-col font-sans transition-colors relative">
       <TimeReminders />
       <NotificationListener />
+      <KycReminderPopup />
       <TopLoadingBar />
       {/* Header */}
       <Header

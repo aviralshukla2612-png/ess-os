@@ -165,16 +165,49 @@ export default function AdminKycPage() {
     );
   }
 
+  const [broadcasting, setBroadcasting] = useState(false);
   const departments = Array.from(new Set(employees.map((e) => e.department))).filter(Boolean);
+
+  const handleBroadcastReminder = async () => {
+    try {
+      setBroadcasting(true);
+      const res = await fetch("/crmtesting/api/admin/kyc/broadcast-reminder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deadline: "23 September" }),
+      });
+      const json = await res.json();
+
+      if (json.success) {
+        showToast(json.message || "Broadcasted KYC deadline reminder (23 Sept) to all staff!", "success");
+      } else {
+        showToast(json.error || "Failed to broadcast reminder", "error");
+      }
+    } catch {
+      showToast("Error sending broadcast reminder", "error");
+    } finally {
+      setBroadcasting(false);
+    }
+  };
 
   return (
     <div className="space-y-8 pb-16 max-w-7xl mx-auto">
-      <PageHeader
-        title="Employee KYC & Verification Management"
-        description="Verify employee identity documents, Aadhaar, PAN card, and official bank accounts for payroll."
-        badge="ADMIN COMPLIANCE PORTAL"
-        icon={<FileCheck className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />}
-      />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <PageHeader
+          title="Employee KYC & Verification Management"
+          description="Verify employee identity documents, Aadhaar, PAN card, and official bank accounts for payroll."
+          badge="ADMIN COMPLIANCE PORTAL"
+          icon={<FileCheck className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />}
+        />
+        <button
+          onClick={handleBroadcastReminder}
+          disabled={broadcasting}
+          className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2 flex-shrink-0"
+        >
+          {broadcasting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <span>📢</span>}
+          <span>Broadcast Reminder (23 Sept)</span>
+        </button>
+      </div>
 
       {/* METRIC CARDS */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
