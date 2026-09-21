@@ -106,7 +106,7 @@ export default function ProjectsDirectoryPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: projectName,
-          clientName: clientName.trim(),
+          clientName: clientName.trim() || undefined,
           contractValue: contractValue !== "" ? Number(contractValue) : 0,
           priority,
           assigneeId: assigneeId || undefined,
@@ -312,19 +312,21 @@ export default function ProjectsDirectoryPage() {
             />
           </div>
 
-          <div>
-            <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">
-              Client Company Name *
-            </label>
-            <input
-              type="text"
-              required
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              placeholder="e.g. Apex Global Innovations"
-              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
-            />
-          </div>
+          {userRole !== "EMPLOYEE" && (
+            <div>
+              <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">
+                Client Company Name *
+              </label>
+              <input
+                type="text"
+                required={userRole !== "EMPLOYEE"}
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                placeholder="e.g. Apex Global Innovations"
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
+              />
+            </div>
+          )}
 
           {userRole !== "EMPLOYEE" && (
             <div>
