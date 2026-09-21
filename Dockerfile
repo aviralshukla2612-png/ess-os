@@ -58,6 +58,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
+# Create upload and data directories with open write permissions for nextjs user
+RUN mkdir -p /app/public/uploads /app/prisma/data/uploads /tmp/uploads && \
+    chown -R nextjs:nodejs /app/public /app/prisma /tmp/uploads && \
+    chmod -R 777 /app/public /app/prisma /tmp/uploads
+
 USER nextjs
 
 EXPOSE 3040

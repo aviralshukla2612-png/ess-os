@@ -22,21 +22,31 @@ export async function GET(
       return new NextResponse("Not Found", { status: 404 });
     }
 
-    const uploadsBaseDir = path.resolve(process.cwd(), "public", "uploads");
     const sanitizedSegments = rawSegments.map((s) => path.basename(s));
-    const targetFilePath = path.resolve(uploadsBaseDir, ...sanitizedSegments);
 
-    // Prevent directory traversal attacks
-    if (!targetFilePath.startsWith(uploadsBaseDir)) {
-      return new NextResponse("Forbidden", { status: 403 });
+    // Candidate base directories
+    const searchBases = [
+      path.resolve(process.cwd(), "prisma", "data", "uploads"),
+      path.resolve(process.cwd(), "public", "uploads"),
+      path.resolve("/tmp", "uploads"),
+    ];
+
+    let foundFilePath: string | null = null;
+
+    for (const base of searchBases) {
+      const candidatePath = path.resolve(base, ...sanitizedSegments);
+      if (candidatePath.startsWith(base) && fs.existsSync(candidatePath)) {
+        foundFilePath = candidatePath;
+        break;
+      }
     }
 
-    if (!fs.existsSync(targetFilePath)) {
+    if (!foundFilePath) {
       return new NextResponse("File Not Found", { status: 404 });
     }
 
-    const fileBuffer = fs.readFileSync(targetFilePath);
-    const ext = path.extname(targetFilePath).toLowerCase();
+    const fileBuffer = fs.readFileSync(foundFilePath);
+    const ext = path.extname(foundFilePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || "application/octet-stream";
 
     return new NextResponse(fileBuffer, {

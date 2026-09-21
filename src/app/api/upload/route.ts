@@ -3,6 +3,39 @@ import { requireAuth } from "@/lib/auth";
 import fs from "fs";
 import path from "path";
 
+function getWritableUploadDir(): string {
+  // Candidate 1: prisma/data/uploads/kyc (inside persistent database volume)
+  const candidate1 = path.join(process.cwd(), "prisma", "data", "uploads", "kyc");
+  try {
+    if (!fs.existsSync(candidate1)) {
+      fs.mkdirSync(candidate1, { recursive: true });
+    }
+    fs.accessSync(candidate1, fs.constants.W_OK);
+    return candidate1;
+  } catch {}
+
+  // Candidate 2: public/uploads/kyc
+  const candidate2 = path.join(process.cwd(), "public", "uploads", "kyc");
+  try {
+    if (!fs.existsSync(candidate2)) {
+      fs.mkdirSync(candidate2, { recursive: true });
+    }
+    fs.accessSync(candidate2, fs.constants.W_OK);
+    return candidate2;
+  } catch {}
+
+  // Candidate 3: /tmp/uploads/kyc (always writable in Unix/Linux containers)
+  const candidate3 = path.join("/tmp", "uploads", "kyc");
+  try {
+    if (!fs.existsSync(candidate3)) {
+      fs.mkdirSync(candidate3, { recursive: true });
+    }
+    return candidate3;
+  } catch {}
+
+  return candidate2;
+}
+
 export async function POST(req: Request) {
   const authRes = await requireAuth();
   if (authRes instanceof NextResponse) return authRes;
@@ -25,13 +58,8 @@ export async function POST(req: Request) {
 
     const ext = path.extname(file.name) || ".jpg";
     const filename = `kyc-${authRes.id}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
-    
-    // Ensure public/uploads/kyc directory exists
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "kyc");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
 
+    const uploadDir = getWritableUploadDir();
     const filePath = path.join(uploadDir, filename);
     fs.writeFileSync(filePath, buffer);
 
