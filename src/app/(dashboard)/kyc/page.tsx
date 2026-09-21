@@ -97,9 +97,138 @@ export default function KycPage() {
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
 
+  // Live Camera states
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraLoading, setCameraLoading] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [uploadingSelfie, setUploadingSelfie] = useState(false);
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
   useEffect(() => {
     fetchKycData();
+    return () => {
+      stopCamera();
+    };
   }, []);
+
+  const startCamera = async () => {
+    try {
+      setCameraLoading(true);
+      setCameraError(null);
+      setCapturedImage(null);
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+    } catch (err: any) {
+      console.error("Camera error:", err);
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        setCameraError("Camera permission was denied. Please allow camera access in your browser address bar or upload a file directly.");
+      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+        setCameraError("No camera device was detected on your device. Please upload a photo from your files.");
+      } else {
+        setCameraError(err.message || "Unable to access camera. Please check permissions or upload a file.");
+      }
+    } finally {
+      setCameraLoading(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  const openCameraModal = () => {
+    setIsCameraOpen(true);
+    setTimeout(() => {
+      startCamera();
+    }, 150);
+  };
+
+  const closeCameraModal = () => {
+    stopCamera();
+    setIsCameraOpen(false);
+    setCapturedImage(null);
+    setCameraError(null);
+  };
+
+  const captureSnapshot = () => {
+    if (!videoRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Mirror snapshot horizontally to match live viewfinder
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    setCapturedImage(dataUrl);
+  };
+
+  const retakeSnapshot = () => {
+    setCapturedImage(null);
+    if (!streamRef.current) {
+      startCamera();
+    }
+  };
+
+  const uploadCapturedSelfie = async () => {
+    if (!capturedImage) return;
+
+    try {
+      setUploadingSelfie(true);
+      const res = await fetch(capturedImage);
+      const blob = await res.blob();
+      const file = new File([blob], `selfie-${Date.now()}.jpg`, { type: "image/jpeg" });
+
+      const data = new FormData();
+      data.append("file", file);
+
+      const uploadRes = await fetch("/crmtesting/api/upload", {
+        method: "POST",
+        body: data,
+      });
+      const json = await uploadRes.json();
+
+      if (json.success && json.url) {
+        setFormData((prev) => ({ ...prev, selfieUrl: json.url }));
+        showToast("Live selfie captured & uploaded successfully!", "success");
+        closeCameraModal();
+      } else {
+        showToast(json.error || "Failed to upload selfie", "error");
+      }
+    } catch {
+      showToast("Error uploading selfie photo", "error");
+    } finally {
+      setUploadingSelfie(false);
+    }
+  };
 
   const fetchKycData = async () => {
     try {
@@ -609,38 +738,66 @@ export default function KycPage() {
                   <button
                     onClick={() => setPreviewImage({ url: formData.selfieUrl!, title: "Live Selfie Photo" })}
                     className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md"
+                    title="View Photo"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
                   {editSection.selfie && (
-                    <label className="p-2 rounded-xl bg-white/20 hover:bg-white/40 text-white backdrop-blur-md cursor-pointer">
+                    <button
+                      onClick={openCameraModal}
+                      className="p-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-white backdrop-blur-md transition-all shadow-lg shadow-cyan-500/30"
+                      title="Retake with Live Camera"
+                    >
                       <Camera className="w-4 h-4" />
-                      <input type="file" accept="image/*" capture="user" className="hidden" onChange={(e) => handleFileUpload(e, "selfieUrl")} />
-                    </label>
+                    </button>
                   )}
                 </div>
               </div>
             ) : (
-              <label className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl w-36 h-44 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-cyan-500 hover:bg-cyan-500/5 transition-all flex-shrink-0">
-                {uploadingField === "selfieUrl" ? (
-                  <RefreshCw className="w-6 h-6 text-cyan-500 animate-spin" />
-                ) : (
-                  <>
-                    <Camera className="w-6 h-6 text-slate-400" />
-                    <span className="text-xs font-semibold text-slate-500 text-center px-2">Take / Upload Selfie</span>
-                  </>
-                )}
-                <input type="file" accept="image/*" capture="user" className="hidden" onChange={(e) => handleFileUpload(e, "selfieUrl")} />
-              </label>
+              <div className="flex flex-col items-center gap-2 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={openCameraModal}
+                  className="w-36 h-44 rounded-3xl border-2 border-dashed border-cyan-500/60 hover:border-cyan-500 bg-cyan-500/5 hover:bg-cyan-500/10 flex flex-col items-center justify-center gap-2.5 transition-all group cursor-pointer shadow-sm hover:shadow-md"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 group-hover:bg-cyan-500 group-hover:text-white transition-all flex items-center justify-center shadow-inner">
+                    <Camera className="w-6 h-6" />
+                  </div>
+                  <div className="text-center px-2">
+                    <span className="text-xs font-bold text-cyan-700 dark:text-cyan-300 block">Open Camera</span>
+                    <span className="text-[10px] text-slate-500 block mt-0.5">Take Live Selfie</span>
+                  </div>
+                </button>
+
+                <label className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 underline cursor-pointer">
+                  <span>or upload from device</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "selfieUrl")} />
+                </label>
+              </div>
             )}
 
-            <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1.5 leading-relaxed">
-              <p className="font-semibold text-slate-700 dark:text-slate-300">Selfie Guidelines:</p>
+            <div className="text-xs text-slate-500 dark:text-slate-400 space-y-2 leading-relaxed">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+                <p className="font-bold text-slate-800 dark:text-slate-200">Interactive Camera Verification</p>
+              </div>
               <ul className="list-disc list-inside space-y-1">
-                <li>Take a direct selfie facing your front camera</li>
-                <li>Ensure face is centered with clear neutral expression</li>
-                <li>Remove cap, mask, or sunglasses during capture</li>
+                <li>Click <strong>&quot;Open Camera&quot;</strong> to take a photo directly in your browser.</li>
+                <li>Ensure face is centered with good lighting and clear neutral expression.</li>
+                <li>Remove cap, face mask, or sunglasses during capture.</li>
               </ul>
+              {formData.selfieUrl && editSection.selfie && (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={openCameraModal}
+                    className="px-3.5 py-1.5 rounded-xl bg-cyan-50 dark:bg-cyan-500/10 hover:bg-cyan-100 dark:hover:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 font-semibold text-xs border border-cyan-200 dark:border-cyan-500/30 transition-all flex items-center gap-1.5"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Retake Live Selfie</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -839,6 +996,181 @@ export default function KycPage() {
               <Check className="w-4 h-4" />
               <span>Got it, Thank you!</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* LIVE IN-BROWSER WEBCAM CAMERA MODAL */}
+      {isCameraOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="relative max-w-lg w-full bg-slate-900 rounded-3xl overflow-hidden border border-slate-700 shadow-2xl flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 px-6 border-b border-slate-800 text-white">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-400">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-100">Live Face Verification Camera</h3>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[10px] font-medium text-slate-400">
+                      {capturedImage ? "Snapshot Review" : "Front Camera Active"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={closeCameraModal}
+                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Viewfinder / Video Feed */}
+            <div className="relative aspect-[4/3] bg-black overflow-hidden flex items-center justify-center">
+              {cameraLoading && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-cyan-400 bg-slate-950 z-20">
+                  <RefreshCw className="w-8 h-8 animate-spin" />
+                  <span className="text-xs font-semibold text-slate-300">Accessing front camera...</span>
+                </div>
+              )}
+
+              {cameraError ? (
+                <div className="p-6 text-center space-y-4 max-w-sm">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 mx-auto flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-white">Camera Access Error</h4>
+                    <p className="text-xs text-slate-400 leading-relaxed">{cameraError}</p>
+                  </div>
+                  <div className="flex flex-col gap-2 pt-2">
+                    <button
+                      onClick={startCamera}
+                      className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Try Again</span>
+                    </button>
+                    <label className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs cursor-pointer text-center transition-all flex items-center justify-center gap-1.5">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload File Instead</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          handleFileUpload(e, "selfieUrl");
+                          closeCameraModal();
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+              ) : capturedImage ? (
+                /* Still Snapshot Preview */
+                <div className="relative w-full h-full">
+                  <img src={capturedImage} alt="Captured Selfie" className="w-full h-full object-cover" />
+                  <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-[11px] font-semibold flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-cyan-400" />
+                    <span>Snapshot Captured</span>
+                  </div>
+                </div>
+              ) : (
+                /* Live Video Stream Viewfinder with Face Guide */
+                <div className="relative w-full h-full">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover -scale-x-100"
+                  />
+
+                  {/* Biometric Oval Guide Overlay */}
+                  <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
+                    <div className="w-48 h-60 rounded-[50%] border-2 border-dashed border-cyan-400/70 shadow-[0_0_20px_rgba(6,182,212,0.3)] flex items-center justify-center animate-pulse" />
+                    <span className="mt-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-medium border border-white/10">
+                      Center your face inside the oval
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Controls Bar */}
+            <div className="p-4 px-6 border-t border-slate-800 bg-slate-900/90 flex items-center justify-between gap-4">
+              {capturedImage ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={retakeSnapshot}
+                    disabled={uploadingSelfie}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-all flex items-center gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>Retake Photo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={uploadCapturedSelfie}
+                    disabled={uploadingSelfie}
+                    className="px-6 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-cyan-500/30 flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {uploadingSelfie ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>Saving & Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>Confirm & Use Selfie</span>
+                      </>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <label className="text-xs text-slate-400 hover:text-slate-200 cursor-pointer flex items-center gap-1.5">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload from device</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        handleFileUpload(e, "selfieUrl");
+                        closeCameraModal();
+                      }}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={captureSnapshot}
+                    disabled={cameraLoading || !!cameraError}
+                    className="w-14 h-14 rounded-full bg-cyan-400 hover:bg-cyan-300 text-slate-950 flex items-center justify-center shadow-xl shadow-cyan-500/40 hover:scale-105 active:scale-95 transition-all mx-auto disabled:opacity-40"
+                    title="Take Snapshot"
+                  >
+                    <div className="w-11 h-11 rounded-full border-2 border-slate-900 flex items-center justify-center">
+                      <Camera className="w-5 h-5" />
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={closeCameraModal}
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-semibold transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
