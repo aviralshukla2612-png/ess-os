@@ -381,6 +381,7 @@ export default function AdminKycPage() {
               <tr>
                 <th className="px-6 py-4">Employee</th>
                 <th className="px-6 py-4">Department / Role</th>
+                <th className="px-6 py-4">Photos & Selfie</th>
                 <th className="px-6 py-4">Aadhaar Status</th>
                 <th className="px-6 py-4">PAN Card</th>
                 <th className="px-6 py-4">Bank Details</th>
@@ -391,7 +392,7 @@ export default function AdminKycPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {employees.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-slate-400 text-sm">
+                  <td colSpan={8} className="text-center py-12 text-slate-400 text-sm">
                     No employee records match the filter criteria.
                   </td>
                 </tr>
@@ -424,6 +425,36 @@ export default function AdminKycPage() {
                       <td className="px-6 py-4">
                         <p className="font-semibold text-slate-800 dark:text-slate-200">{emp.department}</p>
                         <p className="text-[11px] text-slate-500">{emp.designation}</p>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          {emp.kyc.selfieUrl ? (
+                            <button
+                              type="button"
+                              onClick={() => setPreviewImage({ url: emp.kyc.selfieUrl!, title: `Live Selfie - ${emp.name}` })}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-[10px] font-bold w-fit transition-all cursor-pointer"
+                              title="Click to view full Live Selfie"
+                            >
+                              <Camera className="w-3 h-3" />
+                              <span>Live Selfie ✓</span>
+                            </button>
+                          ) : (
+                            <span className="text-[11px] text-slate-400 italic">No Selfie</span>
+                          )}
+
+                          {emp.kyc.passportPhotoUrl ? (
+                            <button
+                              type="button"
+                              onClick={() => setPreviewImage({ url: emp.kyc.passportPhotoUrl!, title: `Passport Photo - ${emp.name}` })}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold w-fit transition-all cursor-pointer"
+                              title="Click to view full Passport Photo"
+                            >
+                              <User className="w-3 h-3" />
+                              <span>Passport Photo ✓</span>
+                            </button>
+                          ) : null}
+                        </div>
                       </td>
 
                       <td className="px-6 py-4">

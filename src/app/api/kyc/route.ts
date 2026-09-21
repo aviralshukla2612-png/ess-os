@@ -88,19 +88,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Employee profile not found" }, { status: 404 });
     }
 
+    const existingKyc = await prisma.employeeKyc.findUnique({
+      where: { employeeId: employee.id },
+    });
+
     const kycData = {
-      aadharNumber: body.aadharNumber || null,
-      aadharFrontUrl: body.aadharFrontUrl || null,
-      aadharBackUrl: body.aadharBackUrl || null,
-      panNumber: body.panNumber ? body.panNumber.toUpperCase() : null,
-      panCardUrl: body.panCardUrl || null,
-      passportPhotoUrl: body.passportPhotoUrl || null,
-      selfieUrl: body.selfieUrl || null,
-      bankName: body.bankName || null,
-      accountHolderName: body.accountHolderName || null,
-      accountNumber: body.accountNumber || null,
-      ifscCode: body.ifscCode ? body.ifscCode.toUpperCase() : null,
-      bankProofUrl: body.bankProofUrl || null,
+      aadharNumber: body.aadharNumber !== undefined ? (body.aadharNumber || null) : existingKyc?.aadharNumber || null,
+      aadharFrontUrl: body.aadharFrontUrl !== undefined ? (body.aadharFrontUrl || null) : existingKyc?.aadharFrontUrl || null,
+      aadharBackUrl: body.aadharBackUrl !== undefined ? (body.aadharBackUrl || null) : existingKyc?.aadharBackUrl || null,
+      panNumber: body.panNumber !== undefined ? (body.panNumber ? String(body.panNumber).toUpperCase() : null) : existingKyc?.panNumber || null,
+      panCardUrl: body.panCardUrl !== undefined ? (body.panCardUrl || null) : existingKyc?.panCardUrl || null,
+      passportPhotoUrl: body.passportPhotoUrl !== undefined ? (body.passportPhotoUrl || null) : existingKyc?.passportPhotoUrl || null,
+      selfieUrl: body.selfieUrl !== undefined ? (body.selfieUrl || null) : existingKyc?.selfieUrl || null,
+      bankName: body.bankName !== undefined ? (body.bankName || null) : existingKyc?.bankName || null,
+      accountHolderName: body.accountHolderName !== undefined ? (body.accountHolderName || null) : existingKyc?.accountHolderName || null,
+      accountNumber: body.accountNumber !== undefined ? (body.accountNumber || null) : existingKyc?.accountNumber || null,
+      ifscCode: body.ifscCode !== undefined ? (body.ifscCode ? String(body.ifscCode).toUpperCase() : null) : existingKyc?.ifscCode || null,
+      bankProofUrl: body.bankProofUrl !== undefined ? (body.bankProofUrl || null) : existingKyc?.bankProofUrl || null,
       status: "PENDING",
       rejectionReason: null,
       submittedAt: new Date(),
@@ -151,14 +155,51 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ success: false, error: "Employee profile not found" }, { status: 404 });
     }
 
-    if (body.markNotified) {
-      await prisma.employeeKyc.update({
-        where: { employeeId: employee.id },
-        data: { isNotified: true },
-      });
+    const allowedKeys = [
+      "aadharNumber",
+      "aadharFrontUrl",
+      "aadharBackUrl",
+      "panNumber",
+      "panCardUrl",
+      "passportPhotoUrl",
+      "selfieUrl",
+      "bankName",
+      "accountHolderName",
+      "accountNumber",
+      "ifscCode",
+      "bankProofUrl",
+      "status",
+      "isNotified",
+    ];
+
+    const patchData: Record<string, any> = {};
+    for (const key of allowedKeys) {
+      if (key in body) {
+        if (key === "panNumber" || key === "ifscCode") {
+          patchData[key] = body[key] ? String(body[key]).toUpperCase() : null;
+        } else {
+          patchData[key] = body[key] !== undefined ? body[key] : null;
+        }
+      }
     }
 
-    return NextResponse.json({ success: true });
+    if (body.markNotified) {
+      patchData.isNotified = true;
+    }
+
+    const updatedKyc = await prisma.employeeKyc.upsert({
+      where: { employeeId: employee.id },
+      create: {
+        employeeId: employee.id,
+        ...patchData,
+      },
+      update: {
+        ...patchData,
+        updatedAt: new Date(),
+      },
+    });
+
+    return NextResponse.json({ success: true, data: updatedKyc });
   } catch (error: any) {
     console.error("PATCH /api/kyc error:", error);
     return NextResponse.json({ success: false, error: error?.message || "Failed to update KYC" }, { status: 500 });

@@ -219,7 +219,20 @@ export default function KycPage() {
 
       if (json.success && json.url) {
         setFormData((prev) => ({ ...prev, selfieUrl: json.url }));
-        showToast("Live selfie captured & uploaded successfully!", "success");
+        setKyc((prev) => ({ ...prev, selfieUrl: json.url }));
+
+        // Auto-save to database immediately so it is instantly available in Admin portal
+        try {
+          await fetch("/crmtesting/api/kyc", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ selfieUrl: json.url }),
+          });
+        } catch (patchErr) {
+          console.warn("Auto-save selfie notice:", patchErr);
+        }
+
+        showToast("Live selfie captured, uploaded & saved successfully!", "success");
         closeCameraModal();
       } else {
         showToast(json.error || "Failed to upload selfie", "error");
@@ -292,7 +305,20 @@ export default function KycPage() {
 
       if (json.success && json.url) {
         setFormData((prev) => ({ ...prev, [fieldName]: json.url }));
-        showToast("Document uploaded successfully", "success");
+        setKyc((prev) => ({ ...prev, [fieldName]: json.url }));
+
+        // Auto-save to database immediately
+        try {
+          await fetch("/crmtesting/api/kyc", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ [fieldName]: json.url }),
+          });
+        } catch (patchErr) {
+          console.warn("Auto-save file notice:", patchErr);
+        }
+
+        showToast("Document uploaded & saved successfully", "success");
       } else {
         showToast(json.error || "Upload failed", "error");
       }
@@ -321,9 +347,20 @@ export default function KycPage() {
     return `/crmtesting/${url}`;
   };
 
-  const handleDeleteField = (fieldName: keyof KycData, label: string) => {
+  const handleDeleteField = async (fieldName: keyof KycData, label: string) => {
     setFormData((prev) => ({ ...prev, [fieldName]: "" }));
-    showToast(`${label} deleted`, "info");
+    setKyc((prev) => ({ ...prev, [fieldName]: "" }));
+
+    try {
+      await fetch("/crmtesting/api/kyc", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [fieldName]: null }),
+      });
+      showToast(`${label} deleted`, "info");
+    } catch {
+      showToast(`Failed to update ${label}`, "error");
+    }
   };
 
   const handleSaveKyc = async () => {
