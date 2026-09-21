@@ -49,10 +49,24 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     const assignedMembers: any[] = [];
 
     for (const item of employeeList) {
+      const emp = await prisma.employee.findFirst({
+        where: {
+          OR: [
+            { id: item.employeeId },
+            { userId: item.employeeId },
+            { employeeIdCode: item.employeeId },
+          ],
+        },
+      });
+      const resolvedEmployeeId = emp ? emp.id : item.employeeId;
+
       const existingMembership = await prisma.projectMembership.findFirst({
         where: {
           projectId,
-          employeeId: item.employeeId,
+          OR: [
+            { employeeId: resolvedEmployeeId },
+            { employeeId: item.employeeId },
+          ],
         },
       });
 
@@ -62,6 +76,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         membership = await prisma.projectMembership.update({
           where: { id: existingMembership.id },
           data: {
+            employeeId: resolvedEmployeeId,
             isActive: true,
             roleInProject: item.role || existingMembership.roleInProject,
             compensationAmount: item.compensationAmount !== undefined ? item.compensationAmount : existingMembership.compensationAmount,
@@ -78,7 +93,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         membership = await prisma.projectMembership.create({
           data: {
             projectId,
-            employeeId: item.employeeId,
+            employeeId: resolvedEmployeeId,
             roleInProject: item.role || "Member",
             compensationAmount: item.compensationAmount,
             isActive: true,

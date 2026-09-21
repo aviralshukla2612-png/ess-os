@@ -129,14 +129,19 @@ export async function GET(req: Request) {
     ]);
 
     const formattedUpdates = rawUpdates.map((u) => {
-      const membership = u.project.memberships.find((m) => m.employee.userId === u.author.id);
+      const memberships = u.project?.memberships || [];
+      const membership = memberships.find(
+        (m) =>
+          (m.employee && m.employee.userId === u.author?.id) ||
+          m.employeeId === u.author?.employeeProfile?.id
+      );
 
       return {
         id: u.id,
         projectId: u.projectId,
-        projectCode: u.project.projectNumber,
-        projectName: u.project.name,
-        clientName: u.project.client?.companyName || "Client Account",
+        projectCode: u.project?.projectNumber || u.projectId,
+        projectName: u.project?.name || "Project",
+        clientName: u.project?.client?.companyName || "Client Account",
         title: u.title,
         content: u.content,
         blockers: u.blockers || null,
@@ -150,13 +155,13 @@ export async function GET(req: Request) {
           minute: "2-digit",
         }),
         author: {
-          id: u.author.id,
-          employeeId: u.author.employeeProfile?.id,
-          name: u.author.name,
-          email: u.author.email,
-          designation: u.author.designation || "Staff",
-          avatarUrl: u.author.avatarUrl,
-          roleInProject: membership?.roleInProject || u.author.designation || "Team Member",
+          id: u.author?.id || "unknown",
+          employeeId: u.author?.employeeProfile?.id,
+          name: u.author?.name || "Team Member",
+          email: u.author?.email || "",
+          designation: u.author?.designation || "Staff",
+          avatarUrl: u.author?.avatarUrl,
+          roleInProject: membership?.roleInProject || u.author?.designation || "Team Member",
         },
       };
     });

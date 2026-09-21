@@ -33,12 +33,17 @@ export async function GET() {
 
   let whereClause: any = {};
   if (authRes.activeRole === "EMPLOYEE") {
-    if (!authRes.employeeId) {
-      return NextResponse.json({ success: false, error: "Forbidden: No employee profile linked" }, { status: 403 });
-    }
+    const empId = authRes.employeeId;
     whereClause = {
       memberships: {
-        some: { employeeId: authRes.employeeId, isActive: true },
+        some: {
+          OR: [
+            ...(empId ? [{ employeeId: empId }] : []),
+            { employeeId: authRes.id },
+            { employee: { userId: authRes.id } },
+          ],
+          isActive: true,
+        },
       },
     };
   }
@@ -261,10 +266,18 @@ export async function POST(req: Request) {
     const membershipsToCreate: any[] = [];
 
     if (body.assigneeId) {
-      const emp = await prisma.employee.findUnique({ where: { id: body.assigneeId } });
+      const emp = await prisma.employee.findFirst({
+        where: {
+          OR: [
+            { id: body.assigneeId },
+            { userId: body.assigneeId },
+            { employeeIdCode: body.assigneeId },
+          ],
+        },
+      });
       if (emp) {
         membershipsToCreate.push({
-          employeeId: body.assigneeId,
+          employeeId: emp.id,
           roleInProject: body.assigneeRole || "TM",
           isActive: true,
           assignedById: authRes.id,

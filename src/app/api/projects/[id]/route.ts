@@ -54,7 +54,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const isEmployee = authRes.activeRole === "EMPLOYEE";
 
     if (isEmployee) {
-      const isAssigned = memberships.some((m) => m.employeeId === authRes.employeeId && m.isActive);
+      const isAssigned = memberships.some(
+        (m) =>
+          (m.employeeId === authRes.employeeId ||
+            m.employeeId === authRes.id ||
+            m.employee?.userId === authRes.id) &&
+          m.isActive
+      );
       if (!isAssigned) {
         return NextResponse.json({ success: false, error: "Forbidden: You are not assigned to this project workspace" }, { status: 403 });
       }

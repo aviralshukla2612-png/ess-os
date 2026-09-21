@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/auth";
+import { requireAuth, requireRole } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 
 export async function GET() {
-  const authRes = await requireRole(["OWNER"]);
+  const authRes = await requireAuth();
   if (authRes instanceof NextResponse) return authRes;
 
   try {
