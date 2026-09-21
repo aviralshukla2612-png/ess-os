@@ -137,8 +137,8 @@ export function PrototypeStoreProvider({ children }: { children: React.ReactNode
       if (!role) return; // Wait until session is loaded
 
       const canViewLeads = role === "OWNER" || role === "SALES";
-      const canViewClients = role === "OWNER" || role === "SALES"; // Assume SALES can view clients too, or restrict to OWNER
-      const canViewEmployees = role === "OWNER";
+      const canViewClients = role === "OWNER" || role === "SALES" || role === "SUB_ADMIN";
+      const canViewEmployees = true;
 
       const [leadsRes, clientsRes, projectsRes, employeesRes] = await Promise.all([
         canViewLeads ? fetch("/crmtesting/api/leads").catch(() => null) : Promise.resolve(null),
