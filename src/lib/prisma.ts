@@ -18,93 +18,125 @@ async function ensureSchema() {
   globalForPrisma.dbInitialized = true;
 
   try {
-    // 1. Check & add missing columns in ProjectMembership
-    const membershipCols: any = await prisma.$queryRawUnsafe("PRAGMA table_info('ProjectMembership')");
-    if (Array.isArray(membershipCols) && membershipCols.length > 0) {
-      const colNames = membershipCols.map((c: any) => c.name);
-      if (!colNames.includes("compensationAmount")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "ProjectMembership" ADD COLUMN "compensationAmount" REAL');
-        console.log("Auto-migrated: Added compensationAmount to ProjectMembership");
+    const helperAddColumn = async (tableName: string, colName: string, colDef: string) => {
+      try {
+        const cols: any = await prisma.$queryRawUnsafe(`PRAGMA table_info("${tableName}")`);
+        if (Array.isArray(cols) && cols.length > 0) {
+          const names = cols.map((c: any) => c.name);
+          if (!names.includes(colName)) {
+            await prisma.$executeRawUnsafe(`ALTER TABLE "${tableName}" ADD COLUMN "${colName}" ${colDef}`);
+            console.log(`Auto-migrated: Added ${colName} to ${tableName}`);
+          }
+        }
+      } catch (e) {
+        // Table may not exist yet or column already exists
       }
-      if (!colNames.includes("removedAt")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "ProjectMembership" ADD COLUMN "removedAt" DATETIME');
-      }
-      if (!colNames.includes("removedById")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "ProjectMembership" ADD COLUMN "removedById" TEXT');
-      }
-      if (!colNames.includes("removalReason")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "ProjectMembership" ADD COLUMN "removalReason" TEXT');
-      }
-      if (!colNames.includes("isActive")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "ProjectMembership" ADD COLUMN "isActive" BOOLEAN DEFAULT 1');
-      }
-    }
+    };
 
-    // 2. Check & add missing columns in Project
-    const projectCols: any = await prisma.$queryRawUnsafe("PRAGMA table_info('Project')");
-    if (Array.isArray(projectCols) && projectCols.length > 0) {
-      const colNames = projectCols.map((c: any) => c.name);
-      if (!colNames.includes("designUrl")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "Project" ADD COLUMN "designUrl" TEXT');
-      }
-      if (!colNames.includes("stagingUrl")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "Project" ADD COLUMN "stagingUrl" TEXT');
-      }
-      if (!colNames.includes("liveUrl")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "Project" ADD COLUMN "liveUrl" TEXT');
-      }
-      if (!colNames.includes("scopeText")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "Project" ADD COLUMN "scopeText" TEXT');
-      }
-      if (!colNames.includes("progressPercentage")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "Project" ADD COLUMN "progressPercentage" REAL DEFAULT 0');
-      }
-      if (!colNames.includes("contractValue")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "Project" ADD COLUMN "contractValue" REAL DEFAULT 0');
-      }
-    }
+    // 1. Create missing tables if needed
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "UserFcmToken" (
+        "id" TEXT PRIMARY KEY,
+        "userId" TEXT NOT NULL,
+        "token" TEXT NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `).catch(() => {});
 
-    // 3. Check & add missing columns in Task
-    const taskCols: any = await prisma.$queryRawUnsafe("PRAGMA table_info('Task')");
-    if (Array.isArray(taskCols) && taskCols.length > 0) {
-      const colNames = taskCols.map((c: any) => c.name);
-      if (!colNames.includes("isMostImportant")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "Task" ADD COLUMN "isMostImportant" BOOLEAN DEFAULT 0');
-      }
-    }
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "ClientUpdate" (
+        "id" TEXT PRIMARY KEY,
+        "projectId" TEXT NOT NULL,
+        "authorId" TEXT NOT NULL,
+        "title" TEXT NOT NULL,
+        "content" TEXT NOT NULL,
+        "blockers" TEXT,
+        "healthStatus" TEXT NOT NULL DEFAULT 'ON_TRACK',
+        "visibility" TEXT NOT NULL DEFAULT 'CLIENT_VISIBLE',
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `).catch(() => {});
 
-    // 4. Check & add missing columns in Employee
-    const employeeCols: any = await prisma.$queryRawUnsafe("PRAGMA table_info('Employee')");
-    if (Array.isArray(employeeCols) && employeeCols.length > 0) {
-      const colNames = employeeCols.map((c: any) => c.name);
-      if (!colNames.includes("sickLeaveTotal")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "Employee" ADD COLUMN "sickLeaveTotal" INTEGER DEFAULT 10');
-      }
-      if (!colNames.includes("sickLeaveUsed")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "Employee" ADD COLUMN "sickLeaveUsed" REAL DEFAULT 0');
-      }
-      if (!colNames.includes("casualLeaveTotal")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "Employee" ADD COLUMN "casualLeaveTotal" INTEGER DEFAULT 15');
-      }
-      if (!colNames.includes("casualLeaveUsed")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "Employee" ADD COLUMN "casualLeaveUsed" REAL DEFAULT 0');
-      }
-      if (!colNames.includes("paidLeaveTotal")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "Employee" ADD COLUMN "paidLeaveTotal" INTEGER DEFAULT 15');
-      }
-      if (!colNames.includes("paidLeaveUsed")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "Employee" ADD COLUMN "paidLeaveUsed" REAL DEFAULT 0');
-      }
-    }
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "LeaveRequest" (
+        "id" TEXT PRIMARY KEY,
+        "employeeId" TEXT NOT NULL,
+        "leaveType" TEXT NOT NULL,
+        "startDate" DATETIME NOT NULL,
+        "endDate" DATETIME NOT NULL,
+        "days" REAL NOT NULL DEFAULT 1,
+        "reason" TEXT NOT NULL,
+        "status" TEXT NOT NULL DEFAULT 'PENDING',
+        "approvedById" TEXT,
+        "approvedAt" DATETIME,
+        "rejectionReason" TEXT,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `).catch(() => {});
 
-    // 5. Check & add missing columns in User
-    const userCols: any = await prisma.$queryRawUnsafe("PRAGMA table_info('User')");
-    if (Array.isArray(userCols) && userCols.length > 0) {
-      const colNames = userCols.map((c: any) => c.name);
-      if (!colNames.includes("subAdminPermissions")) {
-        await prisma.$executeRawUnsafe('ALTER TABLE "User" ADD COLUMN "subAdminPermissions" TEXT DEFAULT \'[]\'');
-      }
-    }
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "CompanyHoliday" (
+        "id" TEXT PRIMARY KEY,
+        "title" TEXT NOT NULL,
+        "date" DATETIME NOT NULL,
+        "description" TEXT,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `).catch(() => {});
+
+    // 2. ProjectMembership columns
+    await helperAddColumn("ProjectMembership", "compensationAmount", "REAL");
+    await helperAddColumn("ProjectMembership", "removedAt", "DATETIME");
+    await helperAddColumn("ProjectMembership", "removedById", "TEXT");
+    await helperAddColumn("ProjectMembership", "removalReason", "TEXT");
+    await helperAddColumn("ProjectMembership", "isActive", "BOOLEAN DEFAULT 1");
+
+    // 3. Project columns
+    await helperAddColumn("Project", "designUrl", "TEXT");
+    await helperAddColumn("Project", "stagingUrl", "TEXT");
+    await helperAddColumn("Project", "liveUrl", "TEXT");
+    await helperAddColumn("Project", "scopeText", "TEXT");
+    await helperAddColumn("Project", "progressPercentage", "REAL DEFAULT 0");
+    await helperAddColumn("Project", "contractValue", "REAL DEFAULT 0");
+    await helperAddColumn("Project", "startDate", "DATETIME");
+    await helperAddColumn("Project", "targetDeadline", "DATETIME");
+    await helperAddColumn("Project", "actualCompletionDate", "DATETIME");
+
+    // 4. Task columns
+    await helperAddColumn("Task", "completedAt", "DATETIME");
+    await helperAddColumn("Task", "startDate", "DATETIME");
+    await helperAddColumn("Task", "deadline", "DATETIME");
+    await helperAddColumn("Task", "stageId", "TEXT");
+    await helperAddColumn("Task", "estimatedHours", "REAL DEFAULT 0");
+    await helperAddColumn("Task", "actualHours", "REAL DEFAULT 0");
+    await helperAddColumn("Task", "isMostImportant", "BOOLEAN DEFAULT 0");
+
+    // 5. Employee columns
+    await helperAddColumn("Employee", "sickLeaveTotal", "INTEGER DEFAULT 10");
+    await helperAddColumn("Employee", "sickLeaveUsed", "REAL DEFAULT 0");
+    await helperAddColumn("Employee", "casualLeaveTotal", "INTEGER DEFAULT 15");
+    await helperAddColumn("Employee", "casualLeaveUsed", "REAL DEFAULT 0");
+    await helperAddColumn("Employee", "paidLeaveTotal", "INTEGER DEFAULT 15");
+    await helperAddColumn("Employee", "paidLeaveUsed", "REAL DEFAULT 0");
+    await helperAddColumn("Employee", "reportingManagerId", "TEXT");
+    await helperAddColumn("Employee", "skillsJson", "TEXT DEFAULT '[]'");
+
+    // 6. User columns
+    await helperAddColumn("User", "subAdminPermissions", "TEXT DEFAULT '[]'");
+    await helperAddColumn("User", "activeRole", "TEXT DEFAULT 'EMPLOYEE'");
+    await helperAddColumn("User", "avatarUrl", "TEXT");
+    await helperAddColumn("User", "isActive", "BOOLEAN DEFAULT 1");
+
+    // 7. Attendance columns
+    await helperAddColumn("Attendance", "punchOutReason", "TEXT");
+    await helperAddColumn("Attendance", "punchOutRequestStatus", "TEXT");
+    await helperAddColumn("Attendance", "punchOutRequestedAt", "DATETIME");
+    await helperAddColumn("Attendance", "punchOutApprovedById", "TEXT");
+    await helperAddColumn("Attendance", "totalMinutes", "INTEGER DEFAULT 0");
+
   } catch (err) {
     console.warn("Auto-schema migration notice:", err);
   }
