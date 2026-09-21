@@ -99,7 +99,7 @@ export default function KycPage() {
   const fetchKycData = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/kyc");
+      const res = await fetch("/crmtesting/api/kyc");
       const json = await res.json();
       if (json.success && json.data) {
         setKyc(json.data);
@@ -125,7 +125,7 @@ export default function KycPage() {
   const handleDismissApprovalModal = async () => {
     setShowApprovalModal(false);
     try {
-      await fetch("/api/kyc", {
+      await fetch("/crmtesting/api/kyc", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ markNotified: true }),
@@ -149,7 +149,7 @@ export default function KycPage() {
       const data = new FormData();
       data.append("file", file);
 
-      const res = await fetch("/api/upload", {
+      const res = await fetch("/crmtesting/api/upload", {
         method: "POST",
         body: data,
       });
@@ -185,7 +185,7 @@ export default function KycPage() {
 
     try {
       setSaving(true);
-      const res = await fetch("/api/kyc", {
+      const res = await fetch("/crmtesting/api/kyc", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

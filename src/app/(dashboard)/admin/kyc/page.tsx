@@ -97,7 +97,7 @@ export default function AdminKycPage() {
       if (departmentFilter !== "ALL") params.append("department", departmentFilter);
       if (search.trim()) params.append("search", search.trim());
 
-      const res = await fetch(`/api/admin/kyc?${params.toString()}`);
+      const res = await fetch(`/crmtesting/api/admin/kyc?${params.toString()}`);
       const json = await res.json();
 
       if (json.success) {
@@ -123,7 +123,7 @@ export default function AdminKycPage() {
 
     try {
       setActionLoading(true);
-      const res = await fetch("/api/admin/kyc", {
+      const res = await fetch("/crmtesting/api/admin/kyc", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
