@@ -119,8 +119,10 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
             
             const breakMins = dayBreaks.reduce((acc: number, ev: any) => {
               const start = new Date(ev.startedAt).getTime();
-              const end = ev.endedAt ? new Date(ev.endedAt).getTime() : Date.now();
-              return acc + Math.max(0, Math.floor((end - start) / 60000));
+              const isEventToday = new Date(ev.startedAt).toDateString() === new Date().toDateString();
+              const end = ev.endedAt ? new Date(ev.endedAt).getTime() : (isEventToday ? Date.now() : start + (30 * 60000));
+              const mins = Math.min(180, Math.max(0, Math.floor((end - start) / 60000)));
+              return acc + mins;
             }, 0);
 
             const breakHoursStr = breakMins > 0 ? `${Math.floor(breakMins / 60)}h ${breakMins % 60}m` : "0m";
@@ -288,8 +290,12 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
       .filter((ev: any) => ev.statusType !== "WORKING")
       .reduce((sum: number, ev: any) => {
         const start = new Date(ev.startedAt).getTime();
-        const end = ev.endedAt ? new Date(ev.endedAt).getTime() : Date.now();
-        const mins = Math.max(0, Math.floor((end - start) / 60000));
+        const isEventToday = new Date(ev.startedAt).toDateString() === new Date().toDateString();
+        // If break was on a previous day and never ended, cap it to 30 mins max
+        const end = ev.endedAt ? new Date(ev.endedAt).getTime() : (isEventToday ? Date.now() : start + (30 * 60000));
+        const diffMs = Math.max(0, end - start);
+        // Single break safety cap: max 3 hours (180m) to prevent runaway timer bugs
+        const mins = Math.min(180, Math.floor(diffMs / 60000));
         return sum + mins;
       }, 0);
 

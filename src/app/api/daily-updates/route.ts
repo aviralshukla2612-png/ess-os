@@ -128,6 +128,8 @@ export async function GET(req: Request) {
       }),
     ]);
 
+    const validDistinctProjects = distinctProjectsCount.filter((p) => p.projectId !== null);
+
     const formattedUpdates = rawUpdates.map((u) => {
       const memberships = u.project?.memberships || [];
       const membership = memberships.find(
@@ -139,9 +141,9 @@ export async function GET(req: Request) {
       return {
         id: u.id,
         projectId: u.projectId,
-        projectCode: u.project?.projectNumber || u.projectId,
-        projectName: u.project?.name || "Project",
-        clientName: u.project?.client?.companyName || "Client Account",
+        projectCode: u.project?.projectNumber || (u.projectId ? u.projectId : "GENERAL"),
+        projectName: u.project?.name || "General Workspace",
+        clientName: u.project?.client?.companyName || null,
         title: u.title,
         content: u.content,
         blockers: u.blockers || null,
@@ -179,7 +181,7 @@ export async function GET(req: Request) {
         },
         stats: {
           totalSubmissionsToday: todayUpdatesCount,
-          projectsUpdatedToday: distinctProjectsCount.length,
+          projectsUpdatedToday: validDistinctProjects.length,
           blockersCount,
           criticalAlertsCount: criticalCount,
         },
@@ -188,5 +190,81 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error("GET /api/daily-updates error:", error);
     return NextResponse.json({ success: false, error: "Failed to fetch master daily updates feed" }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  const authRes = await requireAuth();
+  if (authRes instanceof NextResponse) return authRes;
+
+  try {
+    const body = await req.json();
+
+    if (!body.title || !body.content) {
+      return NextResponse.json(
+        { success: false, error: "Title and content are required" },
+        { status: 400 }
+      );
+    }
+
+    const projectId = body.projectId && body.projectId.trim() !== "" ? body.projectId.trim() : null;
+
+    if (projectId) {
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        include: {
+          memberships: {
+            where: { isActive: true },
+            include: { employee: { select: { userId: true } } },
+          },
+        },
+      });
+
+      if (!project) {
+        return NextResponse.json(
+          { success: false, error: "Project not found" },
+          { status: 404 }
+        );
+      }
+
+      // Role verification: If EMPLOYEE, verify assigned
+      if (authRes.activeRole === "EMPLOYEE") {
+        const isAssigned = project.memberships.some(
+          (m) => m.employeeId === authRes.employeeId || m.employee?.userId === authRes.id
+        );
+        if (!isAssigned) {
+          return NextResponse.json(
+            { success: false, error: "Forbidden: You are not an active member on this project" },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
+    const healthStatus = ["ON_TRACK", "AT_RISK", "BLOCKED"].includes(body.healthStatus)
+      ? body.healthStatus
+      : "ON_TRACK";
+
+    const newUpdate = await prisma.clientUpdate.create({
+      data: {
+        projectId: projectId || undefined,
+        title: body.title.trim(),
+        content: body.content.trim(),
+        blockers: body.blockers?.trim() || null,
+        healthStatus,
+        authorId: authRes.id,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: newUpdate,
+    });
+  } catch (error) {
+    console.error("POST /api/daily-updates error:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to create daily update" },
+      { status: 500 }
+    );
   }
 }

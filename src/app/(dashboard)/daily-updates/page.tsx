@@ -342,19 +342,29 @@ export default function MasterDailyUpdatesPage() {
                 {/* Header: Project Badge, Client & Timestamp */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-xs font-bold text-indigo-700 dark:text-indigo-400 px-2.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20">
-                      {update.projectCode}
-                    </span>
-                    <Link
-                      href={`/projects/${update.projectId}`}
-                      className="font-extrabold text-sm text-slate-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors inline-flex items-center gap-1.5"
-                    >
-                      <span>{update.projectName}</span>
-                      <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                    </Link>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      • 🏢 {update.clientName}
-                    </span>
+                    {update.projectId ? (
+                      <>
+                        <span className="font-mono text-xs font-bold text-indigo-700 dark:text-indigo-400 px-2.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20">
+                          {update.projectCode}
+                        </span>
+                        <Link
+                          href={`/projects/${update.projectId}`}
+                          className="font-extrabold text-sm text-slate-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors inline-flex items-center gap-1.5"
+                        >
+                          <span>{update.projectName}</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                        </Link>
+                        {update.clientName && (
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            • 🏢 {update.clientName}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="font-mono text-xs font-bold text-slate-600 dark:text-slate-400 px-2.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        General Workspace
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">

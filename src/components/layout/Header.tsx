@@ -111,14 +111,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
       setIsPunchOutConfirmOpen(true);
       setIsBreakSheetOpen(false); // close break sheet if open
     } else {
-      try {
-        await fetch("/crmtesting/api/attendance/punch-out-request", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ employeeId: currentUser.employeeId, reason: "" }), // Assume 8+ hours
-        });
-      } catch (e) {}
-      showToast("✓ Punched Out for today. Day complete!", "success");
+      confirmPunchOutAnyway();
     }
   };
 

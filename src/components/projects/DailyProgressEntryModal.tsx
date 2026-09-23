@@ -39,7 +39,7 @@ export function DailyProgressEntryModal({
   const { showToast } = useToast();
 
   const [selectedProjectId, setSelectedProjectId] = useState<string>(
-    fixedProject?.id || (availableProjects.length > 0 ? availableProjects[0].id : "")
+    fixedProject?.id || ""
   );
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -48,23 +48,16 @@ export function DailyProgressEntryModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showBlockerInput, setShowBlockerInput] = useState(false);
 
-  // Sync selected project if fixedProject or availableProjects change
+  // Sync selected project if fixedProject changes
   React.useEffect(() => {
     if (fixedProject?.id) {
       setSelectedProjectId(fixedProject.id);
-    } else if (availableProjects.length > 0 && !selectedProjectId) {
-      setSelectedProjectId(availableProjects[0].id);
     }
-  }, [fixedProject, availableProjects]);
+  }, [fixedProject]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const targetProjectId = fixedProject?.id || selectedProjectId;
-
-    if (!targetProjectId) {
-      showToast("Please select a project to post progress for", "error");
-      return;
-    }
+    const targetProjectId = fixedProject?.id || (selectedProjectId ? selectedProjectId : undefined);
 
     if (!title.trim()) {
       showToast("Please enter an update summary headline", "error");
@@ -78,10 +71,11 @@ export function DailyProgressEntryModal({
 
     try {
       setIsSubmitting(true);
-      const res = await fetch(`/crmtesting/api/projects/${targetProjectId}/updates`, {
+      const res = await fetch("/crmtesting/api/daily-updates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          projectId: targetProjectId,
           title: title.trim(),
           content: content.trim(),
           blockers: blockers.trim() || undefined,
@@ -109,41 +103,39 @@ export function DailyProgressEntryModal({
     }
   };
 
-  const currentProjectName =
-    fixedProject?.name ||
-    availableProjects.find((p) => p.id === selectedProjectId)?.name ||
-    "Project Workspace";
+  const selectedProj = availableProjects.find((p) => p.id === selectedProjectId);
+  const currentProjectName = fixedProject?.name || selectedProj?.name;
 
   return (
     <BottomSheet
       isOpen={isOpen}
       onClose={onClose}
       title="Post Daily Progress Update"
-      subtitle={`Submit your work summary and achievements for ${currentProjectName}.`}
+      subtitle={
+        currentProjectName
+          ? `Submit your work summary and achievements for ${currentProjectName}.`
+          : "Submit your work summary and achievements for today."
+      }
     >
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">
         {/* Project Selector (if not fixed) */}
         {!fixedProject && (
           <div>
             <label className="text-slate-700 dark:text-slate-300 font-semibold block mb-1.5">
-              Select Project Workspace *
+              Select Project Workspace <span className="text-slate-400 font-normal">(Optional)</span>
             </label>
             <select
-              required
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all font-medium"
             >
-              {availableProjects.length === 0 ? (
-                <option value="">-- No Projects Available --</option>
-              ) : (
-                availableProjects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.projectCode ? `[${p.projectCode}] ` : ""}
-                    {p.name} {p.clientName ? `(${p.clientName})` : ""}
-                  </option>
-                ))
-              )}
+              <option value="">-- General Work / No Specific Project --</option>
+              {availableProjects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.projectCode ? `[${p.projectCode}] ` : ""}
+                  {p.name} {p.clientName ? `(${p.clientName})` : ""}
+                </option>
+              ))}
             </select>
           </div>
         )}

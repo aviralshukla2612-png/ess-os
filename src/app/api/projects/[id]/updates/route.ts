@@ -45,15 +45,15 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     });
 
     const formatted = updates.map((u) => {
-      const membership = u.project.memberships.find(
+      const membership = u.project?.memberships.find(
         (m) => m.employee.userId === u.author.id
       );
 
       return {
         id: u.id,
         projectId: u.projectId,
-        projectCode: u.project.projectNumber,
-        projectName: u.project.name,
+        projectCode: u.project?.projectNumber || u.projectId,
+        projectName: u.project?.name || "Project",
         title: u.title,
         content: u.content,
         blockers: u.blockers || null,
