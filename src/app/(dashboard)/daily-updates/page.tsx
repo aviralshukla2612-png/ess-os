@@ -105,6 +105,23 @@ export default function MasterDailyUpdatesPage() {
     }
   };
 
+  const formatDateTime = (dateInput?: string | Date, fallbackFormatted?: string) => {
+    if (!dateInput) return fallbackFormatted || "";
+    try {
+      return new Date(dateInput).toLocaleString("en-US", {
+        timeZone: "Asia/Kolkata",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch {
+      return fallbackFormatted || "";
+    }
+  };
+
   const getHealthBadge = (status?: string) => {
     switch (status) {
       case "BLOCKED":
@@ -375,7 +392,7 @@ export default function MasterDailyUpdatesPage() {
                       <span>{healthBadge.label}</span>
                     </span>
                     <span className="text-[11px] font-mono text-slate-400">
-                      {update.formattedDate}
+                      {formatDateTime(update.createdAt, update.formattedDate)}
                     </span>
                   </div>
                 </div>

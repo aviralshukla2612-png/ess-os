@@ -61,11 +61,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         visibility: u.visibility,
         createdAt: u.createdAt,
         formattedDate: new Date(u.createdAt).toLocaleDateString("en-US", {
+          timeZone: "Asia/Kolkata",
           month: "short",
           day: "numeric",
           year: "numeric",
-          hour: "2-digit",
+          hour: "numeric",
           minute: "2-digit",
+          hour12: true,
         }),
         author: {
           id: u.author.id,
@@ -205,11 +207,13 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         visibility: newUpdate.visibility,
         createdAt: newUpdate.createdAt,
         formattedDate: new Date(newUpdate.createdAt).toLocaleDateString("en-US", {
+          timeZone: "Asia/Kolkata",
           month: "short",
           day: "numeric",
           year: "numeric",
-          hour: "2-digit",
+          hour: "numeric",
           minute: "2-digit",
+          hour12: true,
         }),
         author: {
           id: newUpdate.author.id,

@@ -150,11 +150,13 @@ export async function GET(req: Request) {
         healthStatus: u.healthStatus || "ON_TRACK",
         createdAt: u.createdAt,
         formattedDate: new Date(u.createdAt).toLocaleDateString("en-US", {
+          timeZone: "Asia/Kolkata",
           month: "short",
           day: "numeric",
           year: "numeric",
-          hour: "2-digit",
+          hour: "numeric",
           minute: "2-digit",
+          hour12: true,
         }),
         author: {
           id: u.author?.id || "unknown",

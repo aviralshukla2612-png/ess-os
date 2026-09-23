@@ -72,8 +72,10 @@ export function ProjectUpdatesTimeline({
     const isToday = d.toDateString() === now.toDateString();
 
     const timeStr = d.toLocaleTimeString("en-US", {
-      hour: "2-digit",
+      timeZone: "Asia/Kolkata",
+      hour: "numeric",
       minute: "2-digit",
+      hour12: true,
     });
 
     if (isToday) return `Today at ${timeStr}`;
@@ -85,10 +87,12 @@ export function ProjectUpdatesTimeline({
     }
 
     return d.toLocaleDateString("en-US", {
+      timeZone: "Asia/Kolkata",
       month: "short",
       day: "numeric",
-      hour: "2-digit",
+      hour: "numeric",
       minute: "2-digit",
+      hour12: true,
     });
   };
 
