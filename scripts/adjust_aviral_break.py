@@ -123,13 +123,13 @@ for u_id, name, email, emp_id in rows:
 
     print(f"\nCurrent Break: {round(total_break_ms / 60000, 1)} mins | Current Work: {round(total_work_ms / 60000, 1)} mins")
 
-    TARGET_BREAK_MS = 20 * 60 * 1000  # Exactly 20 minutes (1,200,000 ms)
+    TARGET_BREAK_MS = 24 * 60 * 1000  # Exactly 24 minutes (1,440,000 ms)
     if total_break_ms <= TARGET_BREAK_MS:
-        print(f"Break time is already <= 20 mins ({round(total_break_ms / 60000, 1)} mins). Nothing to adjust.")
+        print(f"Break time is already <= 24 mins ({round(total_break_ms / 60000, 1)} mins). Nothing to adjust.")
         continue
 
     excess_ms = total_break_ms - TARGET_BREAK_MS
-    print(f"\nTrimming {round(excess_ms / 60000, 1)} mins of excess break to credit as WORK...")
+    print(f"\nTrimming {round(excess_ms / 60000, 1)} mins of excess break so total break becomes 24 mins (credit to WORK)...")
 
     # Sort break events by duration descending
     break_events.sort(key=lambda x: x[5], reverse=True)
@@ -198,7 +198,7 @@ for u_id, name, email, emp_id in rows:
 
     conn.commit()
     print(f"\n==========================================")
-    print(f"✅ Success! Break time for {name} has been set to 20 minutes only!")
+    print(f"✅ Success! Break time for {name} has been set to 24 minutes only!")
     print(f"==========================================\n")
 
 conn.close()

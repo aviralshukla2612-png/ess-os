@@ -75,15 +75,15 @@ async function main() {
     console.log(`\n  Current Recorded Break Time: ${(initialBreakMs / 60000).toFixed(1)} minutes (${Math.floor(initialBreakMs / 3600000)}h ${Math.round((initialBreakMs % 3600000) / 60000)}m)`);
     console.log(`  Current Recorded Work Time : ${(initialWorkMs / 60000).toFixed(1)} minutes (${Math.floor(initialWorkMs / 3600000)}h ${Math.round((initialWorkMs % 3600000) / 60000)}m)`);
 
-    const TARGET_BREAK_MS = 20 * 60 * 1000; // Exactly 20 minutes (1,200,000 ms)
+    const TARGET_BREAK_MS = 24 * 60 * 1000; // Exactly 24 minutes (1,440,000 ms)
 
     if (initialBreakMs <= TARGET_BREAK_MS) {
-      console.log(`\n  ℹ️ Break time is already ${(initialBreakMs / 60000).toFixed(1)} mins (<= 20 minutes). No reduction needed.`);
+      console.log(`\n  ℹ️ Break time is already ${(initialBreakMs / 60000).toFixed(1)} mins (<= 24 minutes). No reduction needed.`);
       continue;
     }
 
     const excessToReduceMs = initialBreakMs - TARGET_BREAK_MS;
-    console.log(`\n  🎯 Target Break Time: 20.0 minutes`);
+    console.log(`\n  🎯 Target Break Time: 24.0 minutes`);
     console.log(`  ✂️ Excess Break Time to convert to Work: ${(excessToReduceMs / 60000).toFixed(1)} mins (${Math.floor(excessToReduceMs / 3600000)}h ${Math.round((excessToReduceMs % 3600000) / 60000)}m)`);
 
     const breakEvents = events.filter(e => e.statusType !== "WORKING");
@@ -185,7 +185,7 @@ async function main() {
 
     console.log(`\n========================================`);
     console.log(`✅ RESULT FOR ${user.name}:`);
-    console.log(`   Total Break Time: ${(finalBreakMs / 60000).toFixed(1)} mins (${Math.round(finalBreakMs / 60000)}m) [Target: 20 mins]`);
+    console.log(`   Total Break Time: ${(finalBreakMs / 60000).toFixed(1)} mins (${Math.round(finalBreakMs / 60000)}m) [Target: 24 mins]`);
     console.log(`   Total Work Time : ${(finalWorkMs / 60000).toFixed(1)} mins (${Math.floor(finalWorkMs / 3600000)}h ${Math.round((finalWorkMs % 3600000) / 60000)}m)`);
     console.log(`========================================\n`);
   }
