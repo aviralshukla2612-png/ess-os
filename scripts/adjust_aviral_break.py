@@ -124,37 +124,24 @@ for u_id, name, email, emp_id in rows:
     print(f"\nCurrent Break: {round(total_break_ms / 60000, 1)} mins | Current Work: {round(total_work_ms / 60000, 1)} mins")
 
     TARGET_BREAK_MS = 24 * 60 * 1000  # Exactly 24 minutes (1,440,000 ms)
-    if total_break_ms <= TARGET_BREAK_MS:
-        print(f"Break time is already <= 24 mins ({round(total_break_ms / 60000, 1)} mins). Nothing to adjust.")
+    diff_ms = TARGET_BREAK_MS - total_break_ms
+
+    if abs(diff_ms) < 5000:
+        print(f"Break time is already exactly 24 mins ({round(total_break_ms / 60000, 1)} mins). Nothing to adjust.")
         continue
 
-    excess_ms = total_break_ms - TARGET_BREAK_MS
-    print(f"\nTrimming {round(excess_ms / 60000, 1)} mins of excess break so total break becomes 24 mins (credit to WORK)...")
+    if diff_ms > 0:
+        # We need to INCREASE break time from current to 24 mins (by adding diff_ms)
+        print(f"\nExtending break by {round(diff_ms / 60000, 1)} mins so total break becomes EXACTLY 24.0 mins...")
+        b_ev = break_events[0]
+        ev_id, stype, s_at, e_at, notes, dur_ms, s_ms, e_ms = b_ev
 
-    # Sort break events by duration descending
-    break_events.sort(key=lambda x: x[5], reverse=True)
-    remaining_cut = excess_ms
+        new_end_ms = e_ms + diff_ms
+        formatted_end = format_like_original(new_end_ms, e_at)
+        cur.execute("UPDATE EmployeeStatusEvent SET endedAt = ? WHERE id = ?", (formatted_end, ev_id))
+        print(f"  ✓ Extended break {ev_id} endedAt -> now ends at {datetime.fromtimestamp(new_end_ms / 1000).strftime('%H:%M:%S')} (duration: 24.0 mins)")
 
-    for ev_id, stype, s_at, e_at, notes, dur_ms, s_ms, e_ms in break_events:
-        if remaining_cut <= 0:
-            break
-        cut_this = min(remaining_cut, dur_ms)
-        if cut_this <= 0:
-            continue
-
-        new_end_ms = e_ms - cut_this
-        if e_at:
-            formatted_end = format_like_original(new_end_ms, e_at)
-            cur.execute("UPDATE EmployeeStatusEvent SET endedAt = ? WHERE id = ?", (formatted_end, ev_id))
-            print(f"  ✓ Updated break {ev_id} endedAt -> reduced by {round(cut_this / 60000, 1)} mins")
-        else:
-            new_s_ms = s_ms + cut_this
-            formatted_start = format_like_original(new_s_ms, s_at)
-            cur.execute("UPDATE EmployeeStatusEvent SET startedAt = ? WHERE id = ?", (formatted_start, ev_id))
-            print(f"  ✓ Updated ongoing break {ev_id} startedAt -> shifted forward by {round(cut_this / 60000, 1)} mins")
-
-        # Credit work time to adjacent working event
-        # 1. Look for next working event starting near old end
+        # Shift adjacent working event start later by diff_ms
         next_work = None
         for w in events:
             if w[1] == "WORKING":
@@ -165,10 +152,52 @@ for u_id, name, email, emp_id in rows:
 
         if next_work:
             orig_next_start_ms = parse_ts_to_ms(next_work[2])
-            new_work_start_ms = orig_next_start_ms - cut_this
+            new_work_start_ms = orig_next_start_ms + diff_ms
             formatted_w_start = format_like_original(new_work_start_ms, next_work[2])
             cur.execute("UPDATE EmployeeStatusEvent SET startedAt = ? WHERE id = ?", (formatted_w_start, next_work[0]))
-            print(f"  ✓ Shifted subsequent WORKING event {next_work[0]} earlier by {round(cut_this / 60000, 1)} mins to credit work")
+            print(f"  ✓ Shifted subsequent WORKING event {next_work[0]} start to {datetime.fromtimestamp(new_work_start_ms / 1000).strftime('%H:%M:%S')}")
+    else:
+        # We need to REDUCE break time to 24 mins
+        excess_ms = abs(diff_ms)
+        print(f"\nTrimming {round(excess_ms / 60000, 1)} mins of excess break so total break becomes 24 mins (credit to WORK)...")
+
+        # Sort break events by duration descending
+        break_events.sort(key=lambda x: x[5], reverse=True)
+        remaining_cut = excess_ms
+
+        for ev_id, stype, s_at, e_at, notes, dur_ms, s_ms, e_ms in break_events:
+            if remaining_cut <= 0:
+                break
+            cut_this = min(remaining_cut, dur_ms)
+            if cut_this <= 0:
+                continue
+
+            new_end_ms = e_ms - cut_this
+            if e_at:
+                formatted_end = format_like_original(new_end_ms, e_at)
+                cur.execute("UPDATE EmployeeStatusEvent SET endedAt = ? WHERE id = ?", (formatted_end, ev_id))
+                print(f"  ✓ Updated break {ev_id} endedAt -> reduced by {round(cut_this / 60000, 1)} mins")
+            else:
+                new_s_ms = s_ms + cut_this
+                formatted_start = format_like_original(new_s_ms, s_at)
+                cur.execute("UPDATE EmployeeStatusEvent SET startedAt = ? WHERE id = ?", (formatted_start, ev_id))
+                print(f"  ✓ Updated ongoing break {ev_id} startedAt -> shifted forward by {round(cut_this / 60000, 1)} mins")
+
+            # Credit work time to adjacent working event
+            next_work = None
+            for w in events:
+                if w[1] == "WORKING":
+                    w_s = parse_ts_to_ms(w[2])
+                    if w_s and abs(w_s - e_ms) < 120000:
+                        next_work = w
+                        break
+
+            if next_work:
+                orig_next_start_ms = parse_ts_to_ms(next_work[2])
+                new_work_start_ms = orig_next_start_ms - cut_this
+                formatted_w_start = format_like_original(new_work_start_ms, next_work[2])
+                cur.execute("UPDATE EmployeeStatusEvent SET startedAt = ? WHERE id = ?", (formatted_w_start, next_work[0]))
+                print(f"  ✓ Shifted subsequent WORKING event {next_work[0]} earlier by {round(cut_this / 60000, 1)} mins to credit work")
         else:
             # 2. Check previous work
             prev_work = None
