@@ -22,6 +22,7 @@ interface Message {
   toolUsed?: string;
   source?: "ollama" | "fallback";
   data?: any;
+  downloadUrl?: string;
 }
 
 export function AttendanceAiAssistant({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -70,6 +71,7 @@ export function AttendanceAiAssistant({ isOpen, onClose }: { isOpen: boolean; on
             toolUsed: data.toolUsed,
             source: data.source,
             data: data.data,
+            downloadUrl: data.downloadUrl || data.data?.downloadUrl,
           },
         ]);
       } else {
@@ -161,6 +163,18 @@ export function AttendanceAiAssistant({ isOpen, onClose }: { isOpen: boolean; on
                 )}
 
                 <div className="whitespace-pre-wrap">{msg.content}</div>
+                {msg.downloadUrl && (
+                  <div className="pt-2">
+                    <a
+                      href={msg.downloadUrl}
+                      download
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-colors shadow-xs"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Download PDF Report</span>
+                    </a>
+                  </div>
+                )}
 
                 {/* Structured UI Card for Summary */}
                 {msg.data?.type === "summary" && (

@@ -10,6 +10,7 @@ import { OwnerBreakDashboard } from "@/components/owner/OwnerBreakDashboard";
 import { OwnerAttendanceHistory } from "@/components/owner/OwnerAttendanceHistory";
 import { OwnerHolidayManager } from "@/components/owner/OwnerHolidayManager";
 import { CalendarDatePicker } from "@/components/ui/CalendarDatePicker";
+import { AttendanceAiAssistant } from "@/components/attendance/AttendanceAiAssistant";
 import {
   Clock,
   Play,
@@ -186,6 +187,7 @@ export default function AttendanceWorkClockPage() {
   } = useWorkClock();
 
   // Bottom sheets
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const [isBreakSheetOpen, setIsBreakSheetOpen] = useState(false);
   const [isChangeWorkOpen, setIsChangeWorkOpen] = useState(false);
   const [isPunchOutConfirmOpen, setIsPunchOutConfirmOpen] = useState(false);
@@ -480,7 +482,15 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
         description="Employee day timeline, live stopwatch, work focus tracking, and break allowances."
         badge="WORK MODULE"
         icon={<Clock className="w-7 h-7 text-indigo-600 dark:text-indigo-400 animate-pulse" />}
-        actions={undefined}
+        actions={
+          <button
+            onClick={() => setIsAiAssistantOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition-all cursor-pointer hover:scale-102 active:scale-98"
+          >
+            <Sparkles className="w-4 h-4 text-indigo-200" />
+            <span>Attendance AI</span>
+          </button>
+        }
       />
 
         {/* STATE 1: NOT PUNCHED IN */}
