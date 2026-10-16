@@ -374,12 +374,39 @@ export class AttendanceService {
     let lateCount = 0;
     let incompleteCheckoutCount = 0;
 
+    const presentEmployees: any[] = [];
+    const lateEmployees: any[] = [];
+    const incompleteEmployees: any[] = [];
+
     for (const a of attendances) {
+      const empName = a.employee?.user?.name || "Employee";
+      const empDept = a.employee?.user?.department || "General";
+      const punchInStr = a.punchIn ? formatTimeIST(a.punchIn) : "--:--";
+
+      presentEmployees.push({
+        id: a.employeeId,
+        name: empName,
+        department: empDept,
+        punchIn: punchInStr,
+      });
+
       if (a.punchIn && isLateArrival(a.punchIn)) {
         lateCount++;
+        lateEmployees.push({
+          id: a.employeeId,
+          name: empName,
+          department: empDept,
+          punchIn: punchInStr,
+        });
       }
       if (!a.punchOut) {
         incompleteCheckoutCount++;
+        incompleteEmployees.push({
+          id: a.employeeId,
+          name: empName,
+          department: empDept,
+          punchIn: punchInStr,
+        });
       }
     }
 
@@ -398,6 +425,7 @@ export class AttendanceService {
           code: emp.employeeIdCode,
           name: emp.user.name,
           department: emp.user.department,
+          designation: emp.user.designation,
         });
       }
     }
@@ -411,7 +439,10 @@ export class AttendanceService {
       late: lateCount,
       incompleteCheckout: incompleteCheckoutCount,
       attendanceRatePercentage: totalExpected > 0 ? Math.round((presentCount / totalExpected) * 100) : 0,
-      absentEmployees: caller && hasAdminAttendanceAccess(caller) ? absentEmployees : undefined,
+      presentEmployees,
+      absentEmployees,
+      lateEmployees,
+      incompleteEmployees,
     };
   }
 

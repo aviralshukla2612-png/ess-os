@@ -325,9 +325,28 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
           `• Total Opportunities Tracked: **${result.totalLeadsTracked || 0}**`;
       }
 
-      case "get_attendance_summary": {
+            case "get_attendance_summary": {
         const s = result.data || result;
-        return `📅 **Attendance Summary for ${s.date}**\n\n• **Present:** ${s.present} of ${s.totalExpected} active employees (${s.attendanceRatePercentage}%)\n• **Absent:** ${s.absent}\n• **On Approved Leave:** ${s.onLeave}\n• **Late Arrivals:** ${s.late}\n• **Incomplete Check-outs:** ${s.incompleteCheckout}`;
+        const presentNames = (s.presentEmployees || []).map((e: any) => e.name).join(", ");
+        const absentNames = (s.absentEmployees || []).map((e: any) => e.name).join(", ");
+        const lateNames = (s.lateEmployees || []).map((e: any) => `${e.name} (${e.punchIn})`).join(", ");
+
+        let text = `Attendance Summary for ${s.date}\n\n`;
+        text += `• Present: ${s.present} of ${s.totalExpected} active employees (${s.attendanceRatePercentage}%)\n`;
+        if (presentNames) {
+          text += `  Employees: ${presentNames}\n`;
+        }
+        text += `• Absent: ${s.absent}\n`;
+        if (absentNames) {
+          text += `  Employees: ${absentNames}\n`;
+        }
+        text += `• On Approved Leave: ${s.onLeave || 0}\n`;
+        text += `• Late Arrivals: ${s.late}\n`;
+        if (lateNames) {
+          text += `  Employees: ${lateNames}\n`;
+        }
+        text += `• Incomplete Check-outs: ${s.incompleteCheckout}`;
+        return text;
       }
 
       case "get_late_arrivals_summary": {
