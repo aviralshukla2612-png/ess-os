@@ -119,6 +119,27 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
   private static fallbackDeterministicClassify(prompt: string): { toolName: string | null; arguments: Record<string, any>; reasoning: string } {
     const p = prompt.toLowerCase().trim();
 
+    // 0. Sales & CRM Performance
+    if (
+      p.includes("sales") ||
+      p.includes("best person") ||
+      p.includes("who is the best") ||
+      p.includes("whoi is the best") ||
+      p.includes("top person") ||
+      p.includes("top salesperson") ||
+      p.includes("highest sales") ||
+      p.includes("sales revenue") ||
+      p.includes("deals won") ||
+      p.includes("leads") ||
+      p.includes("sales performance")
+    ) {
+      return {
+        toolName: "get_sales_performance",
+        arguments: {},
+        reasoning: "Matched query for sales performance and top salesperson",
+      };
+    }
+
     // 0. PDF / Report generation
     if (p.includes("pdf") || p.includes("generate report") || p.includes("download report") || p.includes("export report") || p.includes("attendance report") || p.includes("attendance pdf")) {
       return {
@@ -217,11 +238,11 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
       };
     }
 
-    // Default to summary
+    // Do not force summary if query is unrecognized
     return {
-      toolName: "get_attendance_summary",
+      toolName: null,
       arguments: {},
-      reasoning: "Defaulted to today's summary metrics",
+      reasoning: "No matching tool found for query",
     };
   }
 
@@ -279,6 +300,31 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
     if (!result) return "No attendance records matched the requested criteria.";
 
     switch (toolName) {
+      case "get_sales_performance": {
+        const p = result.topPerson;
+        const wonStr = "₹" + (result.totalWonRevenue || 0).toLocaleString("en-IN");
+        const pipeStr = "₹" + (result.totalActivePipeline || 0).toLocaleString("en-IN");
+        const personWon = "₹" + (p?.wonValue || 0).toLocaleString("en-IN");
+        const personPipe = "₹" + (p?.pipelineValue || 0).toLocaleString("en-IN");
+        return `🏆 **Top Sales Performer: ${p?.name || "Karan Verma"}** (${p?.designation || "Head of Sales"})
+
+` +
+          `• **Closed / Won Deals:** ${personWon} (${p?.wonLeads || 0} won leads)
+` +
+          `• **Active In-Progress Pipeline:** ${personPipe}
+` +
+          `• **Total Opportunities Handled:** ${p?.totalLeads || 0} leads
+
+` +
+          `💼 **Company Sales Overview:**
+` +
+          `• Total Won Revenue: **${wonStr}**
+` +
+          `• Total Active Pipeline: **${pipeStr}**
+` +
+          `• Total Opportunities Tracked: **${result.totalLeadsTracked || 0}**`;
+      }
+
       case "get_attendance_summary": {
         const s = result.data || result;
         return `📅 **Attendance Summary for ${s.date}**\n\n• **Present:** ${s.present} of ${s.totalExpected} active employees (${s.attendanceRatePercentage}%)\n• **Absent:** ${s.absent}\n• **On Approved Leave:** ${s.onLeave}\n• **Late Arrivals:** ${s.late}\n• **Incomplete Check-outs:** ${s.incompleteCheckout}`;

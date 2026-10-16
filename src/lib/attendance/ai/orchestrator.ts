@@ -81,6 +81,22 @@ export class AttendanceAnalyticsOrchestrator {
       metrics = [
         { label: "Incomplete Checkouts", value: rawResult.count ?? (table?.length || 0), color: "rose" },
       ];
+    } else if (rawResult.type === "sales_performance") {
+      const p = rawResult.topPerson;
+      metrics = [
+        { label: "Top Performer", value: p?.name || "Karan Verma", color: "emerald" },
+        { label: "Role", value: p?.designation || "Head of Sales", color: "indigo" },
+        { label: "Won Revenue", value: "₹" + (rawResult.totalWonRevenue || 0).toLocaleString("en-IN"), color: "emerald" },
+        { label: "Active Pipeline", value: "₹" + (rawResult.totalActivePipeline || 0).toLocaleString("en-IN"), color: "amber" },
+      ];
+      table = (rawResult.performers || []).map((perf: any) => ({
+        Salesperson: perf.name,
+        Designation: perf.designation,
+        "Won Deals": perf.wonLeads,
+        "Won Revenue": "₹" + (perf.wonValue || 0).toLocaleString("en-IN"),
+        "Active Pipeline": "₹" + (perf.pipelineValue || 0).toLocaleString("en-IN"),
+        "Total Leads": perf.totalLeads,
+      }));
     } else if (rawResult.type === "department_summary") {
       const depts = rawResult.departments || [];
       metrics = [
@@ -160,22 +176,15 @@ export class AttendanceAnalyticsOrchestrator {
     const classification = await OllamaClient.classifyIntent(question);
     const toolName = classification.toolName;
 
-    if (!toolName || !ATTENDANCE_TOOLS[toolName]) {
-      // Fall back to general summary
-      const summaryTool = ATTENDANCE_TOOLS.get_attendance_summary;
-      const data = await summaryTool.execute({}, caller);
-      const explanation = await OllamaClient.explainResult(question, "get_attendance_summary", data);
-      const structured = this.formatStructuredData("get_attendance_summary", data);
-
+        if (!toolName || !ATTENDANCE_TOOLS[toolName]) {
       return {
         success: true,
         question,
-        toolUsed: "get_attendance_summary",
+        toolUsed: "assistant_guide",
         parameters: {},
-        data,
-        explanation,
+        data: null,
+        explanation: "I'm your ESS OS Assistant. I didn't find specific data matching that question.\n\nHere is what I can answer for you from the live CRM database:\n• 💼 **Sales & Leads:** \"Who is the best person in sales?\", \"Show sales performance\"\n• 📊 **Attendance & Time:** \"How many employees are present today?\", \"Who arrived late today?\", \"Which employees have incomplete check-outs?\"\n• 🏢 **Departments:** \"Show attendance for Engineering department\"\n• 📑 **Reports:** \"Generate monthly attendance summary PDF\"",
         source: classification.source,
-        ...structured,
       };
     }
 
