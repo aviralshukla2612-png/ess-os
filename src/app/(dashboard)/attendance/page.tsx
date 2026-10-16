@@ -483,13 +483,15 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
         badge="WORK MODULE"
         icon={<Clock className="w-7 h-7 text-indigo-600 dark:text-indigo-400 animate-pulse" />}
         actions={
-          <button
-            onClick={() => setIsAiAssistantOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition-all cursor-pointer hover:scale-102 active:scale-98"
-          >
-            <Sparkles className="w-4 h-4 text-indigo-200" />
-            <span>Attendance AI</span>
-          </button>
+          hasTeamAttendance ? (
+            <button
+              onClick={() => setIsAiAssistantOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition-all cursor-pointer hover:scale-102 active:scale-98"
+            >
+              <Sparkles className="w-4 h-4 text-indigo-200" />
+              <span>Attendance AI</span>
+            </button>
+          ) : undefined
         }
       />
 
