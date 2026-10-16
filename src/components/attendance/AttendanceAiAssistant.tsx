@@ -229,7 +229,7 @@ export function AttendanceAiAssistant({ isOpen, onClose }: { isOpen: boolean; on
         </div>
 
         {/* Quick Prompts Bar */}
-        <div className="px-4 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 overflow-x-auto scrollbar-none flex gap-1.5">
+        <div className="px-4 py-2.5 border-t border-slate-200/60 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 flex flex-wrap gap-1.5 max-h-36 overflow-y-auto">
           {quickPrompts.map((q, idx) => (
             <button
               key={idx}

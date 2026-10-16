@@ -11,12 +11,15 @@ import { RoleContext } from "@/lib/auth";
 import { TimeReminders } from "@/components/ui/TimeReminders";
 import { NotificationListener } from "@/components/ui/NotificationListener";
 import { KycReminderPopup } from "@/components/ui/KycReminderPopup";
+import { AttendanceAiAssistant } from "@/components/attendance/AttendanceAiAssistant";
+import { Sparkles } from "lucide-react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
 
   // If on login page, render full viewport without app shell
   if (pathname === "/login") {
