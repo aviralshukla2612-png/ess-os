@@ -1,3 +1,4 @@
+const OLLAMA_URL = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
 import { ATTENDANCE_TOOLS } from "./tools";
 import { getISTDateString } from "../dateUtils";
 
@@ -8,25 +9,97 @@ export interface IntentClassificationResult {
   source: "ollama" | "fallback";
 }
 
-const OLLAMA_URL = process.env.OLLAMA_URL || "http://127.0.0.1:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.2";
+let cachedOllamaUrl: string | null = null;
+let lastOllamaCheck = 0;
 
 export class OllamaClient {
+  /**
+   * Discovers and caches the working Ollama endpoint (host, container bridge, or env)
+   */
+  static async getActiveUrl(): Promise<string | null> {
+    const now = Date.now();
+    if (cachedOllamaUrl && (now - lastOllamaCheck < 30000)) {
+      return cachedOllamaUrl;
+    }
+
+    const candidateUrls = [
+      process.env.OLLAMA_URL,
+      "http://127.0.0.1:11434",
+      "http://host.docker.internal:11434",
+      "http://172.17.0.1:11434",
+    ].filter(Boolean) as string[];
+
+    for (const url of candidateUrls) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1200);
+        const res = await fetch(`${url}/api/tags`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          cachedOllamaUrl = url;
+          lastOllamaCheck = now;
+          return url;
+        }
+      } catch {
+        // try next candidate
+      }
+    }
+
+    return null;
+  }
+
   /**
    * Checks if Ollama server is reachable and active
    */
   static async isAvailable(): Promise<boolean> {
+    const active = await this.getActiveUrl();
+    return active !== null;
+  }
+
+  /**
+   * General natural-language chat using Ollama when no specific CRM database tool was triggered
+   */
+  static async generalChat(userPrompt: string): Promise<string | null> {
+    const activeUrl = await this.getActiveUrl();
+    if (!activeUrl) return null;
+
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const res = await fetch(`${OLLAMA_URL}/api/tags`, {
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+      const res = await fetch(`${activeUrl}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         signal: controller.signal,
+        body: JSON.stringify({
+          model: OLLAMA_MODEL,
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are the intelligent AI Assistant inside Emperor Smart Solutions OS (ESS OS). You are helpful, articulate, professional, and knowledgeable. Answer the user's question clearly and accurately. If asked general knowledge questions (e.g. celebrities, cinema, technology, science, history), answer them directly with authoritative knowledge.",
+            },
+            {
+              role: "user",
+              content: userPrompt,
+            },
+          ],
+          stream: false,
+        }),
       });
       clearTimeout(timeoutId);
-      return res.ok;
-    } catch {
-      return false;
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.message?.content) {
+          return json.message.content.trim();
+        }
+      }
+    } catch (err) {
+      console.warn("[Ollama Client] generalChat error:", err);
     }
+    return null;
   }
 
   /**
@@ -76,7 +149,9 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-    const res = await fetch(`${OLLAMA_URL}/api/chat`, {
+    const activeUrl = await this.getActiveUrl();
+    if (!activeUrl) return null;
+    const res = await fetch(`${activeUrl}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       signal: controller.signal,

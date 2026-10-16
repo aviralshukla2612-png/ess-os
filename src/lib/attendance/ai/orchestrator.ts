@@ -176,14 +176,27 @@ export class AttendanceAnalyticsOrchestrator {
     const classification = await OllamaClient.classifyIntent(question);
     const toolName = classification.toolName;
 
-        if (!toolName || !ATTENDANCE_TOOLS[toolName]) {
+            if (!toolName || !ATTENDANCE_TOOLS[toolName]) {
+      const generalAnswer = await OllamaClient.generalChat(question);
+      if (generalAnswer) {
+        return {
+          success: true,
+          question,
+          toolUsed: "general_chat",
+          parameters: {},
+          data: null,
+          explanation: generalAnswer,
+          source: "ollama",
+        };
+      }
+
       return {
         success: true,
         question,
         toolUsed: "assistant_guide",
         parameters: {},
         data: null,
-        explanation: "I'm your ESS OS Assistant. I didn't find specific data matching that question.\n\nHere is what I can answer for you from the live CRM database:\n• 💼 **Sales & Leads:** \"Who is the best person in sales?\", \"Show sales performance\"\n• 📊 **Attendance & Time:** \"How many employees are present today?\", \"Who arrived late today?\", \"Which employees have incomplete check-outs?\"\n• 🏢 **Departments:** \"Show attendance for Engineering department\"\n• 📑 **Reports:** \"Generate monthly attendance summary PDF\"",
+        explanation: "I am your ESS OS Intelligence Assistant. I specialize in querying real-time company records, employee attendance, and sales performance directly from your database.\n\nHere are some questions you can ask me:\n• 💼 **Sales & Leads:** \"Who is the best person in sales?\", \"Show sales performance\"\n• 📊 **Attendance & Time:** \"How many employees are present today?\", \"Who arrived late today?\", \"Which employees have incomplete check-outs?\"\n• 🏢 **Departments:** \"Show attendance for Engineering department\"\n• 📑 **Reports:** \"Generate monthly attendance summary PDF\"",
         source: classification.source,
       };
     }

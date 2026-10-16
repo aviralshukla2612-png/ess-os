@@ -211,7 +211,7 @@ export function AttendanceAiAssistant({ isOpen, onClose }: { isOpen: boolean; on
                   }`}
                 >
                   {/* Assistant Metadata Badge */}
-                  {msg.role === "assistant" && msg.toolUsed && (
+                  {msg.role === "assistant" && msg.toolUsed && !["assistant_guide", "general_chat", "none", "guide"].includes(msg.toolUsed) && (
                     <div className="flex items-center gap-1.5 pb-2 border-b border-slate-200/80 dark:border-slate-800 text-[10px] font-mono text-slate-500 dark:text-slate-400">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                       <span className="font-semibold text-slate-700 dark:text-slate-300">Tool: {msg.toolUsed}</span>
