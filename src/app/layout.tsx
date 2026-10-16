@@ -1,8 +1,11 @@
-import React from "react";
+﻿import React from "react";
 import "@/app/globals.css";
+import Script from "next/script";
 import { ToastProvider } from "@/components/ui/Toast";
 import { NextAuthProvider } from "@/components/providers/NextAuthProvider";
 import { AppShell } from "@/components/layout/AppShell";
+import { PrototypeStoreProvider } from "@/lib/prototypeStore";
+import { WorkClockProvider } from "@/lib/workClockContext";
 
 export const metadata = {
   title: "ESS OS — Master Business Operating System",
@@ -13,9 +16,6 @@ export const metadata = {
     apple: "/crmtesting/ess-logo.png",
   },
 };
-
-import { PrototypeStoreProvider } from "@/lib/prototypeStore";
-import { WorkClockProvider } from "@/lib/workClockContext";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -34,6 +34,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </PrototypeStoreProvider>
           </NextAuthProvider>
         </ToastProvider>
+
+        {/* Embedded Live Chatbot Widget */}
+        <Script
+          src="/crmtesting/widget.js"
+          strategy="afterInteractive"
+          data-bot-id="bot_aa"
+          data-color="#4f46e5"
+          data-position="bottom-right"
+          data-api-url="/crmtesting"
+        />
       </body>
     </html>
   );
