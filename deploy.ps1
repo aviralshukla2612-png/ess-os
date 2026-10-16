@@ -1,4 +1,4 @@
-$server = "root@200.97.161.91"
+$server = "root@187.127.158.24"
 $remotePath = "/vps"
 $zipFile = "ess-os.zip"
 

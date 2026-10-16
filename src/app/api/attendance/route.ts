@@ -1,46 +1,58 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { AttendanceService, AttendanceServiceError } from "@/lib/attendance/attendanceService";
+import { AttendanceQuerySchema, CheckInSchema } from "@/lib/attendance/types";
+import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const authResult = await requireAuth();
     if (authResult instanceof NextResponse) return authResult;
     const user = authResult;
 
-    let whereClause = {};
-    const isSubAdminWithAttendance = user.activeRole === "SUB_ADMIN" && (user.subAdminPermissions?.includes("attendance") || false);
-    if (user.activeRole !== "OWNER" && !isSubAdminWithAttendance) {
-      if (!user.employeeId) {
-        return NextResponse.json({ success: false, data: [] });
+    const { searchParams } = new URL(req.url);
+    const rawQuery: Record<string, any> = {};
+
+    for (const [key, value] of searchParams.entries()) {
+      if (value !== undefined && value !== "") {
+        rawQuery[key] = value;
       }
-      whereClause = { employeeId: user.employeeId };
     }
 
-    const attendances = await prisma.attendance.findMany({
-      where: whereClause,
-      orderBy: { date: "desc" },
-      include: {
-        employee: {
-          include: { user: true },
+    const parseResult = AttendanceQuerySchema.safeParse(rawQuery);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Validation Error",
+          details: parseResult.error.flatten().fieldErrors,
         },
-      },
-    });
+        { status: 400 }
+      );
+    }
 
-    const formatted = attendances.map((a) => ({
-      id: a.id,
-      employeeId: a.employee.employeeIdCode,
-      name: a.employee.user.name,
-      date: new Date(a.date).toLocaleDateString(),
-      punchIn: a.punchIn ? new Date(a.punchIn).toLocaleTimeString("en-US", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" }) : "09:00 AM",
-      punchOut: a.punchOut ? new Date(a.punchOut).toLocaleTimeString("en-US", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" }) : "06:00 PM",
-      status: a.status,
-      workHours: `${Math.floor((a.totalMinutes || 0) / 60)}h ${(a.totalMinutes || 0) % 60}m`,
+    const result = await AttendanceService.listAttendance(parseResult.data, user);
+
+    // Keep backwards compatibility for any client expecting "name"
+    const backwardsCompatibleData = result.data.map((item) => ({
+      ...item,
+      name: item.employeeName,
     }));
 
-    return NextResponse.json({ success: true, data: formatted });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: "Failed to fetch attendance" }, { status: 500 });
+    return NextResponse.json({
+      success: true,
+      data: backwardsCompatibleData,
+      pagination: result.pagination,
+    });
+  } catch (error: any) {
+    if (error instanceof AttendanceServiceError) {
+      return NextResponse.json(
+        { success: false, error: error.message, details: error.details },
+        { status: error.statusCode }
+      );
+    }
+    console.error("[API /api/attendance GET Error]:", error);
+    return NextResponse.json({ success: false, error: "Failed to fetch attendance records" }, { status: 500 });
   }
 }
 
@@ -50,93 +62,71 @@ export async function POST(req: Request) {
     if (authResult instanceof NextResponse) return authResult;
     const user = authResult;
 
-    if (!user.employeeId) {
-      return NextResponse.json({ success: false, error: "Not associated with an employee profile" }, { status: 403 });
-    }
+    const body = await req.json().catch(() => ({}));
+    const actionType = body.actionType;
 
-    const body = await req.json();
-    // IGNORE browser employeeId! Use server-derived employeeId.
-    const { actionType, notes, dateOffsetDays } = body;
-
-    const emp = await prisma.employee.findUnique({
-      where: { id: user.employeeId },
-    });
-
-    if (!emp) {
-      return NextResponse.json({ success: false, error: "Employee not found" }, { status: 404 });
-    }
-
-    const logDate = dateOffsetDays ? new Date(Date.now() - 86400000 * dateOffsetDays) : new Date();
-
-    if (actionType === "PUNCH_IN") {
-      // Duplicate guard — same logic as punch-in/route.ts
-      const startOfDay = new Date(logDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(logDate);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const existingToday = await prisma.attendance.findFirst({
-        where: {
-          employeeId: emp.id,
-          date: { gte: startOfDay, lte: endOfDay },
-        },
-      });
-
-      if (existingToday) {
+    // Standardized check-in / check-out routing
+    if (actionType === "PUNCH_IN" || !actionType) {
+      const parsed = CheckInSchema.safeParse(body);
+      if (!parsed.success) {
         return NextResponse.json(
-          { success: false, error: "Already punched in today.", attendance: existingToday },
+          { success: false, error: "Validation Error", details: parsed.error.flatten().fieldErrors },
           { status: 400 }
         );
       }
-
-      const [att] = await prisma.$transaction([
-        prisma.attendance.create({
-          data: {
-            employeeId: emp.id,
-            date: logDate,
-            punchIn: logDate,
-            status: "PRESENT",
-            totalMinutes: 540,
-          },
-        }),
-        prisma.employeeStatusEvent.create({
-          data: {
-            employeeId: emp.id,
-            statusType: "WORKING",
-            startedAt: logDate,
-            notes: notes || "Punched in for daily sprint tasks",
-          },
-        })
-      ]);
-
-      return NextResponse.json({ success: true, data: att });
+      const data = await AttendanceService.checkIn(user, parsed.data);
+      return NextResponse.json({ success: true, data });
     } else if (actionType === "PUNCH_OUT") {
-      const att = await prisma.attendance.create({
-        data: {
-          employeeId: emp.id,
-          date: logDate,
-          punchIn: new Date(logDate.getTime() - 32400000), // 9 hours
-          punchOut: logDate,
-          status: "PRESENT",
-          totalMinutes: 540,
-        },
+      const data = await AttendanceService.checkOut(user, {
+        reason: body.notes || body.reason || "Punched out via API",
       });
-
-      return NextResponse.json({ success: true, data: att });
+      return NextResponse.json({ success: true, data });
     } else if (actionType === "BREAK") {
+      if (!user.employeeId) {
+        return NextResponse.json({ success: false, error: "Not associated with an employee profile" }, { status: 403 });
+      }
       const evt = await prisma.employeeStatusEvent.create({
         data: {
-          employeeId: emp.id,
-          statusType: "BREAK",
-          startedAt: logDate,
-          notes: notes || "Tea / Lunch break",
+          employeeId: user.employeeId,
+          statusType: body.breakType || "BREAK",
+          startedAt: new Date(),
+          notes: body.notes || body.breakReason || "Tea / Lunch break",
+        },
+      });
+      return NextResponse.json({ success: true, data: evt });
+    } else if (actionType === "RESUME") {
+      if (!user.employeeId) {
+        return NextResponse.json({ success: false, error: "Not associated with an employee profile" }, { status: 403 });
+      }
+      // End active breaks
+      await prisma.employeeStatusEvent.updateMany({
+        where: {
+          employeeId: user.employeeId,
+          endedAt: null,
+          statusType: { not: "WORKING" },
+        },
+        data: { endedAt: new Date() },
+      });
+      const evt = await prisma.employeeStatusEvent.create({
+        data: {
+          employeeId: user.employeeId,
+          statusType: "WORKING",
+          startedAt: new Date(),
+          notes: body.task || "Resumed work sprint",
         },
       });
       return NextResponse.json({ success: true, data: evt });
     }
 
-    return NextResponse.json({ success: true, message: "Attendance event recorded" });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: "Failed to record attendance" }, { status: 500 });
+    return NextResponse.json({ success: false, error: `Unsupported actionType: ${actionType}` }, { status: 400 });
+  } catch (error: any) {
+    if (error instanceof AttendanceServiceError) {
+      return NextResponse.json(
+        { success: false, error: error.message, details: error.details },
+        { status: error.statusCode }
+      );
+    }
+    console.error("[API /api/attendance POST Error]:", error);
+    return NextResponse.json({ success: false, error: "Failed to record attendance action" }, { status: 500 });
   }
 }
