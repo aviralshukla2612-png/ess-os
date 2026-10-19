@@ -1,26 +1,40 @@
 # syntax=docker/dockerfile:1
 
-# Build stage
+# 1. Builder Stage
 FROM node:20-alpine AS builder
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-# Install dependencies with build cache mount
+# Copy ONLY package manifest and schema.prisma to maximize Docker layer caching
 COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
-COPY prisma ./prisma
-RUN --mount=type=cache,target=/usr/local/share/.cache/yarn   if [ -f yarn.lock ]; then yarn --frozen-lockfile;   elif [ -f package-lock.json ]; then npm ci;   elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile;   else echo "Lockfile not found." && exit 1;   fi
+COPY prisma/schema.prisma ./prisma/schema.prisma
 
-COPY . .
+# Install dependencies using cached npm/yarn store and skip slow network audits
+RUN --mount=type=cache,target=/root/.npm \
+    --mount=type=cache,target=/usr/local/share/.cache/yarn \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile --prefer-offline; \
+  elif [ -f package-lock.json ]; then npm ci --prefer-offline --no-audit --no-fund; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
 
-# Generate Prisma Client
+# Generate Prisma Client binary
 RUN npx prisma generate
 
-# Build Next.js with SWC cache mount to prevent rebuilding from scratch
+# Copy source files (excluding anything in .dockerignore)
+COPY . .
+
+# Build Next.js with persistent compiler cache
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN --mount=type=cache,target=/app/.next/cache   if [ -f yarn.lock ]; then yarn build;   elif [ -f package-lock.json ]; then npm run build;   elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build;   else echo "Lockfile not found." && exit 1;   fi
+RUN --mount=type=cache,target=/app/.next/cache \
+  if [ -f yarn.lock ]; then yarn build; \
+  elif [ -f package-lock.json ]; then npm run build; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
 
-# Production runner stage
+# 2. Production Runner Stage
 FROM node:20-alpine AS runner
 WORKDIR /app
 
@@ -35,16 +49,20 @@ RUN adduser --system --uid 1001 nextjs
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Copy standalone output
+# Copy standalone output and static assets
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
+# Ensure Prisma schema and client binaries are available
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
-RUN mkdir -p /app/public/uploads /app/prisma/data/uploads /tmp/uploads &&     chown -R nextjs:nodejs /app/public /app/prisma /tmp/uploads &&     chmod -R 777 /app/public /app/prisma /tmp/uploads
+# Setup persistent directory permissions
+RUN mkdir -p /app/public/uploads /app/prisma/data/uploads /tmp/uploads && \
+    chown -R nextjs:nodejs /app/public /app/prisma /tmp/uploads && \
+    chmod -R 777 /app/public /app/prisma /tmp/uploads
 
 USER nextjs
 

@@ -4,5 +4,15 @@ README.md
 .next
 .git
 .env*.local
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
+prisma/*.db
+prisma/*.db-journal
+prisma/dev.db
 dev.db
 dev.db-journal
+test*.ts
+scripts/test*.ts
+scripts/test*.js
