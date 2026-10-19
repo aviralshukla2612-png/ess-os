@@ -190,7 +190,7 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
           orderBy: { employeeIdCode: "asc" },
         });
 
-        deptEmployees = allEmployees.filter((e) =>
+        deptEmployees = allEmployees.filter((e: any) =>
           e.user?.department && e.user.department.toLowerCase().includes(targetDept.toLowerCase())
         );
 
@@ -516,7 +516,7 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
 
       const filterDept = args.department ? args.department.trim() : null;
       const matched = filterDept
-        ? allEmployees.filter((e) => e.user?.department && e.user.department.toLowerCase().includes(filterDept.toLowerCase()))
+        ? allEmployees.filter((e: any) => e.user?.department && e.user.department.toLowerCase().includes(filterDept.toLowerCase()))
         : allEmployees;
 
       return {
@@ -562,12 +562,12 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
       let matchedUser = null;
 
       if (isSelf) {
-        matchedUser = allUsers.find((u) => u.id === caller.id || u.email === caller.email);
+        matchedUser = allUsers.find((u: any) => u.id === caller.id || u.email === caller.email);
       }
 
       if (!matchedUser && searchStr) {
         // Try exact/partial match on user name or email or employee code
-        matchedUser = allUsers.find((u) => {
+        matchedUser = allUsers.find((u: any) => {
           const userName = (u.name || "").toLowerCase();
           const userEmail = (u.email || "").toLowerCase();
           const empCode = (u.employeeProfile?.employeeIdCode || "").toLowerCase();
@@ -582,10 +582,10 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
 
       // If still not found, check partial name token matches (e.g. "aviral" in "Aviral Shukla")
       if (!matchedUser && searchStr) {
-        const tokens = searchStr.split(/\s+/).filter((t) => t.length > 2);
-        matchedUser = allUsers.find((u) => {
+        const tokens: string[] = searchStr.split(/\s+/).filter((t: string) => t.length > 2);
+        matchedUser = allUsers.find((u: any) => {
           const userName = (u.name || "").toLowerCase();
-          return tokens.some((t) => userName.includes(t));
+          return tokens.some((t: string) => userName.includes(t));
         });
       }
 
