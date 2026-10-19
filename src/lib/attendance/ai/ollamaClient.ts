@@ -338,7 +338,37 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
       };
     }
 
-    // 6. Specific employee query (e.g. "EMP-002" or employee name)
+        // Specific employee query: "who is [name]", "profile of [name]", "tell me about [name]"
+    const isWhoIsQuery =
+      p.startsWith("who is ") ||
+      p.startsWith("who's ") ||
+      p.startsWith("who are ") ||
+      p.startsWith("tell me about ") ||
+      p.startsWith("profile of ");
+
+    if (isWhoIsQuery) {
+      const targetName = p
+        .replace(/^(who is|who's|who are|tell me about|profile of)\s+/i, "")
+        .replace(/[?.,!]/g, "")
+        .trim();
+
+      if (
+        !targetName.includes("in sales") &&
+        !targetName.includes("best in sales") &&
+        !targetName.includes("the best") &&
+        !targetName.includes("in engineering") &&
+        !targetName.includes("in design") &&
+        targetName.length > 0
+      ) {
+        return {
+          toolName: "get_employee_profile",
+          arguments: { name: targetName },
+          reasoning: `Matched employee profile lookup for ${targetName}`,
+        };
+      }
+    }
+
+// 6. Specific employee query (e.g. "EMP-002" or employee name)
     const empCodeMatch = p.match(/emp-?\d+/i);
     if (empCodeMatch) {
       const code = empCodeMatch[0].toUpperCase().replace("EMP-", "EMP-");
@@ -420,6 +450,25 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
     if (!result) return "No attendance records matched the requested criteria.";
 
     switch (toolName) {
+      case "get_employee_profile": {
+        if (!result.found) {
+          return `ℹ️ No employee or team member matching "**${result.searchTerm}**" was found in the company database.`;
+        }
+        const u = result.user;
+        const prefix = result.isSelf ? `👤 **You (${u.name}):**` : `👤 **${u.name}:**`;
+        let text = `${prefix}\n\n`;
+        text += `• **Designation:** ${u.designation || "Staff"}\n`;
+        text += `• **Department:** ${u.department || "General"}\n`;
+        text += `• **Employee Code:** ${u.employeeCode}\n`;
+        text += `• **Email:** ${u.email}\n`;
+        if (u.todayStatus === "PRESENT") {
+          text += `• **Today's Status:** ✅ Present (Punched in at ${u.punchIn || "Morning"})`;
+        } else {
+          text += `• **Today's Status:** ⏳ Not checked in today`;
+        }
+        return text;
+      }
+
       case "get_department_employees": {
         const count = result.totalEmployees || 0;
         const dept = result.department;

@@ -97,6 +97,23 @@ export class AttendanceAnalyticsOrchestrator {
         "Active Pipeline": "₹" + (perf.pipelineValue || 0).toLocaleString("en-IN"),
         "Total Leads": perf.totalLeads,
       }));
+    } else if (rawResult.type === "employee_profile" && rawResult.found && rawResult.user) {
+      const u = rawResult.user;
+      metrics = [
+        { label: "Designation", value: u.designation || "Staff", color: "indigo" },
+        { label: "Department", value: u.department || "General", color: "blue" },
+        { label: "Today's Status", value: u.todayStatus === "PRESENT" ? "Present" : "Not Checked In", color: u.todayStatus === "PRESENT" ? "emerald" : "amber" },
+      ];
+      table = [
+        {
+          Name: u.name,
+          Role: u.designation,
+          Department: u.department,
+          Code: u.employeeCode,
+          Email: u.email,
+          Today: u.todayStatus === "PRESENT" ? `In: ${u.punchIn}` : "Not Checked In",
+        },
+      ];
     } else if (rawResult.type === "department_employees") {
       table = rawResult.employees || [];
       metrics = [

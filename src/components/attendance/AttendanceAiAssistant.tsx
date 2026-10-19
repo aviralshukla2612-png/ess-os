@@ -237,6 +237,48 @@ export function AttendanceAiAssistant({ isOpen, onClose }: { isOpen: boolean; on
                     </div>
                   )}
 
+                  {/* PREMIUM STRUCTURED UI: Employee Profile Card */}
+                  {msg.data?.type === "employee_profile" && msg.data?.found && msg.data?.user && (
+                    <div className="p-3.5 rounded-xl bg-gradient-to-br from-indigo-50 to-slate-50 dark:from-slate-800 dark:to-slate-900 border border-indigo-200/80 dark:border-indigo-800/80 space-y-3 font-sans">
+                      <div className="flex items-center justify-between border-b border-indigo-200/50 dark:border-indigo-800/50 pb-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-indigo-600/30">
+                            {msg.data.user.name.charAt(0)}
+                          </div>
+                          <div>
+                            <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                              <span>{msg.data.user.name}</span>
+                              {msg.data.isSelf && (
+                                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 font-bold">You</span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                              {msg.data.user.designation} • {msg.data.user.department}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          {msg.data.user.employeeCode}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs pt-0.5">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              msg.data.user.todayStatus === "PRESENT" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
+                            }`}
+                          />
+                          <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                            {msg.data.user.todayStatus === "PRESENT" ? `Present (In: ${msg.data.user.punchIn})` : "Not checked in today"}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono truncate max-w-[150px]">
+                          {msg.data.user.email}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* PREMIUM STRUCTURED UI: Department Roster / Employee Count */}
                   {msg.data?.type === "department_employees" && (
                     <div className="p-3.5 rounded-xl bg-indigo-50/70 dark:bg-slate-800/80 border border-indigo-200/80 dark:border-indigo-800/80 space-y-2.5 font-sans">

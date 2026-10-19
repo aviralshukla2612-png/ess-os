@@ -534,4 +534,101 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
       };
     },
   },
+  get_employee_profile: {
+    name: "get_employee_profile",
+    description: "Look up an employee or team member profile by name, email, or employee code (e.g. who is Dev Patel, who is Aviral Shukla).",
+    parameters: z.object({
+      name: z.string().optional().describe("Employee name or query string"),
+      employeeId: z.string().optional().describe("Employee code or ID"),
+    }),
+    requiresAdmin: false,
+    execute: async (args, caller) => {
+      const searchStr = (args.name || args.employeeId || "").trim().toLowerCase();
+
+      // Check if querying self
+      const isSelf =
+        searchStr === "me" ||
+        searchStr === "my" ||
+        searchStr === "myself" ||
+        (caller.name && searchStr.includes(caller.name.toLowerCase())) ||
+        (caller.email && searchStr.includes(caller.email.toLowerCase()));
+
+      const allUsers = await prisma.user.findMany({
+        include: {
+          employeeProfile: true,
+        },
+      });
+
+      let matchedUser = null;
+
+      if (isSelf) {
+        matchedUser = allUsers.find((u) => u.id === caller.id || u.email === caller.email);
+      }
+
+      if (!matchedUser && searchStr) {
+        // Try exact/partial match on user name or email or employee code
+        matchedUser = allUsers.find((u) => {
+          const userName = (u.name || "").toLowerCase();
+          const userEmail = (u.email || "").toLowerCase();
+          const empCode = (u.employeeProfile?.employeeIdCode || "").toLowerCase();
+          return (
+            userName.includes(searchStr) ||
+            searchStr.includes(userName) ||
+            userEmail.includes(searchStr) ||
+            (empCode && (empCode.includes(searchStr) || searchStr.includes(empCode)))
+          );
+        });
+      }
+
+      // If still not found, check partial name token matches (e.g. "aviral" in "Aviral Shukla")
+      if (!matchedUser && searchStr) {
+        const tokens = searchStr.split(/\s+/).filter((t) => t.length > 2);
+        matchedUser = allUsers.find((u) => {
+          const userName = (u.name || "").toLowerCase();
+          return tokens.some((t) => userName.includes(t));
+        });
+      }
+
+      if (!matchedUser) {
+        return {
+          type: "employee_profile",
+          found: false,
+          searchTerm: args.name || args.employeeId,
+          callerName: caller.name,
+        };
+      }
+
+      // Found user! Check today's attendance if they have employee profile
+      let todayRecord = null;
+      if (matchedUser.employeeProfile?.id) {
+        const todayDate = getISTDateString();
+        const { startOfDay, endOfDay } = getISTDayRange(todayDate);
+        todayRecord = await prisma.attendance.findFirst({
+          where: {
+            employeeId: matchedUser.employeeProfile.id,
+            date: { gte: startOfDay, lte: endOfDay },
+          },
+          orderBy: { date: "desc" },
+        });
+      }
+
+      return {
+        type: "employee_profile",
+        found: true,
+        user: {
+          id: matchedUser.id,
+          name: matchedUser.name,
+          email: matchedUser.email,
+          department: matchedUser.department,
+          designation: matchedUser.designation,
+          role: matchedUser.activeRole,
+          employeeCode: matchedUser.employeeProfile?.employeeIdCode || "N/A",
+          todayStatus: todayRecord ? todayRecord.status : "NOT_CHECKED_IN",
+          punchIn: todayRecord?.punchIn ? formatTimeIST(todayRecord.punchIn) : null,
+          punchOut: todayRecord?.punchOut ? formatTimeIST(todayRecord.punchOut) : null,
+        },
+        isSelf: matchedUser.id === caller.id,
+      };
+    },
+  },
 };
