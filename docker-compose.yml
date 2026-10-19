@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   ess-os:
     build:
@@ -20,4 +18,3 @@ services:
       - DATABASE_URL=file:/app/prisma/data/production.db
       - OLLAMA_URL=http://host.docker.internal:11434
     restart: unless-stopped
-

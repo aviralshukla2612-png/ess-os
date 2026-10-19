@@ -1,15 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
   output: "standalone",
   basePath: "/crmtesting",
   swcMinify: true,
+  productionBrowserSourceMaps: false,
   eslint: {
-    // Skip ESLint during Docker build to cut build time by 2-3 minutes
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // Skip type checking during Docker build (verified locally before push)
     ignoreBuildErrors: true,
   },
   async rewrites() {

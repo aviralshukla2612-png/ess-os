@@ -5,31 +5,32 @@ FROM node:20-alpine AS builder
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-# Copy ONLY package manifest and schema.prisma to maximize Docker layer caching
+# Copy ONLY package manifest files to guarantee Docker layer caching
 COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
-COPY prisma/schema.prisma ./prisma/schema.prisma
 
-# Install dependencies using cached npm/yarn store and skip slow network audits
+# Install dependencies using cache mount and skip postinstall scripts
 RUN --mount=type=cache,target=/root/.npm \
-    --mount=type=cache,target=/usr/local/share/.cache/yarn \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile --prefer-offline; \
-  elif [ -f package-lock.json ]; then npm ci --prefer-offline --no-audit --no-fund; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+  if [ -f package-lock.json ]; then npm ci --ignore-scripts --prefer-offline --no-audit --no-fund; \
+  elif [ -f yarn.lock ]; then yarn --frozen-lockfile --ignore-scripts --prefer-offline; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile --ignore-scripts; \
   else echo "Lockfile not found." && exit 1; \
   fi
 
-# Generate Prisma Client binary
+# Copy prisma schema and generate client separately
+COPY prisma ./prisma
 RUN npx prisma generate
 
-# Copy source files (excluding anything in .dockerignore)
+# Copy source code (files in .dockerignore like database and uploads are skipped)
 COPY . .
 
-# Build Next.js with persistent compiler cache
+# Build Next.js with single worker to eliminate VPS memory thrashing
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+ENV NEXT_BUILD_WORKERS=1
+
 RUN --mount=type=cache,target=/app/.next/cache \
-  if [ -f yarn.lock ]; then yarn build; \
-  elif [ -f package-lock.json ]; then npm run build; \
+  if [ -f package-lock.json ]; then npm run build; \
+  elif [ -f yarn.lock ]; then yarn build; \
   elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
   else echo "Lockfile not found." && exit 1; \
   fi
@@ -49,17 +50,15 @@ RUN adduser --system --uid 1001 nextjs
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Copy standalone output and static assets
+# Copy standalone build
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Ensure Prisma schema and client binaries are available
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
-# Setup persistent directory permissions
 RUN mkdir -p /app/public/uploads /app/prisma/data/uploads /tmp/uploads && \
     chown -R nextjs:nodejs /app/public /app/prisma /tmp/uploads && \
     chmod -R 777 /app/public /app/prisma /tmp/uploads
