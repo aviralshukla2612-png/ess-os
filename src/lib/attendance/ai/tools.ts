@@ -1,3 +1,36 @@
+function isUserInDepartment(u: any, targetDept: string): boolean {
+  if (!u || !targetDept) return false;
+  const search = targetDept.trim().toLowerCase();
+  const dept = (u.department || "").trim().toLowerCase();
+  const role = (u.activeRole || "").trim().toLowerCase();
+  const desig = (u.designation || "").trim().toLowerCase();
+
+  // Direct substring match on department
+  if (dept && (dept.includes(search) || search.includes(dept))) return true;
+
+  // Sales department synonyms
+  if (search.includes("sale") || search === "sales") {
+    if (dept.includes("sale") || dept.includes("bd") || dept.includes("business dev")) return true;
+    if (role.includes("sale") || role === "sales") return true;
+    if (desig.includes("sale") || desig.includes("bd") || desig.includes("business dev")) return true;
+  }
+
+  // Engineering / Tech synonyms
+  if (search.includes("engineer") || search.includes("tech") || search.includes("dev")) {
+    if (dept.includes("engineer") || dept.includes("tech") || dept.includes("dev")) return true;
+    if (role.includes("dev") || role.includes("engineer")) return true;
+    if (desig.includes("developer") || desig.includes("engineer") || desig.includes("software")) return true;
+  }
+
+  // Design synonyms
+  if (search.includes("design") || search.includes("ui") || search.includes("ux")) {
+    if (dept.includes("design") || dept.includes("ui") || dept.includes("ux")) return true;
+    if (desig.includes("design") || desig.includes("ui") || desig.includes("ux")) return true;
+  }
+
+  return false;
+}
+
 import { z } from "zod";
 import { CurrentUserSession } from "@/lib/auth";
 import { AttendanceService, hasAdminAttendanceAccess, AttendanceServiceError } from "../attendanceService";
@@ -162,52 +195,46 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
       const year = args.year || now.getFullYear();
       const targetDept = args.departmentId;
 
-      // 1. Fetch monthly report
+      // 1. Fetch monthly report for all departments (avoids exact string match failures)
       const report = await AttendanceService.getMonthlyReport(
         {
           month,
           year,
-          departmentId: targetDept,
           status: "ALL",
         },
         caller
       );
 
-      // 2. Fetch department roster and today's status
+      // 2. Fetch all active users in the system (recognizes users even if employee row is lowercase or missing)
       let deptEmployees: any[] = [];
       let todayRecords: any[] = [];
       let recentRecords: any[] = [];
       let todayPresentCount = 0;
 
       if (targetDept) {
-        const allEmployees = await prisma.employee.findMany({
-          where: { status: "ACTIVE" },
-          include: {
-            user: {
-              select: { id: true, name: true, email: true, department: true, designation: true },
-            },
-          },
-          orderBy: { employeeIdCode: "asc" },
+        const allUsers = await prisma.user.findMany({
+          where: { isActive: true },
+          include: { employeeProfile: true },
+          orderBy: { name: "asc" },
         });
 
-        deptEmployees = allEmployees.filter((e: any) =>
-          e.user?.department && e.user.department.toLowerCase().includes(targetDept.toLowerCase())
-        );
+        const matchedUsers = allUsers.filter((u: any) => isUserInDepartment(u, targetDept));
+        const empProfileIds = matchedUsers
+          .map((u: any) => u.employeeProfile?.id)
+          .filter(Boolean) as string[];
 
-        const empIds = deptEmployees.map((e) => e.id);
+        const todayDate = getISTDateString();
+        const { startOfDay, endOfDay } = getISTDayRange(todayDate);
 
-        if (empIds.length > 0) {
-          const todayDate = getISTDateString();
-          const { startOfDay, endOfDay } = getISTDayRange(todayDate);
-
+        let todayMap = new Map<string, any>();
+        if (empProfileIds.length > 0) {
           todayRecords = await prisma.attendance.findMany({
             where: {
-              employeeId: { in: empIds },
+              employeeId: { in: empProfileIds },
               date: { gte: startOfDay, lte: endOfDay },
             },
           });
 
-          const todayMap = new Map<string, any>();
           for (const tr of todayRecords) {
             todayMap.set(tr.employeeId, tr);
             if (tr.status === "PRESENT" || tr.punchIn) {
@@ -215,22 +242,8 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
             }
           }
 
-          deptEmployees = deptEmployees.map((e) => {
-            const tr = todayMap.get(e.id);
-            return {
-              id: e.id,
-              code: e.employeeIdCode,
-              name: e.user.name,
-              department: e.user.department,
-              designation: e.user.designation || "Staff",
-              todayStatus: tr ? tr.status : "NOT_CHECKED_IN",
-              todayPunchIn: tr?.punchIn ? formatTimeIST(tr.punchIn) : null,
-              todayPunchOut: tr?.punchOut ? formatTimeIST(tr.punchOut) : null,
-            };
-          });
-
           recentRecords = await prisma.attendance.findMany({
-            where: { employeeId: { in: empIds } },
+            where: { employeeId: { in: empProfileIds } },
             orderBy: { date: "desc" },
             take: 5,
             include: {
@@ -240,18 +253,41 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
             },
           });
         }
+
+        deptEmployees = matchedUsers.map((u: any) => {
+          const empId = u.employeeProfile?.id;
+          const tr = empId ? todayMap.get(empId) : null;
+          return {
+            id: empId || u.id,
+            code: u.employeeProfile?.employeeIdCode || "STAFF",
+            name: u.name,
+            email: u.email,
+            department: u.department || targetDept,
+            designation: u.designation || (u.activeRole === "SALES" ? "Sales Executive" : "Staff"),
+            todayStatus: tr ? tr.status : "NOT_CHECKED_IN",
+            todayPunchIn: tr?.punchIn ? formatTimeIST(tr.punchIn) : null,
+            todayPunchOut: tr?.punchOut ? formatTimeIST(tr.punchOut) : null,
+          };
+        });
       }
+
+      // Filter department breakdown flexibly
+      const matchedDepts = targetDept
+        ? report.departmentBreakdown.filter((d: any) =>
+            isUserInDepartment({ department: d.department }, targetDept)
+          )
+        : report.departmentBreakdown;
 
       return {
         type: "department_summary",
-        department: targetDept,
+        department: targetDept || "Company Wide",
         month,
         year,
         todayPresentCount,
         todayTotalCount: deptEmployees.length,
         employees: deptEmployees,
-        departments: report.departmentBreakdown,
-        recentRecords: recentRecords.map((r) => ({
+        departments: matchedDepts.length > 0 ? matchedDepts : report.departmentBreakdown,
+        recentRecords: recentRecords.map((r: any) => ({
           name: r.employee?.user?.name || "Employee",
           date: r.date.toISOString().slice(0, 10),
           status: r.status,
@@ -261,7 +297,6 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
       };
     },
   },
-
   get_late_arrivals_summary: {
     name: "get_late_arrivals_summary",
     description: "List employees who arrived late (punched in after 09:30 AM IST) for a specific date or date range.",
@@ -504,32 +539,28 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
     }),
     requiresAdmin: false,
     execute: async (args, caller) => {
-      const allEmployees = await prisma.employee.findMany({
-        where: { status: "ACTIVE" },
-        include: {
-          user: {
-            select: { id: true, name: true, email: true, department: true, designation: true },
-          },
-        },
-        orderBy: { employeeIdCode: "asc" },
+      const allUsers = await prisma.user.findMany({
+        where: { isActive: true },
+        include: { employeeProfile: true },
+        orderBy: { name: "asc" },
       });
 
       const filterDept = args.department ? args.department.trim() : null;
-      const matched = filterDept
-        ? allEmployees.filter((e: any) => e.user?.department && e.user.department.toLowerCase().includes(filterDept.toLowerCase()))
-        : allEmployees;
+      const matchedUsers = filterDept
+        ? allUsers.filter((u: any) => isUserInDepartment(u, filterDept))
+        : allUsers;
 
       return {
         type: "department_employees",
         department: filterDept || "All Departments",
-        totalEmployees: matched.length,
-        employees: matched.map((e) => ({
-          id: e.id,
-          code: e.employeeIdCode,
-          name: e.user.name,
-          email: e.user.email,
-          department: e.user.department,
-          designation: e.user.designation || "Staff",
+        totalEmployees: matchedUsers.length,
+        employees: matchedUsers.map((u: any) => ({
+          id: u.employeeProfile?.id || u.id,
+          code: u.employeeProfile?.employeeIdCode || "STAFF",
+          name: u.name,
+          email: u.email,
+          department: u.department || filterDept || "General",
+          designation: u.designation || (u.activeRole === "SALES" ? "Sales Executive" : "Staff"),
         })),
       };
     },

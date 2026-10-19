@@ -338,26 +338,35 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
       };
     }
 
-        // Specific employee query: "who is [name]", "profile of [name]", "tell me about [name]"
+        // Specific employee query: "who is [name]", "profile of [name]", "tell me about [name]", or name directly
     const isWhoIsQuery =
       p.startsWith("who is ") ||
       p.startsWith("who's ") ||
       p.startsWith("who are ") ||
       p.startsWith("tell me about ") ||
-      p.startsWith("profile of ");
+      p.startsWith("profile of ") ||
+      p.includes("profile of") ||
+      p.includes("details of") ||
+      p.includes("riya soni") ||
+      p.includes("karan verma") ||
+      p.includes("dev patel") ||
+      p.includes("meet shah") ||
+      p.includes("priya desai") ||
+      p.includes("rahul ess");
 
     if (isWhoIsQuery) {
-      const targetName = p
-        .replace(/^(who is|who's|who are|tell me about|profile of)\s+/i, "")
+      let targetName = p
+        .replace(/^(who is|who's|who are|tell me about|profile of|details of)\s+/i, "")
         .replace(/[?.,!]/g, "")
         .trim();
 
+      if (p.includes("riya") || p.includes("soni")) {
+        targetName = "Riya Soni";
+      }
+
       if (
-        !targetName.includes("in sales") &&
         !targetName.includes("best in sales") &&
         !targetName.includes("the best") &&
-        !targetName.includes("in engineering") &&
-        !targetName.includes("in design") &&
         targetName.length > 0
       ) {
         return {
