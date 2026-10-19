@@ -559,6 +559,10 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
           const presentToday = result.todayPresentCount || 0;
           const empNames = (result.employees || []).map((e: any) => `${e.name} (${e.designation || "Staff"})`).join(", ");
 
+          if (totalStaff === 0) {
+            return `ℹ️ No active employees found for the **${dept}** department in company records.`;
+          }
+
           let text = `📊 **${dept} Department Attendance Overview:**\n\n`;
           text += `• **Team Size:** ${totalStaff} active employee${totalStaff > 1 ? "s" : ""}${empNames ? ` (${empNames})` : ""}\n`;
           text += `• **Today's Attendance:** ${presentToday} of ${totalStaff} present today\n`;

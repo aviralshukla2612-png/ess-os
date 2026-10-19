@@ -94,7 +94,7 @@ export function AttendanceAiAssistant({ isOpen, onClose }: { isOpen: boolean; on
     "How many employees are in sales?",
     "Who arrived late today?",
     "Which employees have incomplete check-outs?",
-    "Show attendance for Engineering department",
+    "Show attendance for Sales department",
     "Generate monthly attendance summary",
   ];
 
@@ -319,7 +319,7 @@ export function AttendanceAiAssistant({ isOpen, onClose }: { isOpen: boolean; on
                   )}
 
                   {/* PREMIUM STRUCTURED UI: Department Attendance Status */}
-                  {msg.data?.type === "department_summary" && msg.data?.employees && (
+                  {msg.data?.type === "department_summary" && msg.data?.employees && (msg.data.todayTotalCount > 0) && (
                     <div className="p-3.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-2.5 font-sans">
                       <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
                         <div className="flex items-center gap-2">
