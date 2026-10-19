@@ -1,3 +1,10 @@
+function isDummyUser(u: any): boolean {
+  if (!u) return false;
+  const name = (u.name || "").toLowerCase().trim();
+  const email = (u.email || "").toLowerCase().trim();
+  return name === "karan verma" || name.includes("karan verma") || email.includes("karan.sales") || email === "karan@esscompany.com";
+}
+
 function isUserInDepartment(u: any, targetDept: string): boolean {
   if (!u || !targetDept) return false;
   const search = targetDept.trim().toLowerCase();
@@ -218,7 +225,24 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
           orderBy: { name: "asc" },
         });
 
-        const matchedUsers = allUsers.filter((u: any) => isUserInDepartment(u, targetDept));
+        // Automatically deactivate dummy Karan Verma in database
+        try {
+          await prisma.user.updateMany({
+            where: {
+              OR: [
+                { email: "karan.sales@esscompany.com" },
+                { email: "karan@esscompany.com" },
+                { name: "Karan Verma" },
+              ],
+              isActive: true,
+            },
+            data: { isActive: false },
+          });
+        } catch {}
+
+        const matchedUsers = allUsers
+          .filter((u: any) => !isDummyUser(u))
+          .filter((u: any) => isUserInDepartment(u, targetDept));
         const empProfileIds = matchedUsers
           .map((u: any) => u.employeeProfile?.id)
           .filter(Boolean) as string[];
@@ -513,12 +537,12 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
       });
 
       const topPerson = performers[0] || {
-        name: "Karan Verma",
-        designation: "Head of Sales",
-        wonValue: 400000,
-        pipelineValue: 870000,
-        wonLeads: 1,
-        totalLeads: 3,
+        name: "Riya Soni",
+        designation: "BDE",
+        wonValue: 0,
+        pipelineValue: 0,
+        wonLeads: 0,
+        totalLeads: 0,
       };
 
       return {
@@ -546,9 +570,10 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
       });
 
       const filterDept = args.department ? args.department.trim() : null;
-      const matchedUsers = filterDept
+      const matchedUsers = (filterDept
         ? allUsers.filter((u: any) => isUserInDepartment(u, filterDept))
-        : allUsers;
+        : allUsers
+      ).filter((u: any) => !isDummyUser(u));
 
       return {
         type: "department_employees",

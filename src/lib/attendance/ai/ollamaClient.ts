@@ -348,7 +348,7 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
       p.includes("profile of") ||
       p.includes("details of") ||
       p.includes("riya soni") ||
-      p.includes("karan verma") ||
+      
       p.includes("dev patel") ||
       p.includes("meet shah") ||
       p.includes("priya desai") ||

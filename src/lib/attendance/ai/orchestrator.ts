@@ -84,7 +84,7 @@ export class AttendanceAnalyticsOrchestrator {
     } else if (rawResult.type === "sales_performance") {
       const p = rawResult.topPerson;
       metrics = [
-        { label: "Top Performer", value: p?.name || "Karan Verma", color: "emerald" },
+        { label: "Top Performer", value: p?.name || "Riya Soni", color: "emerald" },
         { label: "Role", value: p?.designation || "Head of Sales", color: "indigo" },
         { label: "Won Revenue", value: "₹" + (rawResult.totalWonRevenue || 0).toLocaleString("en-IN"), color: "emerald" },
         { label: "Active Pipeline", value: "₹" + (rawResult.totalActivePipeline || 0).toLocaleString("en-IN"), color: "amber" },

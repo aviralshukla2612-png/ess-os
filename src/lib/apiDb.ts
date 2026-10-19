@@ -25,17 +25,17 @@ class ApiDatabase {
         leadValue: 400000,
         expectedRevenue: 400000,
         projectScope: "Headless Next.js Storefront + Razorpay HMAC Webhook API Integration",
-        assignedSales: "Karan Verma",
+        assignedSales: "Riya Soni",
         nextFollowupDate: "Today 02:30 PM",
         leadPriority: "HOT",
         notes: [
-          { id: "n1", author: "Karan Verma", text: "Client agreed to ₹4,00,000 milestone schedule with 25% advance.", time: "Aug 1, 10:15 AM" },
+          { id: "n1", author: "Riya Soni", text: "Client agreed to ₹4,00,000 milestone schedule with 25% advance.", time: "Aug 1, 10:15 AM" },
         ],
         callHistory: [
-          { id: "c1", caller: "Karan Verma", notes: "Discussed final payment terms and technical signoff.", date: "Aug 1, 09:30 AM", outcome: "Agreed" },
+          { id: "c1", caller: "Riya Soni", notes: "Discussed final payment terms and technical signoff.", date: "Aug 1, 09:30 AM", outcome: "Agreed" },
         ],
         activityHistory: [
-          { id: "a1", time: "Aug 1 · 10:20 AM", text: "Lead moved from Negotiation to Won by Karan Verma." },
+          { id: "a1", time: "Aug 1 · 10:20 AM", text: "Lead moved from Negotiation to Won by Riya Soni." },
           { id: "a2", time: "Jul 28 · 03:45 PM", text: "Proposal of ₹4,00,000 sent via email." },
         ],
       },
@@ -50,14 +50,14 @@ class ApiDatabase {
         leadValue: 650000,
         expectedRevenue: 520000,
         projectScope: "Multi-Tenant Cloud Inventory & Billing ERP Portal",
-        assignedSales: "Karan Verma",
+        assignedSales: "Riya Soni",
         nextFollowupDate: "Tomorrow 11:00 AM",
         leadPriority: "HIGH",
         notes: [
-          { id: "n2", author: "Karan Verma", text: "Revised technical wireframe proposal sent to Suresh Shah.", time: "Aug 2, 04:00 PM" },
+          { id: "n2", author: "Riya Soni", text: "Revised technical wireframe proposal sent to Suresh Shah.", time: "Aug 2, 04:00 PM" },
         ],
         callHistory: [
-          { id: "c2", caller: "Karan Verma", notes: "Reviewed scope requirements and design deliverables.", date: "Aug 2, 02:15 PM", outcome: "Followup Required" },
+          { id: "c2", caller: "Riya Soni", notes: "Reviewed scope requirements and design deliverables.", date: "Aug 2, 02:15 PM", outcome: "Followup Required" },
         ],
         activityHistory: [
           { id: "a3", time: "Aug 2 · 04:15 PM", text: "Proposal sent (₹6,50,000)." },
@@ -74,7 +74,7 @@ class ApiDatabase {
         leadValue: 220000,
         expectedRevenue: 180000,
         projectScope: "Cross-Platform iOS & Android Mobile Booking Application",
-        assignedSales: "Karan Verma",
+        assignedSales: "Riya Soni",
         nextFollowupDate: "05 Aug 2026",
         leadPriority: "MEDIUM",
         notes: [],
@@ -172,8 +172,8 @@ class ApiDatabase {
       {
         id: "EMP-002",
         employeeId: "EMP-002",
-        name: "Karan Verma",
-        email: "karan@esscompany.com",
+        name: "Riya Soni",
+        email: "riya.soni@esscompany.com",
         role: "SALES",
         designation: "Head of Sales",
         department: "Business Development",
@@ -312,7 +312,7 @@ class ApiDatabase {
     this.activities = [
 
       { id: "act-2", timestamp: "Today 10:15 AM", actor: "Dev Patel", action: "logged work note", target: "Razorpay sandbox HMAC payload verified", targetType: "PROJECT" },
-      { id: "act-3", timestamp: "Aug 1 · 10:20 AM", actor: "Karan Verma", action: "converted lead", target: "ABC Retailers Pvt Ltd (₹4,00,000)", targetType: "LEAD" },
+      { id: "act-3", timestamp: "Aug 1 · 10:20 AM", actor: "Riya Soni", action: "converted lead", target: "ABC Retailers Pvt Ltd (₹4,00,000)", targetType: "LEAD" },
     ];
   }
 }

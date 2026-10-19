@@ -199,7 +199,7 @@ export default function SalesDashboardPage() {
       {/* Page Header */}
       <PageHeader
         title="Sales Dashboard"
-        description="Pipeline overview, follow-up schedules, and monthly conversions for Karan Verma."
+        description="Pipeline overview, follow-up schedules, and monthly conversions for the sales team."
         badge="HEAD OF SALES"
         icon={<Target className="w-7 h-7 text-indigo-600 dark:text-indigo-400 animate-pulse" />}
         actions={
