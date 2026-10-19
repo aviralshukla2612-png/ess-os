@@ -23,10 +23,9 @@ RUN npx prisma generate
 # Copy source code (files in .dockerignore like database and uploads are skipped)
 COPY . .
 
-# Build Next.js with single worker to eliminate VPS memory thrashing
+# Build Next.js with all cores enabled and 4GB memory
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS="--max-old-space-size=2048"
-ENV NEXT_BUILD_WORKERS=1
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 RUN --mount=type=cache,target=/app/.next/cache \
   if [ -f package-lock.json ]; then npm run build; \

@@ -52,8 +52,19 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials");
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+        const rawIdentifier = credentials.email.trim();
+        const rawPassword = credentials.password;
+
+        // Find user by email (case-insensitive) or by employee ID code
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: rawIdentifier },
+              { email: rawIdentifier.toLowerCase() },
+              { employeeProfile: { employeeIdCode: rawIdentifier } },
+              { employeeProfile: { employeeIdCode: rawIdentifier.toUpperCase() } },
+            ],
+          },
           include: { employeeProfile: true },
         });
 
@@ -63,7 +74,12 @@ export const authOptions: NextAuthOptions = {
           throw new Error("User not found or inactive");
         }
 
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
+        let isPasswordValid = false;
+        if (user.passwordHash.startsWith("$2")) {
+          isPasswordValid = await bcrypt.compare(rawPassword, user.passwordHash);
+        } else {
+          isPasswordValid = user.passwordHash === rawPassword;
+        }
 
         if (!isPasswordValid) {
           throw new Error("Invalid password");

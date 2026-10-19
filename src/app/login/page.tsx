@@ -32,12 +32,12 @@ export default function LoginPage() {
     try {
       const res = await signIn("credentials", {
         redirect: false,
-        email: emailOrId,
+        email: emailOrId.trim(),
         password: password,
       });
 
-      if (res?.error) {
-        setError(res.error);
+      if (!res?.ok || res?.error) {
+        setError(res?.error === "CredentialsSignin" ? "Invalid email/Employee ID or password." : (res?.error || "Invalid credentials"));
       } else {
         window.location.href = "/crmtesting";
       }

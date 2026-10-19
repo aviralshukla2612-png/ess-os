@@ -6,6 +6,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { PrototypeStoreProvider } from "@/lib/prototypeStore";
 import { WorkClockProvider } from "@/lib/workClockContext";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "ESS OS — Master Business Operating System",
   description: "Centralized Operating System for ESS Company",
