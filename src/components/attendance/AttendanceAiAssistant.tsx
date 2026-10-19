@@ -91,7 +91,7 @@ export function AttendanceAiAssistant({ isOpen, onClose }: { isOpen: boolean; on
 
   const quickPrompts = [
     "How many employees are present today?",
-    "Who is the best person in sales?",
+    "How many employees are in sales?",
     "Who arrived late today?",
     "Which employees have incomplete check-outs?",
     "Show attendance for Engineering department",
@@ -234,6 +234,94 @@ export function AttendanceAiAssistant({ isOpen, onClose }: { isOpen: boolean; on
                         <FileText className="w-3.5 h-3.5" />
                         <span>Download Vector PDF Report</span>
                       </a>
+                    </div>
+                  )}
+
+                  {/* PREMIUM STRUCTURED UI: Department Roster / Employee Count */}
+                  {msg.data?.type === "department_employees" && (
+                    <div className="p-3.5 rounded-xl bg-indigo-50/70 dark:bg-slate-800/80 border border-indigo-200/80 dark:border-indigo-800/80 space-y-2.5 font-sans">
+                      <div className="flex items-center justify-between border-b border-indigo-200/50 dark:border-indigo-800/50 pb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+                            <Users className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="font-bold text-xs text-slate-900 dark:text-white">
+                              {msg.data.department} Team
+                            </div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                              {msg.data.totalEmployees} Active Member{msg.data.totalEmployees === 1 ? "" : "s"}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                          Verified Roster
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {msg.data.employees?.map((emp: any, i: number) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                            <span className="font-bold">{emp.name}</span>
+                            <span className="text-[10px] text-slate-400">({emp.designation})</span>
+                            <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                              {emp.code}
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PREMIUM STRUCTURED UI: Department Attendance Status */}
+                  {msg.data?.type === "department_summary" && msg.data?.employees && (
+                    <div className="p-3.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-2.5 font-sans">
+                      <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+                            <Building2 className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="font-bold text-xs text-slate-900 dark:text-white">
+                              {msg.data.department} Attendance Status
+                            </div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                              Today: {msg.data.todayPresentCount} of {msg.data.todayTotalCount} Present
+                            </div>
+                          </div>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                          Today's Shift
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {msg.data.employees?.map((emp: any, i: number) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-xs"
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                emp.todayStatus === "PRESENT" ? "bg-emerald-500" : "bg-slate-400"
+                              }`}
+                            />
+                            <span className="font-bold">{emp.name}</span>
+                            <span className="text-[10px] text-slate-400">({emp.designation})</span>
+                            <span
+                              className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${
+                                emp.todayStatus === "PRESENT"
+                                  ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300"
+                                  : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                              }`}
+                            >
+                              {emp.todayStatus === "PRESENT" ? `In: ${emp.todayPunchIn}` : "Not Checked In"}
+                            </span>
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
 

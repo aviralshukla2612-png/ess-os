@@ -97,26 +97,50 @@ export class AttendanceAnalyticsOrchestrator {
         "Active Pipeline": "₹" + (perf.pipelineValue || 0).toLocaleString("en-IN"),
         "Total Leads": perf.totalLeads,
       }));
-    } else if (rawResult.type === "department_summary") {
-      const depts = rawResult.departments || [];
+    } else if (rawResult.type === "department_employees") {
+      table = rawResult.employees || [];
       metrics = [
-        { label: "Departments", value: depts.length, color: "indigo" },
-        { label: "Month/Year", value: `${rawResult.month}/${rawResult.year}`, color: "slate" },
+        { label: "Headcount", value: rawResult.totalEmployees ?? 0, color: "indigo" },
+        { label: "Department", value: rawResult.department || "All Departments", color: "blue" },
       ];
-      chart = depts.map((d: any) => ({
-        name: d.department,
-        shifts: d.totalPresent,
-        hours: d.totalHours,
-      }));
-      table = depts.map((d: any) => ({
-        employeeName: d.department,
-        department: `${d.employeeCount} staff`,
-        date: `${rawResult.month}/${rawResult.year}`,
-        punchIn: `${d.totalPresent} shifts`,
-        punchOut: `${d.totalLate} late`,
-        status: "PRESENT",
-        workHours: `${d.totalHours} hrs`,
-      }));
+    } else if (rawResult.type === "department_summary") {
+      if (rawResult.department && rawResult.employees && rawResult.employees.length > 0) {
+        metrics = [
+          { label: "Team Size", value: rawResult.todayTotalCount ?? rawResult.employees.length, color: "indigo" },
+          { label: "Present Today", value: rawResult.todayPresentCount ?? 0, color: "emerald" },
+          { label: "Department", value: rawResult.department, color: "blue" },
+        ];
+        table = rawResult.employees.map((e: any) => ({
+          employeeName: e.name,
+          department: e.department,
+          employeeCode: e.code,
+          date: "Today",
+          punchIn: e.todayPunchIn || "--:--",
+          punchOut: e.todayPunchOut || "--:--",
+          status: e.todayStatus,
+          workHours: e.todayStatus === "PRESENT" ? "Active" : "Not Checked In",
+        }));
+      } else {
+        const depts = rawResult.departments || [];
+        metrics = [
+          { label: "Departments", value: depts.length, color: "indigo" },
+          { label: "Month/Year", value: `${rawResult.month}/${rawResult.year}`, color: "slate" },
+        ];
+        chart = depts.map((d: any) => ({
+          name: d.department,
+          shifts: d.totalPresent,
+          hours: d.totalHours,
+        }));
+        table = depts.map((d: any) => ({
+          employeeName: d.department,
+          department: `${d.employeeCount} staff`,
+          date: `${rawResult.month}/${rawResult.year}`,
+          punchIn: `${d.totalPresent} shifts`,
+          punchOut: `${d.totalLate} late`,
+          status: "PRESENT",
+          workHours: `${d.totalHours} hrs`,
+        }));
+      }
     } else if (rawResult.type === "monthly_summary" || rawResult.type === "monthly") {
       const rep = rawResult.data || rawResult;
       const overall = rep.overallSummary || rep;

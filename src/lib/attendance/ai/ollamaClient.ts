@@ -194,19 +194,58 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
   private static fallbackDeterministicClassify(prompt: string): { toolName: string | null; arguments: Record<string, any>; reasoning: string } {
     const p = prompt.toLowerCase().trim();
 
-    // 0. Sales & CRM Performance
+    // 0a. Department employees / Headcount / Roster (e.g. "how many employee in sales", "who works in engineering", "list sales employees")
+    // NOTE: If the query explicitly asks for attendance status (present / absent / late / punch), route to attendance tools instead!
+    const isAttendanceStatusQuery = p.includes("present") || p.includes("absent") || p.includes("late") || p.includes("punch") || p.includes("clock");
+
+    const isEmployeeCountOrRosterQuery = !isAttendanceStatusQuery && (
+      p.includes("how many employee") ||
+      p.includes("how many employees") ||
+      p.includes("how many staff") ||
+      p.includes("how many people") ||
+      p.includes("how many person") ||
+      p.includes("employee count") ||
+      p.includes("headcount") ||
+      p.includes("who is in") ||
+      p.includes("who works in") ||
+      p.includes("list employee") ||
+      p.includes("list employees") ||
+      p.includes("team members") ||
+      p.includes("department members") ||
+      ((p.includes("employee") || p.includes("employees") || p.includes("staff")) &&
+       (p.includes("sales") || p.includes("engineering") || p.includes("design") || p.includes("quality") || p.includes("management")))
+    );
+
+    if (isEmployeeCountOrRosterQuery) {
+      let dept: string | undefined;
+      if (p.includes("sales")) dept = "Sales";
+      else if (p.includes("engineering") || p.includes("tech")) dept = "Engineering";
+      else if (p.includes("design") || p.includes("ui/ux")) dept = "Design";
+      else if (p.includes("management") || p.includes("exec")) dept = "Management";
+      else if (p.includes("quality") || p.includes("qa")) dept = "Quality Assurance";
+
+      return {
+        toolName: "get_department_employees",
+        arguments: dept ? { department: dept } : {},
+        reasoning: `Matched department employee count query${dept ? ` for ${dept}` : ""}`,
+      };
+    }
+
+    // 0b. Sales & CRM Performance (ONLY when explicitly querying performance, deals, pipeline, or top rankings)
     if (
-      p.includes("sales") ||
-      p.includes("best person") ||
-      p.includes("who is the best") ||
-      p.includes("whoi is the best") ||
-      p.includes("top person") ||
+      p.includes("sales performance") ||
       p.includes("top salesperson") ||
+      p.includes("top sales performer") ||
+      p.includes("best in sales") ||
+      p.includes("best person in sales") ||
+      p.includes("who is the best in sales") ||
+      p.includes("top sales") ||
       p.includes("highest sales") ||
       p.includes("sales revenue") ||
       p.includes("deals won") ||
-      p.includes("leads") ||
-      p.includes("sales performance")
+      p.includes("sales pipeline") ||
+      p.includes("sales leaderboard") ||
+      p.includes("sales ranking")
     ) {
       return {
         toolName: "get_sales_performance",
@@ -215,7 +254,7 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
       };
     }
 
-    // 0. PDF / Report generation
+    // 0c. PDF / Report generation
     if (p.includes("pdf") || p.includes("generate report") || p.includes("download report") || p.includes("export report") || p.includes("attendance report") || p.includes("attendance pdf")) {
       return {
         toolName: "generate_attendance_report",
@@ -243,7 +282,13 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
     }
 
     // 3. Department attendance
-    if (p.includes("department") || p.includes("sales dept") || p.includes("engineering dept") || p.includes("design dept")) {
+    if (
+      p.includes("department") ||
+      p.includes("sales dept") ||
+      p.includes("engineering dept") ||
+      p.includes("design dept") ||
+      (p.includes("attendance") && (p.includes("engineering") || p.includes("sales") || p.includes("design") || p.includes("management") || p.includes("quality")))
+    ) {
       let dept: string | undefined;
       if (p.includes("sales")) dept = "Sales";
       else if (p.includes("engineering") || p.includes("tech")) dept = "Engineering";
@@ -375,6 +420,22 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
     if (!result) return "No attendance records matched the requested criteria.";
 
     switch (toolName) {
+      case "get_department_employees": {
+        const count = result.totalEmployees || 0;
+        const dept = result.department;
+        const list = (result.employees || [])
+          .map((e: any) => `• **${e.name}** (${e.designation}, ${e.code})`)
+          .join("\n");
+
+        if (dept && dept !== "All Departments") {
+          if (count === 0) {
+            return `ℹ️ No active employees currently assigned to the **${dept}** department.`;
+          }
+          return `👥 The **${dept}** department has **${count} active employee${count > 1 ? "s" : ""}:**\n\n${list}`;
+        }
+        return `👥 The company currently has **${count} active employee${count > 1 ? "s" : ""}:**\n\n${list}`;
+      }
+
       case "get_sales_performance": {
         const p = result.topPerson;
         const wonStr = "₹" + (result.totalWonRevenue || 0).toLocaleString("en-IN");
@@ -443,6 +504,37 @@ Do not invent tool names. Do not include markdown codeblocks or text outside the
       }
 
       case "get_department_attendance_summary": {
+        if (result.department) {
+          const dept = result.department;
+          const totalStaff = result.todayTotalCount || (result.employees ? result.employees.length : 0);
+          const presentToday = result.todayPresentCount || 0;
+          const empNames = (result.employees || []).map((e: any) => `${e.name} (${e.designation || "Staff"})`).join(", ");
+
+          let text = `📊 **${dept} Department Attendance Overview:**\n\n`;
+          text += `• **Team Size:** ${totalStaff} active employee${totalStaff > 1 ? "s" : ""}${empNames ? ` (${empNames})` : ""}\n`;
+          text += `• **Today's Attendance:** ${presentToday} of ${totalStaff} present today\n`;
+
+          if (result.employees && result.employees.length > 0) {
+            const todayList = result.employees.map((e: any) => {
+              if (e.todayStatus === "PRESENT") {
+                return `  ✓ **${e.name}**: Present (Punched in at ${e.todayPunchIn || "Morning"})`;
+              }
+              return `  ○ **${e.name}**: Not checked in today`;
+            }).join("\n");
+            text += `${todayList}\n`;
+          }
+
+          if (result.recentRecords && result.recentRecords.length > 0) {
+            text += `\n**Recent Activity:**\n`;
+            const recs = result.recentRecords.slice(0, 3).map((r: any) => `• ${r.name}: ${r.status} on ${r.date} (In: ${r.punchIn}, Out: ${r.punchOut})`).join("\n");
+            text += recs;
+          } else {
+            text += `\n• **Monthly Log:** No past punch logs found for this period.`;
+          }
+
+          return text;
+        }
+
         const d = result.departments || [];
         if (d.length === 0) return "No department records found for this period.";
         const lines = d.map((dept: any) => `• **${dept.department}:** ${dept.totalPresent} present shifts, ${dept.totalLate} late, ${dept.totalHours} total hours logged across ${dept.employeeCount} staff member(s)`).join("\n");

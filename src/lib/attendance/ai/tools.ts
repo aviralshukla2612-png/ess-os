@@ -146,7 +146,7 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
 
   get_department_attendance_summary: {
     name: "get_department_attendance_summary",
-    description: "Get attendance statistics broken down by department for the current month or a specified date range.",
+    description: "Get attendance statistics, today's punch status, and active roster broken down by department.",
     parameters: z.object({
       departmentId: z.string().optional().describe("Specific department name to query (or all departments if omitted)"),
       month: z.number().int().min(1).max(12).optional(),
@@ -160,22 +160,104 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
       const now = new Date();
       const month = args.month || (now.getMonth() + 1);
       const year = args.year || now.getFullYear();
+      const targetDept = args.departmentId;
 
+      // 1. Fetch monthly report
       const report = await AttendanceService.getMonthlyReport(
         {
           month,
           year,
-          departmentId: args.departmentId,
+          departmentId: targetDept,
           status: "ALL",
         },
         caller
       );
 
+      // 2. Fetch department roster and today's status
+      let deptEmployees: any[] = [];
+      let todayRecords: any[] = [];
+      let recentRecords: any[] = [];
+      let todayPresentCount = 0;
+
+      if (targetDept) {
+        const allEmployees = await prisma.employee.findMany({
+          where: { status: "ACTIVE" },
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, department: true, designation: true },
+            },
+          },
+          orderBy: { employeeIdCode: "asc" },
+        });
+
+        deptEmployees = allEmployees.filter((e) =>
+          e.user?.department && e.user.department.toLowerCase().includes(targetDept.toLowerCase())
+        );
+
+        const empIds = deptEmployees.map((e) => e.id);
+
+        if (empIds.length > 0) {
+          const todayDate = getISTDateString();
+          const { startOfDay, endOfDay } = getISTDayRange(todayDate);
+
+          todayRecords = await prisma.attendance.findMany({
+            where: {
+              employeeId: { in: empIds },
+              date: { gte: startOfDay, lte: endOfDay },
+            },
+          });
+
+          const todayMap = new Map<string, any>();
+          for (const tr of todayRecords) {
+            todayMap.set(tr.employeeId, tr);
+            if (tr.status === "PRESENT" || tr.punchIn) {
+              todayPresentCount++;
+            }
+          }
+
+          deptEmployees = deptEmployees.map((e) => {
+            const tr = todayMap.get(e.id);
+            return {
+              id: e.id,
+              code: e.employeeIdCode,
+              name: e.user.name,
+              department: e.user.department,
+              designation: e.user.designation || "Staff",
+              todayStatus: tr ? tr.status : "NOT_CHECKED_IN",
+              todayPunchIn: tr?.punchIn ? formatTimeIST(tr.punchIn) : null,
+              todayPunchOut: tr?.punchOut ? formatTimeIST(tr.punchOut) : null,
+            };
+          });
+
+          recentRecords = await prisma.attendance.findMany({
+            where: { employeeId: { in: empIds } },
+            orderBy: { date: "desc" },
+            take: 5,
+            include: {
+              employee: {
+                include: { user: { select: { name: true } } },
+              },
+            },
+          });
+        }
+      }
+
       return {
         type: "department_summary",
+        department: targetDept,
         month,
         year,
+        todayPresentCount,
+        todayTotalCount: deptEmployees.length,
+        employees: deptEmployees,
         departments: report.departmentBreakdown,
+        recentRecords: recentRecords.map((r) => ({
+          name: r.employee?.user?.name || "Employee",
+          date: r.date.toISOString().slice(0, 10),
+          status: r.status,
+          punchIn: r.punchIn ? formatTimeIST(r.punchIn) : "--:--",
+          punchOut: r.punchOut ? formatTimeIST(r.punchOut) : "--:--",
+        })),
       };
     },
   },
@@ -411,6 +493,44 @@ export const ATTENDANCE_TOOLS: Record<string, AttendanceToolDefinition> = {
         totalWonRevenue: totalWon,
         totalActivePipeline: totalPipeline,
         totalLeadsTracked: leads.length,
+      };
+    },
+  },
+  get_department_employees: {
+    name: "get_department_employees",
+    description: "Get employee count, headcount, and active staff directory by department or entire company.",
+    parameters: z.object({
+      department: z.string().optional().describe("Department name (e.g. Sales, Engineering, Design)"),
+    }),
+    requiresAdmin: false,
+    execute: async (args, caller) => {
+      const allEmployees = await prisma.employee.findMany({
+        where: { status: "ACTIVE" },
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, department: true, designation: true },
+          },
+        },
+        orderBy: { employeeIdCode: "asc" },
+      });
+
+      const filterDept = args.department ? args.department.trim() : null;
+      const matched = filterDept
+        ? allEmployees.filter((e) => e.user?.department && e.user.department.toLowerCase().includes(filterDept.toLowerCase()))
+        : allEmployees;
+
+      return {
+        type: "department_employees",
+        department: filterDept || "All Departments",
+        totalEmployees: matched.length,
+        employees: matched.map((e) => ({
+          id: e.id,
+          code: e.employeeIdCode,
+          name: e.user.name,
+          email: e.user.email,
+          department: e.user.department,
+          designation: e.user.designation || "Staff",
+        })),
       };
     },
   },
