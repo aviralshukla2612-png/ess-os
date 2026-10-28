@@ -3,15 +3,12 @@ FROM node:20-alpine AS builder
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-# Copy package files
+# Copy package files and prisma schema
 COPY package.json package-lock.json ./
-
-# Install dependencies cleanly
-RUN npm ci --prefer-offline --no-audit --no-fund
-
-# Copy prisma schema and generate client separately
 COPY prisma ./prisma
-RUN npx prisma generate
+
+# Install dependencies cleanly (runs postinstall prisma generate)
+RUN npm ci --prefer-offline --no-audit --no-fund
 
 # Copy source code
 COPY . .
