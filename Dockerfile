@@ -1,38 +1,26 @@
-# syntax=docker/dockerfile:1
-
 # 1. Builder Stage
 FROM node:20-alpine AS builder
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-# Copy ONLY package manifest files to guarantee Docker layer caching
-COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
+# Copy package files
+COPY package.json package-lock.json ./
 
-# Install dependencies using cache mount and skip postinstall scripts
-RUN --mount=type=cache,target=/root/.npm \
-  if [ -f package-lock.json ]; then npm ci --ignore-scripts --prefer-offline --no-audit --no-fund; \
-  elif [ -f yarn.lock ]; then yarn --frozen-lockfile --ignore-scripts --prefer-offline; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile --ignore-scripts; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+# Install dependencies cleanly
+RUN npm ci --prefer-offline --no-audit --no-fund
 
 # Copy prisma schema and generate client separately
 COPY prisma ./prisma
 RUN npx prisma generate
 
-# Copy source code (files in .dockerignore like database and uploads are skipped)
+# Copy source code
 COPY . .
 
-# Build Next.js with all cores enabled and 4GB memory
+# Build Next.js with safe memory limit for VPS
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NODE_OPTIONS="--max-old-space-size=1536"
 
-RUN --mount=type=cache,target=/app/.next/cache \
-  if [ -f package-lock.json ]; then npm run build; \
-  elif [ -f yarn.lock ]; then yarn build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+RUN npm run build
 
 # 2. Production Runner Stage
 FROM node:20-alpine AS runner
