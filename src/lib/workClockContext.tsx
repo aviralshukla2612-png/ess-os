@@ -51,6 +51,9 @@ interface WorkClockContextType {
   formatHM: (sec: number) => string;
   requiredWorkSeconds: number;
   remainingWorkSeconds: number;
+  creditedWorkSeconds: number;
+  targetPunchOutTime: string;
+  punchInRaw: string | null;
 }
 
 const WorkClockContext = createContext<WorkClockContextType | undefined>(undefined);
@@ -64,6 +67,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
   const [breakType, setBreakType] = useState<string>("Lunch");
   const [breakReason, setBreakReason] = useState<string>("");
   const [punchInTime, setPunchInTime] = useState<string | null>(null);
+  const [punchInRaw, setPunchInRaw] = useState<string | null>(null);
   const [punchOutTime, setPunchOutTime] = useState<string | null>(null);
 
   const [currentProject, setCurrentProject] = useState<string>("General Workspace");
@@ -170,6 +174,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
             // Always sync punch-in time from server — this prevents stale localStorage
             // times (e.g. yesterday's 07:02 PM) from showing on a fresh day
             if (json.data.punchIn) {
+              setPunchInRaw(json.data.punchIn);
               const correctTime = new Date(json.data.punchIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
               setPunchInTime(correctTime);
               // Rebuild the full timeline from server events when it's empty
@@ -295,6 +300,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
         if (parsed.breakType) setBreakType(parsed.breakType);
         if (parsed.breakReason) setBreakReason(parsed.breakReason);
         if (parsed.punchInTime) setPunchInTime(parsed.punchInTime);
+        if (parsed.punchInRaw) setPunchInRaw(parsed.punchInRaw);
         if (parsed.punchOutTime) setPunchOutTime(parsed.punchOutTime);
         if (parsed.currentProject) setCurrentProject(parsed.currentProject);
         if (parsed.currentTask) setCurrentTask(parsed.currentTask);
@@ -322,6 +328,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
       breakType,
       breakReason,
       punchInTime,
+      punchInRaw,
       punchOutTime,
       currentProject,
       currentTask,
@@ -396,6 +403,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     const now = new Date();
     const formatted = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     setPunchInTime(formatted);
+    setPunchInRaw(now.toISOString());
     setWorkSeconds(0);
     setBreakSeconds(0);
     setUsedLunchSeconds(0);
@@ -501,13 +509,50 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
   };
 
   const REQUIRED_WORK_SECONDS = parseInt(process.env.NEXT_PUBLIC_REQUIRED_WORK_HOURS || "8") * 3600;
+  const totalAllowanceSeconds = lunchAllowanceSeconds + teaAllowanceSeconds;
+  const allowedBreakSeconds = Math.min(breakSeconds, totalAllowanceSeconds);
+  const excessBreakSeconds = Math.max(0, breakSeconds - totalAllowanceSeconds);
+  const creditedWorkSeconds = workSeconds + allowedBreakSeconds;
+  const remainingWorkSeconds = Math.max(0, REQUIRED_WORK_SECONDS - creditedWorkSeconds);
+
+  const getTargetPunchOutTime = (): string => {
+    if (!punchInTime && !punchInRaw) return "--:--";
+
+    let startDate: Date | null = null;
+    if (punchInRaw) {
+      const parsed = new Date(punchInRaw);
+      if (!isNaN(parsed.getTime())) startDate = parsed;
+    }
+
+    if (!startDate && punchInTime) {
+      const match = punchInTime.match(/(\d+):(\d+)(?::\d+)?\s*(AM|PM)?/i);
+      if (match) {
+        let hours = parseInt(match[1], 10);
+        const minutes = parseInt(match[2], 10);
+        const meridian = match[3]?.toUpperCase();
+        if (meridian === "PM" && hours < 12) hours += 12;
+        if (meridian === "AM" && hours === 12) hours = 0;
+        const d = new Date();
+        d.setHours(hours, minutes, 0, 0);
+        startDate = d;
+      }
+    }
+
+    if (!startDate) return "--:--";
+
+    // Standard shift is REQUIRED_WORK_SECONDS (8h). Any excess break beyond the allowed 55m allowance extends target end.
+    const targetDate = new Date(startDate.getTime() + (REQUIRED_WORK_SECONDS + excessBreakSeconds) * 1000);
+    return targetDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const targetPunchOutTime = getTargetPunchOutTime();
 
   const punchOut = () => {
-    if (workSeconds >= REQUIRED_WORK_SECONDS) {
+    if (creditedWorkSeconds >= REQUIRED_WORK_SECONDS) {
       confirmPunchOutAnyway();
       return { success: true, requiresConfirmation: false, remainingSeconds: 0 };
     } else {
-      const remainingSeconds = REQUIRED_WORK_SECONDS - workSeconds;
+      const remainingSeconds = REQUIRED_WORK_SECONDS - creditedWorkSeconds;
       return { success: false, requiresConfirmation: true, remainingSeconds };
     }
   };
@@ -552,8 +597,6 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
     lastPunchOutStatusRef.current = "PENDING";
   };
 
-  const remainingWorkSeconds = Math.max(0, REQUIRED_WORK_SECONDS - workSeconds);
-
   return (
     <WorkClockContext.Provider
       value={{
@@ -563,6 +606,7 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
         breakType,
         breakReason,
         punchInTime,
+        punchInRaw,
         punchOutTime,
         currentProject,
         currentTask,
@@ -590,6 +634,8 @@ export function WorkClockProvider({ children }: { children: React.ReactNode }) {
         formatHM,
         requiredWorkSeconds: REQUIRED_WORK_SECONDS,
         remainingWorkSeconds,
+        creditedWorkSeconds,
+        targetPunchOutTime,
       }}
     >
       {children}

@@ -25,7 +25,7 @@ interface Props {
 }
 
 export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout }: Props) {
-  const { status, workSeconds, breakSeconds, breakType, formatHMS, remainingWorkSeconds, punchIn, startBreak, resumeWork, punchOut, confirmPunchOutAnyway, markPunchOutPending } = useWorkClock();
+  const { status, workSeconds, breakSeconds, breakType, formatHMS, remainingWorkSeconds, creditedWorkSeconds, punchIn, startBreak, resumeWork, punchOut, confirmPunchOutAnyway, markPunchOutPending } = useWorkClock();
   const { showToast } = useToast();
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -341,7 +341,7 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
                   Total Worked
                 </div>
                 <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 dark:text-slate-100">
-                  {formatHMS(workSeconds)}
+                  {formatHMS(creditedWorkSeconds)}
                 </div>
                 <div className="text-[10px] text-slate-500 font-medium">active session</div>
               </div>

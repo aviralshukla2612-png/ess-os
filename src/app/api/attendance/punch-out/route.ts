@@ -61,10 +61,12 @@ export async function POST(req: Request) {
       totalBreakMinutes += Math.floor(diffMs / 60000);
     }
 
-    // 3. Calculate total worked minutes
+    // 3. Calculate total worked minutes (accounting for 55m break allowance: 45m lunch + 10m tea)
     const elapsedMs = serverNow.getTime() - activeAttendance.punchIn.getTime();
     const elapsedMinutes = Math.floor(elapsedMs / 60000);
-    const workedMinutes = Math.max(0, elapsedMinutes - totalBreakMinutes);
+    const allowedBreakMinutes = 55;
+    const excessBreakMinutes = Math.max(0, totalBreakMinutes - allowedBreakMinutes);
+    const workedMinutes = Math.max(0, elapsedMinutes - excessBreakMinutes);
 
     // 4. Perform the transactional update
     const [updatedAttendance] = await prisma.$transaction([

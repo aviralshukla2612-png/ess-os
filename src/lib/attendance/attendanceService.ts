@@ -832,7 +832,9 @@ export class AttendanceService {
       breakMinutes += Math.max(0, Math.floor((end.getTime() - b.startedAt.getTime()) / 60000));
     });
 
-    const netWorkMinutes = Math.max(0, elapsedMinutes - breakMinutes);
+    const allowedBreakMinutes = 55;
+    const excessBreakMinutes = Math.max(0, breakMinutes - allowedBreakMinutes);
+    const netWorkMinutes = Math.max(0, elapsedMinutes - excessBreakMinutes);
 
     // Update in transaction
     const [updated] = await prisma.$transaction([
