@@ -16,5 +16,8 @@ services:
       - PORT=3040
       - NEXTAUTH_SECRET=super_secret_ess_os_key_2026_!@#
       - DATABASE_URL=file:/app/prisma/data/production.db
+      - NEXTAUTH_URL=https://crm.emperorsmartsolutions.com/crmtesting/api/auth
+      - NEXTAUTH_URL_INTERNAL=http://127.0.0.1:3040/crmtesting/api/auth
+      - NODE_OPTIONS=--max-http-header-size=65536
       - OLLAMA_URL=http://host.docker.internal:11434
     restart: unless-stopped

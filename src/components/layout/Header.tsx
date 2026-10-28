@@ -87,18 +87,28 @@ export function Header({ currentUser, onOpenSearch, onToggleMobileMenu, onLogout
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ employeeId: currentUser.employeeId }),
       });
-      const data = await res.json();
+
+      let data: any = null;
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const rawText = await res.text();
+        console.error("Header Punch In non-JSON response:", res.status, rawText);
+        data = { error: `Server error (${res.status}): ${res.statusText || rawText.substring(0, 100)}` };
+      }
       
-      if (!res.ok || !data.success) {
-        showToast(data.error || "Failed to punch in.", "error");
+      if (!res.ok || !data?.success) {
+        showToast(data?.error || `Failed to punch in (Status: ${res.status})`, "error");
         setIsPunchingIn(false);
         return;
       }
       
       punchIn();
       showToast("✓ Punched In successfully!", "success");
-    } catch (e) {
-      showToast("Network error while punching in.", "error");
+    } catch (e: any) {
+      console.error("Header Punch in error:", e);
+      showToast(e?.message ? `Punch In error: ${e.message}` : "Network error while punching in.", "error");
     } finally {
       isPunchingInRef.current = false;
       setIsPunchingIn(false);

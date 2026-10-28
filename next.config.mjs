@@ -3,6 +3,9 @@ const nextConfig = {
   reactStrictMode: false,
   output: "standalone",
   basePath: "/crmtesting",
+  env: {
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL || "https://crm.emperorsmartsolutions.com/crmtesting/api/auth",
+  },
   swcMinify: true,
   productionBrowserSourceMaps: false,
   eslint: {

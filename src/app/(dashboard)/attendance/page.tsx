@@ -338,17 +338,27 @@ function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: num
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ employeeId: session?.user?.employeeId }),
           });
-          const data = await res.json();
+
+          let data: any = null;
+          const contentType = res.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            data = await res.json();
+          } else {
+            const rawText = await res.text();
+            console.error("Punch In non-JSON response:", res.status, rawText);
+            data = { error: `Server error (${res.status}): ${res.statusText || rawText.substring(0, 100)}` };
+          }
           
-          if (!res.ok || !data.success) {
-            showToast(data.error || "Failed to punch in.", "error");
+          if (!res.ok || !data?.success) {
+            showToast(data?.error || `Failed to punch in (Status: ${res.status})`, "error");
             return;
           }
           
           punchIn();
           showToast("✓ Punched In successfully at " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), "success");
-        } catch (e) {
-          showToast("Network error while punching in.", "error");
+        } catch (e: any) {
+          console.error("Punch in error:", e);
+          showToast(e?.message ? `Punch In error: ${e.message}` : "Network error while punching in.", "error");
         } finally {
           isPunchingInRef.current = false;
           setIsPunchingIn(false);

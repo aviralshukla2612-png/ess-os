@@ -20,39 +20,76 @@ export interface CurrentUserSession {
 /**
  * Retrieves the currently authenticated user based on the secure server session.
  * Does NOT accept a client-provided email or user ID.
+ * Includes fallback to JWT getToken for resilient resolution behind reverse proxies.
  */
 export async function getCurrentUser(): Promise<CurrentUserSession | null> {
-  const session = await getServerSession(authOptions);
+  let userEmail: string | undefined;
 
-  if (!session?.user?.email) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (session?.user?.email) {
+      userEmail = session.user.email;
+    }
+  } catch (err) {
+    console.warn("getServerSession error in getCurrentUser:", err);
+  }
+
+  // Fallback to getToken if getServerSession failed or returned empty
+  if (!userEmail) {
+    try {
+      const { cookies, headers } = await import("next/headers");
+      const { getToken } = await import("next-auth/jwt");
+      const cookieStore = cookies();
+      const allCookies = cookieStore.getAll();
+      const token = await getToken({
+        req: {
+          headers: Object.fromEntries(headers().entries()),
+          cookies: Object.fromEntries(allCookies.map(c => [c.name, c.value])),
+        } as any,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
+      if (token?.email) {
+        userEmail = token.email as string;
+      }
+    } catch (tokenErr) {
+      console.warn("getToken fallback error in getCurrentUser:", tokenErr);
+    }
+  }
+
+  if (!userEmail) {
     return null;
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    include: { employeeProfile: true },
-  });
-
-  if (!user || !user.isActive) return null;
-
-  let parsedPermissions: string[] = [];
   try {
-    if (user.subAdminPermissions) {
-      parsedPermissions = JSON.parse(user.subAdminPermissions);
-    }
-  } catch {}
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail },
+      include: { employeeProfile: true },
+    });
 
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    designation: user.designation,
-    department: user.department,
-    activeRole: user.activeRole as RoleContext,
-    subAdminPermissions: parsedPermissions,
-    avatarUrl: user.avatarUrl,
-    employeeId: user.employeeProfile?.id,
-  };
+    if (!user || !user.isActive) return null;
+
+    let parsedPermissions: string[] = [];
+    try {
+      if (user.subAdminPermissions) {
+        parsedPermissions = JSON.parse(user.subAdminPermissions);
+      }
+    } catch {}
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      designation: user.designation,
+      department: user.department,
+      activeRole: user.activeRole as RoleContext,
+      subAdminPermissions: parsedPermissions,
+      avatarUrl: user.avatarUrl,
+      employeeId: user.employeeProfile?.id,
+    };
+  } catch (dbErr) {
+    console.error("Database error in getCurrentUser:", dbErr);
+    return null;
+  }
 }
 
 /**
@@ -60,11 +97,16 @@ export async function getCurrentUser(): Promise<CurrentUserSession | null> {
  * Returns the CurrentUserSession, or a 401 NextResponse if unauthenticated.
  */
 export async function requireAuth(): Promise<CurrentUserSession | NextResponse> {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    return user;
+  } catch (err: any) {
+    console.error("requireAuth error:", err);
+    return NextResponse.json({ success: false, error: "Authentication check failed: " + (err?.message || "Unknown error") }, { status: 500 });
   }
-  return user;
 }
 
 /**
