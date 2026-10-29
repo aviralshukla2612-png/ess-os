@@ -108,6 +108,25 @@ async function runMigrations() {
       )
     `).catch(() => {});
 
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "ClientWebsite" (
+        "id" TEXT PRIMARY KEY,
+        "clientName" TEXT NOT NULL,
+        "mobileNumber" TEXT NOT NULL,
+        "dateOfDevelopment" DATETIME,
+        "websiteLink" TEXT,
+        "websiteDetails" TEXT,
+        "price" REAL NOT NULL DEFAULT 0,
+        "serverDate" DATETIME,
+        "serverPrice" REAL NOT NULL DEFAULT 0,
+        "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+        "createdById" TEXT,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY ("createdById") REFERENCES "User" ("id") ON DELETE SET NULL
+      )
+    `).catch(() => {});
+
     // 2. EmployeeKyc columns
     await tryAddCol("EmployeeKyc", "aadharNumber", "TEXT");
     await tryAddCol("EmployeeKyc", "aadharFrontUrl", "TEXT");

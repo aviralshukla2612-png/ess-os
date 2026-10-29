@@ -23,6 +23,7 @@ import {
   MessageSquare,
   FileCheck,
   ShieldCheck,
+  Globe,
 } from "lucide-react";
 
 interface Props {
@@ -56,6 +57,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
     const ownerItems: NavItem[] = [
       { id: "overview", title: "Overview", href: "/owner", icon: <LayoutDashboard className="w-4 h-4" /> },
       { id: "leads", title: "Sales & Leads", href: "/leads", icon: <Target className="w-4 h-4" /> },
+      { id: "client-websites", title: "Client Websites", href: "/client-websites", icon: <Globe className="w-4 h-4" /> },
       { id: "quotes", title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
       { id: "clients", title: "Clients", href: "/clients", icon: <Users className="w-4 h-4" /> },
       { id: "projects", title: "Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" /> },
@@ -82,6 +84,7 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
         const delegatedAdminPerms: NavItem[] = [
           { id: "overview", title: "Overview", href: "/owner", icon: <LayoutDashboard className="w-4 h-4" /> },
           { id: "leads", title: "Sales & Leads", href: "/leads", icon: <Target className="w-4 h-4" /> },
+          { id: "client-websites", title: "Client Websites", href: "/client-websites", icon: <Globe className="w-4 h-4" /> },
           { id: "quotes", title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
           { id: "clients", title: "Clients", href: "/clients", icon: <Users className="w-4 h-4" /> },
           { id: "projects", title: "Projects", href: "/projects", icon: <FolderKanban className="w-4 h-4" /> },
@@ -119,15 +122,16 @@ export function Sidebar({ role, isMobileOpen = false, onCloseMobile }: Props) {
       case "SALES":
         return [
           { title: "Sales Overview", href: "/sales", icon: <LayoutDashboard className="w-4 h-4" /> },
+          { title: "Client Websites", href: "/client-websites", icon: <Globe className="w-4 h-4" /> },
+          { title: "Lead Pipeline", href: "/leads", icon: <Target className="w-4 h-4" /> },
+          { title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
+          { title: "Follow-ups Today", href: "/sales/followups", icon: <PhoneCall className="w-4 h-4" /> },
+          { title: "Clients Directory", href: "/clients", icon: <Users className="w-4 h-4" /> },
           { title: "Projects & Feed", href: "/daily-updates", icon: <MessageSquare className="w-4 h-4" /> },
           { title: "My Work Sessions", href: "/attendance", icon: <Clock className="w-4 h-4" /> },
           { title: "Attendance AI", href: "/attendance-assistant", icon: <Sparkles className="w-4 h-4 text-indigo-400" /> },
           { title: "Leave Applications", href: "/attendance/leave", icon: <UserCheck className="w-4 h-4" /> },
           { title: "My KYC Documents", href: "/kyc", icon: <ShieldCheck className="w-4 h-4" /> },
-          { title: "Lead Pipeline", href: "/leads", icon: <Target className="w-4 h-4" /> },
-          { title: "Proposals / Quotes", href: "/quotes", icon: <FileText className="w-4 h-4" /> },
-          { title: "Follow-ups Today", href: "/sales/followups", icon: <PhoneCall className="w-4 h-4" /> },
-          { title: "Clients Directory", href: "/clients", icon: <Users className="w-4 h-4" /> },
           { title: "Settings", href: "/settings", icon: <Settings className="w-4 h-4" /> },
         ];
 

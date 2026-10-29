@@ -36,6 +36,13 @@ export const SUB_ADMIN_MODULES: SubAdminModuleItem[] = [
     category: "MANAGEMENT",
   },
   {
+    id: "client-websites",
+    title: "Client Websites",
+    href: "/client-websites",
+    description: "Client website development records, pricing, and server hosting renewals",
+    category: "MANAGEMENT",
+  },
+  {
     id: "projects",
     title: "Projects",
     href: "/projects",

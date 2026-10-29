@@ -44,6 +44,7 @@ model User {
   userRoles           UserRole[]
   approvedLeaves      LeaveRequest[]      @relation("LeaveApprover")
   fcmTokens           UserFcmToken[]
+  createdWebsites     ClientWebsite[]     @relation("WebsiteCreatedBy")
 }
 
 model UserFcmToken {
@@ -623,5 +624,26 @@ model CompanyHoliday {
   date        DateTime
   description String?
   createdAt   DateTime @default(now())
+}
+
+model ClientWebsite {
+  id                String    @id @default(uuid())
+  clientName        String
+  mobileNumber      String
+  dateOfDevelopment DateTime?
+  websiteLink       String?
+  websiteDetails    String?
+  price             Float     @default(0)
+  serverDate        DateTime?
+  serverPrice       Float     @default(0)
+  status            String    @default("ACTIVE")
+  createdById       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  createdBy         User?     @relation("WebsiteCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([createdById])
+  @@index([clientName])
 }
 

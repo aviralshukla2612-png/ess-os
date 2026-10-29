@@ -38,6 +38,7 @@ export async function middleware(req: any) {
     "/leads": "leads",
     "/quotes": "quotes",
     "/clients": "clients",
+    "/client-websites": "client-websites",
     "/employees": "employees",
     "/attendance-requests": "attendance-requests",
     "/leave-requests": "leave-requests",
@@ -72,7 +73,7 @@ export async function middleware(req: any) {
   }
 
   // SALES routes
-  const salesRoutes = ["/leads", "/clients", "/sales", "/quotes"];
+  const salesRoutes = ["/leads", "/clients", "/sales", "/quotes", "/client-websites"];
   if (salesRoutes.some(r => pathname.startsWith(r)) && token?.role !== "SALES") {
     return NextResponse.redirect(new URL("/crmtesting/login", req.url));
   }

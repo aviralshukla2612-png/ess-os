@@ -15,7 +15,8 @@ import {
   Check, 
   CheckSquare, 
   Square,
-  Shield
+  Shield,
+  Globe
 } from "lucide-react";
 import { SUB_ADMIN_MODULES, SubAdminModuleItem } from "@/lib/subAdminModules";
 
@@ -38,6 +39,8 @@ export function SubAdminPermissionSelector({
         return <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400" />;
       case "clients":
         return <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />;
+      case "client-websites":
+        return <Globe className="w-4 h-4 text-sky-600 dark:text-sky-400" />;
       case "projects":
         return <FolderKanban className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />;
       case "employees":
