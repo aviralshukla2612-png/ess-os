@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/Toast";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { PremiumDatePicker } from "@/components/ui/PremiumDatePicker";
 import {
   Globe,
   Plus,
@@ -758,7 +759,7 @@ export default function ClientWebsitesPage() {
         title={editingItem ? `Edit: ${editingItem.clientName}` : "Add Client Website Record"}
         subtitle="Record development parameters, website links, and server hosting renewal schedules."
       >
-        <form onSubmit={handleFormSubmit} className="space-y-4 text-xs pb-4">
+        <form onSubmit={handleFormSubmit} className="space-y-4 text-xs pb-36">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* 1. Client Name */}
             <div>
@@ -831,11 +832,16 @@ export default function ClientWebsitesPage() {
                 <Calendar className="w-3.5 h-3.5 text-indigo-500" />
                 <span>Date of Development</span>
               </label>
-              <input
-                type="date"
+              <PremiumDatePicker
                 value={formData.dateOfDevelopment}
-                onChange={(e) => setFormData({ ...formData, dateOfDevelopment: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-slate-900 dark:text-slate-100"
+                onChange={(d) => setFormData({ ...formData, dateOfDevelopment: d })}
+                placeholder="Select date of dev..."
+                presets={[
+                  { label: "Today", isToday: true },
+                  { label: "-1 Month", monthsOffset: -1 },
+                  { label: "-3 Months", monthsOffset: -3 },
+                  { label: "-6 Months", monthsOffset: -6 },
+                ]}
               />
             </div>
 
@@ -894,11 +900,19 @@ export default function ClientWebsitesPage() {
                 <Server className="w-3.5 h-3.5 text-sky-500" />
                 <span>Server Renewal Date</span>
               </label>
-              <input
-                type="date"
+              <PremiumDatePicker
                 value={formData.serverDate}
-                onChange={(e) => setFormData({ ...formData, serverDate: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-slate-900 dark:text-slate-100"
+                onChange={(d) => setFormData({ ...formData, serverDate: d })}
+                placeholder="Select renewal date..."
+                accentColor="sky"
+                align="left"
+                presets={[
+                  { label: "Today", isToday: true },
+                  { label: "+1 Month", monthsOffset: 1 },
+                  { label: "+6 Months", monthsOffset: 6 },
+                  { label: "+1 Year", monthsOffset: 12 },
+                  { label: "+2 Years", monthsOffset: 24 },
+                ]}
               />
               <span className="text-[10px] text-slate-400 mt-1 block">Date when hosting/domain renewal is due</span>
             </div>
