@@ -150,8 +150,9 @@ export default function ClientWebsitesPage() {
       showToast("Please enter client name", "error");
       return;
     }
-    if (!formData.mobileNumber.trim()) {
-      showToast("Please enter mobile number", "error");
+    const cleanMobile = formData.mobileNumber.replace(/\D/g, "");
+    if (cleanMobile.length !== 10) {
+      showToast("Mobile number must be exactly 10 digits", "error");
       return;
     }
 
@@ -164,7 +165,7 @@ export default function ClientWebsitesPage() {
 
       const payload = {
         clientName: formData.clientName.trim(),
-        mobileNumber: formData.mobileNumber.trim(),
+        mobileNumber: cleanMobile,
         dateOfDevelopment: formData.dateOfDevelopment || null,
         websiteLink: formData.websiteLink.trim() || null,
         websiteDetails: formData.websiteDetails.trim() || null,
@@ -776,17 +777,50 @@ export default function ClientWebsitesPage() {
 
             {/* 2. Mobile Number */}
             <div>
-              <label className="text-slate-700 dark:text-slate-300 font-bold block mb-1.5">
-                Mobile Number <span className="text-rose-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-slate-700 dark:text-slate-300 font-bold">
+                  Mobile Number <span className="text-rose-500">*</span>
+                </label>
+                <span
+                  className={`text-[10px] font-mono font-bold ${
+                    formData.mobileNumber.length === 10
+                      ? "text-emerald-500"
+                      : formData.mobileNumber.length > 0
+                      ? "text-amber-500"
+                      : "text-slate-400"
+                  }`}
+                >
+                  {formData.mobileNumber.length}/10 digits
+                </span>
+              </div>
               <input
                 type="tel"
                 required
+                maxLength={10}
                 value={formData.mobileNumber}
-                onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
-                placeholder="e.g. +91 98765 43210"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-slate-900 dark:text-slate-100 font-mono"
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                  setFormData({ ...formData, mobileNumber: val });
+                }}
+                placeholder="e.g. 9876543210"
+                className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border text-xs focus:ring-2 outline-none font-medium text-slate-900 dark:text-slate-100 font-mono transition-colors ${
+                  formData.mobileNumber.length === 10
+                    ? "border-emerald-500/60 focus:ring-emerald-500"
+                    : formData.mobileNumber.length > 0
+                    ? "border-amber-500/60 focus:ring-amber-500"
+                    : "border-slate-200 dark:border-slate-700 focus:ring-indigo-500"
+                }`}
               />
+              {formData.mobileNumber.length > 0 && formData.mobileNumber.length < 10 && (
+                <p className="text-[10px] text-amber-500 mt-1 font-medium">
+                  Must be exactly 10 digits ({10 - formData.mobileNumber.length} more needed)
+                </p>
+              )}
+              {formData.mobileNumber.length === 10 && (
+                <p className="text-[10px] text-emerald-500 mt-1 font-medium flex items-center gap-1">
+                  <span>✓ 10-digit number</span>
+                </p>
+              )}
             </div>
           </div>
 

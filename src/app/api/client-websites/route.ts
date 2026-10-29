@@ -123,10 +123,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Mobile number is required" }, { status: 400 });
     }
 
+    const cleanMobile = mobileNumber.replace(/\D/g, "");
+    if (cleanMobile.length !== 10) {
+      return NextResponse.json({ success: false, error: "Mobile number must be exactly 10 digits" }, { status: 400 });
+    }
+
     const newRecord = await prisma.clientWebsite.create({
       data: {
         clientName: clientName.trim(),
-        mobileNumber: mobileNumber.trim(),
+        mobileNumber: cleanMobile,
         dateOfDevelopment: dateOfDevelopment ? new Date(dateOfDevelopment) : null,
         websiteLink: websiteLink ? websiteLink.trim() : null,
         websiteDetails: websiteDetails ? websiteDetails.trim() : null,

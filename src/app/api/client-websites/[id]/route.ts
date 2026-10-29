@@ -72,7 +72,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     const updateData: any = {};
     if (clientName !== undefined) updateData.clientName = clientName.trim();
-    if (mobileNumber !== undefined) updateData.mobileNumber = mobileNumber.trim();
+    if (mobileNumber !== undefined) {
+      const cleanMobile = mobileNumber.replace(/\D/g, "");
+      if (cleanMobile.length !== 10) {
+        return NextResponse.json({ success: false, error: "Mobile number must be exactly 10 digits" }, { status: 400 });
+      }
+      updateData.mobileNumber = cleanMobile;
+    }
     if (dateOfDevelopment !== undefined) {
       updateData.dateOfDevelopment = dateOfDevelopment ? new Date(dateOfDevelopment) : null;
     }
