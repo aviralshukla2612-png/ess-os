@@ -85,6 +85,7 @@ export default function ClientWebsitesPage() {
     websiteLink: "",
     websiteDetails: "",
     price: "",
+    hasServer: false,
     serverDate: "",
     serverPrice: "",
   });
@@ -123,6 +124,7 @@ export default function ClientWebsitesPage() {
       websiteLink: "",
       websiteDetails: "",
       price: "",
+      hasServer: false,
       serverDate: "",
       serverPrice: "",
     });
@@ -131,6 +133,10 @@ export default function ClientWebsitesPage() {
 
   const openEditModal = (item: ClientWebsite) => {
     setEditingItem(item);
+    const hasServerData = Boolean(
+      (item.serverDate && item.serverDate.trim() !== "") ||
+      (item.serverPrice && Number(item.serverPrice) > 0)
+    );
     setFormData({
       clientName: item.clientName,
       mobileNumber: item.mobileNumber,
@@ -138,6 +144,7 @@ export default function ClientWebsitesPage() {
       websiteLink: item.websiteLink || "",
       websiteDetails: item.websiteDetails || "",
       price: item.price ? String(item.price) : "",
+      hasServer: hasServerData,
       serverDate: item.serverDate ? item.serverDate.split("T")[0] : "",
       serverPrice: item.serverPrice ? String(item.serverPrice) : "",
     });
@@ -171,8 +178,8 @@ export default function ClientWebsitesPage() {
         websiteLink: formData.websiteLink.trim() || null,
         websiteDetails: formData.websiteDetails.trim() || null,
         price: parseFloat(formData.price) || 0,
-        serverDate: formData.serverDate || null,
-        serverPrice: parseFloat(formData.serverPrice) || 0,
+        serverDate: formData.hasServer ? (formData.serverDate || null) : null,
+        serverPrice: formData.hasServer ? (parseFloat(formData.serverPrice) || 0) : 0,
       };
 
       const res = await fetch(url, {
@@ -232,6 +239,59 @@ export default function ClientWebsitesPage() {
     showToast(`✓ Copied ${label} to clipboard`, "success");
   };
 
+  const MONTH_NAMES_SHORT = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+  ];
+
+  const formatDateDisplay = (dateStr: string | null) => {
+    if (!dateStr) return "Not Specified";
+    const cleanStr = dateStr.includes("T") ? dateStr : `${dateStr}T00:00:00`;
+    const d = new Date(cleanStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const day = d.getDate();
+    const month = MONTH_NAMES_SHORT[d.getMonth()] || "";
+    const year = d.getFullYear();
+    return `${day} ${month}, ${year}`;
+  };
+
+  const handleQuickRenew = async (item: ClientWebsite) => {
+    if (!item.serverDate) return;
+    const cleanStr = item.serverDate.includes("T") ? item.serverDate : `${item.serverDate}T00:00:00`;
+    const curDate = new Date(cleanStr);
+    if (isNaN(curDate.getTime())) return;
+
+    // Advance 1 year
+    const nextDate = new Date(curDate);
+    nextDate.setFullYear(nextDate.getFullYear() + 1);
+    const yr = nextDate.getFullYear();
+    const mm = String(nextDate.getMonth() + 1).padStart(2, "0");
+    const dd = String(nextDate.getDate()).padStart(2, "0");
+    const formattedNext = `${yr}-${mm}-${dd}`;
+
+    try {
+      const res = await fetch(`/crmtesting/api/client-websites/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          serverDate: formattedNext,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(`✓ Server renewed for "${item.clientName}" until ${formatDateDisplay(formattedNext)}`, "success");
+        fetchWebsites();
+        if (viewDetailsItem && viewDetailsItem.id === item.id) {
+          setViewDetailsItem({ ...viewDetailsItem, serverDate: formattedNext });
+        }
+      } else {
+        showToast(json.error || "Failed to renew", "error");
+      }
+    } catch (err) {
+      showToast("Network error renewing server", "error");
+    }
+  };
+
   // Filtered websites
   const filteredWebsites = useMemo(() => {
     const now = new Date();
@@ -275,28 +335,48 @@ export default function ClientWebsitesPage() {
   const getServerDateStatus = (dateStr: string | null) => {
     if (!dateStr) {
       return {
+        diffDays: 0,
+        isExpired: false,
         label: "No date set",
         color: "bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700",
       };
     }
-    const target = new Date(dateStr);
+    const cleanStr = dateStr.includes("T") ? dateStr : `${dateStr}T00:00:00`;
+    const target = new Date(cleanStr);
     const now = new Date();
-    const diffTime = target.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // Normalize to calendar day for accurate difference
+    const targetDay = new Date(target.getFullYear(), target.getMonth(), target.getDate());
+    const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffTime = targetDay.getTime() - nowDay.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
       return {
+        diffDays,
+        isExpired: true,
         label: `Expired (${Math.abs(diffDays)}d ago)`,
+        color: "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900/60",
+      };
+    }
+    if (diffDays === 0) {
+      return {
+        diffDays,
+        isExpired: false,
+        label: "Expires Today",
         color: "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900/60",
       };
     }
     if (diffDays <= 30) {
       return {
+        diffDays,
+        isExpired: false,
         label: `Due in ${diffDays}d`,
         color: "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/60",
       };
     }
     return {
+      diffDays,
+      isExpired: false,
       label: `Active (${diffDays}d left)`,
       color: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60",
     };
@@ -324,11 +404,11 @@ export default function ClientWebsitesPage() {
     const rows = websites.map((w) => [
       `"${w.clientName.replace(/"/g, '""')}"`,
       `"${w.mobileNumber}"`,
-      `"${w.dateOfDevelopment ? new Date(w.dateOfDevelopment).toLocaleDateString() : ""}"`,
+      `"${w.dateOfDevelopment ? formatDateDisplay(w.dateOfDevelopment) : ""}"`,
       `"${w.websiteLink || ""}"`,
       `"${(w.websiteDetails || "").replace(/"/g, '""').replace(/\n/g, " ")}"`,
       w.price || 0,
-      `"${w.serverDate ? new Date(w.serverDate).toLocaleDateString() : ""}"`,
+      `"${w.serverDate ? formatDateDisplay(w.serverDate) : ""}"`,
       w.serverPrice || 0,
       `"${w.createdBy?.name || "Salesperson"}"`,
       `"${new Date(w.createdAt).toLocaleDateString()}"`,
@@ -625,7 +705,7 @@ export default function ClientWebsitesPage() {
                         {item.dateOfDevelopment ? (
                           <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 font-medium">
                             <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                            <span>{new Date(item.dateOfDevelopment).toLocaleDateString()}</span>
+                            <span className="font-mono text-xs">{formatDateDisplay(item.dateOfDevelopment)}</span>
                           </div>
                         ) : (
                           <span className="text-slate-400 italic">Not set</span>
@@ -684,13 +764,26 @@ export default function ClientWebsitesPage() {
                           <div className="space-y-1">
                             <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium">
                               <Server className="w-3.5 h-3.5 text-slate-400" />
-                              <span>{new Date(item.serverDate).toLocaleDateString()}</span>
+                              <span className="font-mono font-bold text-xs">{formatDateDisplay(item.serverDate)}</span>
                             </div>
-                            <span
-                              className={`inline-block text-[10px] font-bold font-mono px-2 py-0.5 rounded-md border ${status.color}`}
-                            >
-                              {status.label}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`inline-block text-[10px] font-bold font-mono px-2 py-0.5 rounded-md border ${status.color}`}
+                              >
+                                {status.label}
+                              </span>
+                              {status.isExpired && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuickRenew(item)}
+                                  title="Advance renewal by 1 year"
+                                  className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900 border border-indigo-200 dark:border-indigo-800 transition-colors flex items-center gap-1 shadow-xs"
+                                >
+                                  <RefreshCw className="w-2.5 h-2.5" />
+                                  <span>Renew (+1y)</span>
+                                </button>
+                              )}
+                            </div>
                           </div>
                         ) : (
                           <span className="text-slate-400 italic">No date set</span>
@@ -893,48 +986,157 @@ export default function ClientWebsitesPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80">
-            {/* 7. Server Date */}
-            <div>
-              <label className="text-slate-700 dark:text-slate-300 font-bold block mb-1.5 flex items-center gap-1.5">
-                <Server className="w-3.5 h-3.5 text-sky-500" />
-                <span>Server Renewal Date</span>
-              </label>
-              <PremiumDatePicker
-                value={formData.serverDate}
-                onChange={(d) => setFormData({ ...formData, serverDate: d })}
-                placeholder="Select renewal date..."
-                accentColor="sky"
-                align="left"
-                presets={[
-                  { label: "Today", isToday: true },
-                  { label: "+1 Month", monthsOffset: 1 },
-                  { label: "+6 Months", monthsOffset: 6 },
-                  { label: "+1 Year", monthsOffset: 12 },
-                  { label: "+2 Years", monthsOffset: 24 },
-                ]}
-              />
-              <span className="text-[10px] text-slate-400 mt-1 block">Date when hosting/domain renewal is due</span>
-            </div>
-
-            {/* 8. Server Price */}
-            <div>
-              <label className="text-slate-700 dark:text-slate-300 font-bold block mb-1.5 flex items-center gap-1.5">
-                <IndianRupee className="w-3.5 h-3.5 text-sky-500" />
-                <span>Server Renewal Price (₹)</span>
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="any"
-                value={formData.serverPrice}
-                onChange={(e) => setFormData({ ...formData, serverPrice: e.target.value })}
-                placeholder="e.g. 5000"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-900 dark:text-slate-100 font-mono"
-              />
-              <span className="text-[10px] text-slate-400 mt-1 block">Annual hosting or maintenance cost</span>
-            </div>
+          {/* Server / Hosting Purchase Checkbox */}
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 transition-all">
+            <label htmlFor="hasServerCheckbox" className="flex items-center justify-between cursor-pointer select-none">
+              <div className="flex items-center gap-2.5">
+                <input
+                  type="checkbox"
+                  id="hasServerCheckbox"
+                  checked={formData.hasServer}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      hasServer: e.target.checked,
+                    })
+                  }
+                  className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-sky-600 focus:ring-sky-500 cursor-pointer accent-sky-600"
+                />
+                <div className="flex items-center gap-1.5">
+                  <Server className="w-3.5 h-3.5 text-sky-500" />
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    Client purchased Server / Hosting from us?
+                  </span>
+                </div>
+              </div>
+              <span
+                className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-colors ${
+                  formData.hasServer
+                    ? "bg-sky-100 dark:bg-sky-950/70 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-800"
+                    : "bg-slate-200/80 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                }`}
+              >
+                {formData.hasServer ? "Yes (Add Details)" : "No"}
+              </span>
+            </label>
+            <p className="text-[10px] text-slate-400 mt-1 ml-6.5">
+              Check this if the client bought server hosting from us to configure renewal date and price.
+            </p>
           </div>
+
+          {/* Conditional Server Renewal Section */}
+          {formData.hasServer && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-sky-50/40 dark:bg-sky-950/20 border border-sky-200/80 dark:border-sky-800/60 animate-in fade-in slide-in-from-top-1 duration-200">
+              {/* 7. Server Date */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-slate-700 dark:text-slate-300 font-bold flex items-center gap-1.5">
+                    <Server className="w-3.5 h-3.5 text-sky-500" />
+                    <span>Server Renewal Date</span>
+                  </label>
+                  {formData.dateOfDevelopment && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const devStr = formData.dateOfDevelopment.includes("T")
+                          ? formData.dateOfDevelopment
+                          : `${formData.dateOfDevelopment}T00:00:00`;
+                        const dev = new Date(devStr);
+                        if (!isNaN(dev.getTime())) {
+                          const next = new Date(dev);
+                          const now = new Date();
+                          while (next <= now) {
+                            next.setFullYear(next.getFullYear() + 1);
+                          }
+                          const yr = next.getFullYear();
+                          const mm = String(next.getMonth() + 1).padStart(2, "0");
+                          const dd = String(next.getDate()).padStart(2, "0");
+                          const nextVal = `${yr}-${mm}-${dd}`;
+                          setFormData({ ...formData, serverDate: nextVal });
+                          showToast(`✓ Set to upcoming active cycle: ${formatDateDisplay(nextVal)}`, "success");
+                        }
+                      }}
+                      className="text-[10px] text-sky-600 dark:text-sky-400 hover:text-sky-500 font-bold hover:underline flex items-center gap-1"
+                      title="Set to the next upcoming annual anniversary based on development date"
+                    >
+                      <Sparkles className="w-3 h-3 text-amber-500" />
+                      <span>Next Active Cycle</span>
+                    </button>
+                  )}
+                </div>
+                <PremiumDatePicker
+                  value={formData.serverDate}
+                  onChange={(d) => setFormData({ ...formData, serverDate: d })}
+                  placeholder="Select renewal date..."
+                  accentColor="sky"
+                  align="left"
+                  presets={[
+                    { label: "Today", isToday: true },
+                    { label: "+1 Month", monthsOffset: 1 },
+                    { label: "+6 Months", monthsOffset: 6 },
+                    { label: "+1 Year", monthsOffset: 12 },
+                    { label: "+2 Years", monthsOffset: 24 },
+                  ]}
+                />
+                <span className="text-[10px] text-slate-400 mt-1 block">Date when hosting/domain renewal is due</span>
+              </div>
+
+              {/* 8. Server Price */}
+              <div>
+                <label className="text-slate-700 dark:text-slate-300 font-bold block mb-1.5 flex items-center gap-1.5">
+                  <IndianRupee className="w-3.5 h-3.5 text-sky-500" />
+                  <span>Server Renewal Price (₹)</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={formData.serverPrice}
+                  onChange={(e) => setFormData({ ...formData, serverPrice: e.target.value })}
+                  placeholder="e.g. 5000"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-sky-500 outline-none font-bold text-slate-900 dark:text-slate-100 font-mono"
+                />
+                <span className="text-[10px] text-slate-400 mt-1 block">Annual hosting or maintenance cost</span>
+              </div>
+
+              {/* Alert if selected server date is in the past */}
+              {formData.serverDate && getServerDateStatus(formData.serverDate).isExpired && (
+                <div className="sm:col-span-2 flex items-center justify-between gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300">
+                  <div className="flex items-center gap-2 text-xs">
+                    <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span>
+                      This date has passed ({getServerDateStatus(formData.serverDate).label}).
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const curStr = formData.serverDate.includes("T")
+                        ? formData.serverDate
+                        : `${formData.serverDate}T00:00:00`;
+                      const d = new Date(curStr);
+                      if (!isNaN(d.getTime())) {
+                        const next = new Date(d);
+                        const now = new Date();
+                        while (next <= now) {
+                          next.setFullYear(next.getFullYear() + 1);
+                        }
+                        const yr = next.getFullYear();
+                        const mm = String(next.getMonth() + 1).padStart(2, "0");
+                        const dd = String(next.getDate()).padStart(2, "0");
+                        const nextVal = `${yr}-${mm}-${dd}`;
+                        setFormData({ ...formData, serverDate: nextVal });
+                        showToast(`✓ Advanced renewal date to: ${formatDateDisplay(nextVal)}`, "success");
+                      }
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-[11px] shadow-sm transition-all whitespace-nowrap active:scale-95"
+                  >
+                    Advance to Next Cycle (+1 Year)
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="pt-2 flex items-center justify-end gap-3">
             <button
@@ -1008,10 +1210,8 @@ export default function ClientWebsitesPage() {
                 <span className="text-slate-400 font-bold text-[10px] uppercase tracking-wider block">
                   Date of Development
                 </span>
-                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {viewDetailsItem.dateOfDevelopment
-                    ? new Date(viewDetailsItem.dateOfDevelopment).toLocaleDateString()
-                    : "Not Specified"}
+                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                  {formatDateDisplay(viewDetailsItem.dateOfDevelopment)}
                 </span>
               </div>
 
@@ -1025,14 +1225,24 @@ export default function ClientWebsitesPage() {
               </div>
 
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 space-y-1">
-                <span className="text-slate-400 font-bold text-[10px] uppercase tracking-wider block">
-                  Server Renewal Date
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 font-bold text-[10px] uppercase tracking-wider block">
+                    Server Renewal Date
+                  </span>
+                  {viewDetailsItem.serverDate && getServerDateStatus(viewDetailsItem.serverDate).isExpired && (
+                    <button
+                      type="button"
+                      onClick={() => handleQuickRenew(viewDetailsItem)}
+                      className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                    >
+                      <RefreshCw className="w-2.5 h-2.5" />
+                      <span>Renew (+1 Year)</span>
+                    </button>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    {viewDetailsItem.serverDate
-                      ? new Date(viewDetailsItem.serverDate).toLocaleDateString()
-                      : "Not Specified"}
+                  <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                    {formatDateDisplay(viewDetailsItem.serverDate)}
                   </span>
                   {viewDetailsItem.serverDate && (
                     <span
